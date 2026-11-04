@@ -207,9 +207,13 @@ You can also press `w` to open the app in a web browser.
 ```
 Keepr/
 ├── src/
-│   └── app/            # Screens (Expo Router: every file here is a screen)
-│       ├── _layout.tsx #   Root navigation layout
-│       └── index.tsx   #   Home screen
+│   ├── app/            # Screens (Expo Router: every file here is a screen)
+│   │   ├── _layout.tsx #   Root navigation layout
+│   │   └── index.tsx   #   Home screen
+│   ├── lib/            # App logic, kept separate from screens
+│   │   └── deadlines.ts#   Works out return, cancellation and warranty dates
+│   └── types/          # Shared TypeScript types
+│       └── receipt.ts  #   The Receipt data model
 ├── assets/             # App icons and splash screen
 ├── AGENTS.md           # Notes for AI coding assistants working on this repo
 ├── app.json            # Expo app configuration (name, icons, plugins)
