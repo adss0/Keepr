@@ -4,7 +4,7 @@
 
 Keepr is a personal finance companion that collects your receipts automatically — from your email inbox, photos of paper receipts, and manual entries — organises them in one place, helps you split costs with friends, and reminds you about the things that matter (return deadlines, warranties, who still owes you money).
 
-> **Status:** Early development. Nothing here is production-ready yet.
+> **Status:** Early development. The Expo app skeleton is set up, and features are being built phase by phase (see [Roadmap](#roadmap)).
 
 ---
 
@@ -170,30 +170,55 @@ Keepr reads financial data and email, so trust is the whole product. Guiding pri
 
 ## Getting started
 
-Setup instructions will be added once the first code lands.
+### Prerequisites
+- [Node.js](https://nodejs.org/) **22.13 or newer** (Expo SDK 58 requires it; install the current LTS)
+- [Git](https://git-scm.com/)
+- The **Expo Go** app on your phone ([iOS](https://apps.apple.com/app/expo-go/id982107779) / [Android](https://play.google.com/store/apps/details?id=host.exp.exponent)) to test on a real device, for free
+
+### Run the app
 
 ```bash
 git clone https://github.com/adss0/Keepr.git
 cd Keepr
+npm install
+npm start
 ```
+
+Then scan the QR code in the terminal:
+- **Android:** scan it with the Expo Go app.
+- **iPhone:** scan it with the Camera app.
+
+You can also press `w` to open the app in a web browser.
+
+### Useful commands
+
+| Command | What it does |
+|---|---|
+| `npm start` | Starts the dev server |
+| `npm run web` | Opens the app in a browser |
+| `npm run typecheck` | Checks the TypeScript types |
+| `npm run lint` | Lints the code |
+| `npx expo install <package>` | Adds a package at a version compatible with this Expo SDK. Use this instead of `npm install <package>`. |
 
 ---
 
 ## Project structure
 
-To be defined. Planned layout:
-
 ```
 Keepr/
-├── apps/
-│   ├── mobile/      # Mobile client
-│   └── web/         # Web client
-├── services/
-│   ├── api/         # Backend API
-│   └── workers/     # Email sync, OCR and reminder jobs
-├── packages/        # Shared code (types, utils)
-└── docs/            # Design docs and decisions
+├── src/
+│   └── app/            # Screens (Expo Router: every file here is a screen)
+│       ├── _layout.tsx #   Root navigation layout
+│       └── index.tsx   #   Home screen
+├── assets/             # App icons and splash screen
+├── AGENTS.md           # Notes for AI coding assistants working on this repo
+├── app.json            # Expo app configuration (name, icons, plugins)
+├── eslint.config.js    # Lint rules (Expo defaults)
+├── package.json        # Dependencies and scripts
+└── tsconfig.json       # TypeScript settings (`@/` points to `src/`)
 ```
+
+Planned additions: `supabase/` (database schema and server functions) and `src/components/` (reusable UI).
 
 ---
 

@@ -1,31 +1,44 @@
 # Dependencies
 node_modules/
-.venv/
-venv/
-__pycache__/
 
-# Builds
-dist/
-build/
-.next/
+# Expo
 .expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Generated native folders (Expo regenerates these)
+/ios
+/android
+.kotlin/
+
+# Signing keys and certificates
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.pem
+*.mobileprovision
+
+# Metro
+.metro-health-check*
 
 # Environment and secrets
 .env
 .env.*
 !.env.example
-*.pem
-*.key
 
 # Logs
 *.log
-npm-debug.log*
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# TypeScript
+*.tsbuildinfo
 
 # OS / editor
 .DS_Store
 Thumbs.db
-.vscode/
 .idea/
-
-# Local receipt uploads / test data
-uploads/
