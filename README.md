@@ -1,8 +1,8 @@
 # Keepr
 
-**Keep every receipt. Split every bill. Never miss a return window again.**
+> **You keep your receipts. Keepr keeps your rights.**
 
-Keepr is a personal finance companion that collects your receipts automatically — from your email inbox, photos of paper receipts, and manual entries — organises them in one place, helps you split costs with friends, and reminds you about the things that matter (return deadlines, warranties, who still owes you money).
+Snap a receipt and Keepr pulls out the product, price and return deadline. It reminds you before your return window or warranty runs out. When something breaks, it tells you exactly what you're entitled to under UK consumer law, and how to claim it.
 
 > **Status:** Early development. The Expo app skeleton is set up, and features are being built phase by phase (see [Roadmap](#roadmap)).
 
@@ -10,68 +10,95 @@ Keepr is a personal finance companion that collects your receipts automatically 
 
 ## Table of contents
 
-- [Why Keepr?](#why-keepr)
+- [The problem](#the-problem)
+- [Who it's for](#who-its-for)
 - [Core features](#core-features)
+- [Your rights, explained](#your-rights-explained)
 - [How it works](#how-it-works)
+- [Business model](#business-model)
 - [Privacy and security](#privacy-and-security)
+- [Tech stack](#tech-stack)
 - [Roadmap](#roadmap)
-- [Proposed tech stack](#proposed-tech-stack)
 - [Getting started](#getting-started)
 - [Project structure](#project-structure)
-- [Contributing](#contributing)
 - [License](#license)
 
 ---
 
-## Why Keepr?
+## The problem
 
-Receipts are scattered everywhere: crumpled in pockets, buried in email, stuck in a dozen shopping apps. When you need one — to return something, claim a warranty, file an expense, or settle up after a group dinner — it's never where you need it.
+Most people lose their receipts and miss refunds they were owed.
 
-Keepr solves three everyday problems:
+- Receipts fade, get thrown away, or sit in an inbox nobody searches.
+- Return windows close without anyone noticing.
+- When a product breaks, most people don't know that the law often gives them more than the shop's own policy, so they accept "sorry, it's out of warranty" when they could get a repair, replacement or refund.
+- Subscriptions pile up across different apps and cards, and renewals catch people out.
 
-1. **"Where's that receipt?"** — Every receipt, digital or paper, searchable in one place.
-2. **"Who owes what?"** — Split a bill item-by-item and track who has paid you back.
-3. **"I forgot to return it."** — Automatic reminders before return windows and warranties expire.
+## Who it's for
+
+**Everyone who buys anything.** In particular:
+
+- Shoppers who want proof of purchase to hand without hunting for it.
+- People buying expensive items like electronics, appliances and furniture, where a missed warranty or return costs real money.
+- Anyone who has been told "no" by a retailer and isn't sure whether that's actually allowed.
+- Anyone with more subscriptions than they can keep track of.
 
 ---
 
 ## Core features
 
-### 📥 Automatic receipt capture from email
-- Connect your email account (Gmail, Outlook, and others via IMAP) with **read-only** access.
-- Keepr scans for order confirmations, invoices and e-receipts from retailers, restaurants, ride-shares, subscriptions and more.
-- Extracts the useful bits: merchant, date, total, tax, line items, payment method, order number.
-- Only receipt-like emails are processed — everything else is ignored.
+### 📸 Snap a receipt
+- Take a photo of a paper receipt, or forward or upload a digital one.
+- Keepr extracts the **retailer, product(s), price, purchase date and payment method**.
+- It works out the **return deadline** and **warranty end date**, using the retailer's known policy where available and the legal minimums otherwise.
+- The original image is kept as proof of purchase.
 
-### 📸 Paper receipt scanning
-- Snap a photo of a paper receipt.
-- OCR reads the merchant, items and totals so you don't have to type them.
-- The original image is kept alongside the extracted data.
+### 📥 Automatic capture from email *(later phase)*
+- Connect Gmail or Outlook with **read-only** access.
+- Order confirmations and e-receipts are picked up automatically, with no snapping needed.
 
-### 🗂️ Organisation and search
-- Automatic categorisation (groceries, dining, travel, electronics, subscriptions, …).
-- Search by merchant, item, amount, date or tag.
-- Custom tags and folders (e.g. "Work expenses", "Home renovation", "Holiday 2026").
-- Spending summaries by category and month.
+### ⏰ Reminders before you lose out
+- "Your 30-day return window for *Headphones* at *Store X* closes in 3 days."
+- "The warranty on your *Washing machine* ends next month."
+- "Your 14-day cancellation period for an online order ends on Friday."
 
-### ➗ Bill splitting
-- Split any receipt **evenly**, **by item**, **by percentage** or **by custom amounts**.
-- Assign individual line items to people ("Sam had the steak, Alex had the pasta").
-- Tax and tip are distributed proportionally.
-- Groups for recurring splits (flatmates, trips, couples).
-- Running balances: see who owes whom and settle up with the fewest payments.
-- Share a split link with friends — they don't need an account to see what they owe.
+### ⚖️ "It broke. What am I owed?"
+- Pick the item, describe what went wrong, and Keepr tells you:
+  - which rights apply, based on what you bought, when, how and how you paid
+  - what you can ask for: a refund, repair, replacement or partial refund
+  - the steps to take, with a ready-to-send claim letter or email to the retailer
+- See [Your rights, explained](#your-rights-explained) below.
 
-### ⏰ Reminders
-- **Return windows:** "Your return window for *Headphones* at *Store X* closes in 3 days."
-- **Warranties:** alerts before a product warranty expires.
-- **Unpaid splits:** gentle nudges for money you're owed (and money you owe).
-- **Subscriptions:** a heads-up before a free trial converts or a subscription renews.
-- **Price drops (future):** notice when something you bought gets cheaper within its price-adjustment window.
+### 🔁 All your subscriptions in one place
+- See every subscription together, with its cost, renewal date and billing cycle.
+- Get alerts before free trials convert and before renewals.
+- See your total monthly and yearly subscription spend.
 
-### 📤 Export
-- Export receipts to CSV / PDF for expense reports or tax time.
-- Bulk-download original receipt images and emails.
+### 🗂️ Organise, search and export
+- Automatic categories (electronics, groceries, clothing, home, …).
+- Search by retailer, product, amount or date.
+- Export receipts to PDF or CSV for insurance claims, expenses or tax.
+
+---
+
+## Your rights, explained
+
+Keepr's rights engine is built on UK consumer law. These are the main rules it applies:
+
+| Situation | Your right | Source |
+|---|---|---|
+| Faulty goods, within **30 days** | Full refund (the "short-term right to reject") | Consumer Rights Act 2015 |
+| Faulty goods, within **6 months** | Repair or replacement. If that fails, a refund or price reduction. The fault is presumed to have been there from the start. | Consumer Rights Act 2015 |
+| Faulty goods, after **6 months** | Repair, replacement or refund still possible, but you may need to show the fault was there at purchase | Consumer Rights Act 2015 |
+| Goods that should last longer | Claims possible for up to **6 years** (5 in Scotland), depending on reasonable durability | Consumer Rights Act 2015 / Limitation Act 1980 |
+| Bought **online, by phone or by mail order** | **14 days** to cancel for any reason, then 14 days to return. Refund due within 14 days. | Consumer Contracts Regulations 2013 |
+| Paid by **credit card**, item £100–£30,000 | The card provider is jointly liable with the retailer | Section 75, Consumer Credit Act 1974 |
+| Paid by **debit card** or for items under £100 on credit | You may be able to ask your bank for a chargeback (a scheme rule, not a legal right) | Card scheme rules |
+| Faulty **digital content** | Repair or replacement, then a refund or price reduction | Consumer Rights Act 2015 |
+
+Keepr also makes clear what the law **doesn't** cover. For example, a "change of mind" return in a physical shop is a goodwill policy, not a legal right.
+
+> ⚠️ Keepr provides general information about consumer rights, not legal advice. For complex disputes, Citizens Advice or a solicitor can help.
 
 ---
 
@@ -79,92 +106,92 @@ Keepr solves three everyday problems:
 
 ```
  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
- │  Email inbox │   │ Photo / scan │   │ Manual entry │
+ │ Photo / scan │   │  Email inbox │   │ Manual entry │
  └──────┬───────┘   └──────┬───────┘   └──────┬───────┘
-        │                  │                  │
         ▼                  ▼                  ▼
  ┌─────────────────────────────────────────────────────┐
- │        Ingestion: detect receipt-like content       │
+ │  Extraction: retailer, product, price, date,        │
+ │  payment method (vision AI + OCR)                   │
  └──────────────────────────┬──────────────────────────┘
                             ▼
  ┌─────────────────────────────────────────────────────┐
- │  Extraction: merchant, date, items, totals, return  │
- │  policy, warranty (parsing + OCR + AI assistance)   │
+ │  Deadlines: return window, cancellation period,     │
+ │  warranty, legal rights timeline                    │
  └──────────────────────────┬──────────────────────────┘
                             ▼
  ┌─────────────────────────────────────────────────────┐
- │           Receipt store (searchable, tagged)        │
+ │        Receipt vault (searchable proof of purchase) │
  └───────┬─────────────────┬─────────────────┬─────────┘
          ▼                 ▼                 ▼
-   Bill splitting     Reminders &       Insights &
-   & balances         notifications     exports
+    Reminders        Rights engine      Subscriptions
+                   + claim letters      & exports
 ```
 
-1. **Ingest** — Keepr periodically checks connected inboxes for new receipt emails, and accepts photos and manual entries.
-2. **Extract** — Structured data is pulled out using known retailer templates where available, falling back to OCR and AI-assisted parsing for everything else.
-3. **Store** — Receipts are saved with their original source (email or image) so you always have proof of purchase.
-4. **Act** — Split the bill, set reminders, or just let it sit there until you need it.
+---
+
+## Business model
+
+1. **Subscription (Keepr Premium).** Free tier: a limited number of receipts and basic reminders. Premium: unlimited receipts, email auto-capture, the full rights engine with claim letters, subscription tracking and exports.
+2. **Partnerships with retailers and insurers.**
+   - **Retailers:** verified digital receipts sent straight into Keepr at checkout, so customers never need a paper receipt.
+   - **Insurers:** extended warranty or gadget insurance offered at the moment it's relevant, such as when a manufacturer warranty is about to end. Only with clear user consent.
+
+Keepr is always on the user's side. Partnerships never change what the rights engine tells you.
 
 ---
 
 ## Privacy and security
 
-Keepr reads financial data and email, so trust is the whole product. Guiding principles:
+- **Least privilege:** email access is read-only, and only receipt-like emails are processed.
+- **OAuth, not passwords:** Keepr never sees your email password.
+- **Encryption** in transit and at rest.
+- **Your data, your control:** export everything, or delete your account and all data at any time.
+- **No selling personal data.** Partners never get your data without explicit opt-in.
+- Designed to comply with **UK GDPR**.
 
-- **Least privilege:** email access is read-only and scoped as narrowly as the provider allows. Keepr never sends, deletes or modifies email.
-- **Only receipts:** non-receipt emails are skipped and not stored.
-- **OAuth, not passwords:** email is connected via the provider's OAuth flow — Keepr never sees or stores your email password.
-- **Encryption:** data encrypted in transit (TLS) and at rest.
-- **Your data, your control:** disconnect an inbox at any time, export everything, or delete your account and all associated data.
-- **No selling data.** Ever.
+---
 
-> Note: Accessing Gmail data requires passing Google's OAuth verification and, for restricted scopes, a security assessment. This should be planned for before a public launch.
+## Tech stack
+
+| Layer | Choice | Why |
+|---|---|---|
+| Language | **TypeScript** everywhere | One language across the app and backend. Strong typing catches bugs early. Huge ecosystem. |
+| Mobile app | **React Native + Expo** | One codebase for iOS and Android. Built-in camera, push notifications and over-the-air updates. Can also run on the web. |
+| Backend | **Supabase** (Postgres, Auth, Storage, Edge Functions) | A managed database, sign-in, image storage and server functions in one service. Very fast to start, and it's standard Postgres, so there's no lock-in. |
+| Receipt extraction | **Vision-capable LLM** (e.g. Claude) | Reads messy, crumpled or faded receipts and returns structured data (product, price, date) directly, rather than raw OCR text that still needs parsing. |
+| Rights engine | **Rules in TypeScript**, with an LLM only for explanations | The deadlines and entitlements must be deterministic and testable. The AI explains the result in plain English but doesn't decide it. |
+| Scheduled jobs | Supabase cron / scheduled functions | Daily checks for upcoming deadlines that trigger reminders. |
+| Notifications | Expo Push Notifications | One API for iOS and Android push. |
+| In-app payments | **RevenueCat** | Handles Apple and Google subscriptions (required for digital subscriptions sold in mobile apps) and receipts. |
+| Email capture (later) | Gmail API / Microsoft Graph | Official read-only access. |
 
 ---
 
 ## Roadmap
 
-### Phase 1 — MVP
-- [ ] Project setup, auth and user accounts
-- [ ] Manual receipt entry
-- [ ] Receipt list, detail view and search
-- [ ] Basic bill splitting (even and custom amounts)
+### Phase 1: MVP
+- [x] Expo app setup (TypeScript, Expo Router)
+- [x] Receipt data model and deadline calculator (return, 14-day cancellation, 30-day reject, warranty)
+- [ ] Receipt list screen with mock data
+- [ ] Supabase project setup, sign-up and log-in
+- [ ] Snap a receipt → AI extraction → review and save
+- [ ] Receipt vault with search
+- [ ] Return deadline and warranty reminders (push notifications)
 
-### Phase 2 — Automation
-- [ ] Gmail integration (read-only OAuth)
-- [ ] Receipt detection and data extraction from emails
-- [ ] Photo upload with OCR
-- [ ] Auto-categorisation
+### Phase 2: Rights
+- [ ] Rights engine (Consumer Rights Act, Consumer Contracts Regulations, Section 75)
+- [ ] "It broke" flow with a generated claim letter
+- [ ] Known retailer return policies
 
-### Phase 3 — Reminders and social
-- [ ] Return window and warranty reminders
-- [ ] Item-level splitting, groups and balances
-- [ ] Shareable split links
-- [ ] Push and email notifications
+### Phase 3: Subscriptions and automation
+- [ ] Subscription tracker with renewal and trial alerts
+- [ ] Gmail / Outlook auto-capture
+- [ ] Keepr Premium via RevenueCat
 
-### Phase 4 — Polish
-- [ ] Outlook / IMAP support
-- [ ] Spending insights dashboard
-- [ ] CSV / PDF export
-- [ ] Subscription tracking and price-drop alerts
-- [ ] Mobile apps
-
----
-
-## Proposed tech stack
-
-*Not final — open to change as the project takes shape.*
-
-| Layer | Options |
-|---|---|
-| Mobile / web client | React Native (Expo) or Next.js |
-| Backend API | Node.js (TypeScript) or Python (FastAPI) |
-| Database | PostgreSQL |
-| File storage | S3-compatible object storage for receipt images |
-| Background jobs | Queue-based workers for email syncing and reminders |
-| Email integration | Gmail API, Microsoft Graph, IMAP |
-| OCR / extraction | Cloud OCR + LLM-assisted parsing |
-| Notifications | Push notifications + transactional email |
+### Phase 4: Partnerships
+- [ ] Retailer digital receipt integration
+- [ ] Opt-in insurer offers
+- [ ] PDF / CSV export
 
 ---
 
@@ -226,12 +253,6 @@ Planned additions: `supabase/` (database schema and server functions) and `src/c
 
 ---
 
-## Contributing
-
-This is currently a personal project. Ideas and feedback are welcome via issues.
-
----
-
 ## License
 
-All rights reserved. A license may be added later.
+All rights reserved.
