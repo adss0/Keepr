@@ -38,12 +38,10 @@
 - [ ] Known retailer return policies
 - [ ] Unit tests for every rule
 
-### Phase 3: Subscriptions and automation
+### Phase 3: Subscription tracking and automation
 - [ ] Subscription tracker: cost, renewal date, trial end
 - [ ] Renewal and trial-ending alerts
 - [ ] Gmail / Outlook auto-capture (read-only)
-- [ ] Keepr Premium subscription via RevenueCat
-- [ ] Free-tier scan limit
 
 ### Phase 4: Partnerships and polish
 - [ ] Retailer digital receipt integration
@@ -56,17 +54,19 @@
 
 ## Features (full list)
 
-| Feature | Phase | Free / Premium |
-|---|---|---|
-| Snap a receipt, AI pulls out product, price, date | 1 | Free (limited scans) |
-| Return, cancellation and warranty reminders | 1 | Free |
-| Receipt vault with search | 1 | Free |
-| "It broke, what am I owed?" | 2 | Premium |
-| Claim letter generator | 2 | Premium |
-| Subscription tracker and alerts | 3 | Premium |
-| Email auto-capture | 3 | Premium |
-| Export to PDF / CSV | 4 | Premium |
-| Retailer and insurer partnerships | 4 | Revenue |
+| Feature | Phase |
+|---|---|
+| Snap a receipt, AI pulls out product, price, date | 1 |
+| Return, cancellation and warranty reminders | 1 |
+| Receipt vault with search | 1 |
+| "It broke, what am I owed?" | 2 |
+| Claim letter generator | 2 |
+| Subscription tracker and alerts | 3 |
+| Email auto-capture | 3 |
+| Export to PDF / CSV | 4 |
+| Retailer and insurer partnerships | 4 |
+
+All features are free for now.
 
 ---
 
@@ -81,7 +81,6 @@
 | **Vision AI (e.g. Claude)** | Reads messy receipts straight into structured data. |
 | **Rules in code (not AI)** | Legal deadlines must be exact and testable. AI only explains results and drafts letters. |
 | **Expo Push Notifications** | One API for iOS and Android reminders. |
-| **RevenueCat** | Handles Apple and Google subscriptions. Free until real revenue. |
 | **Cloudflare R2** (if needed) | Cheap photo storage once Supabase's 1 GB fills up. |
 
 ---
@@ -93,6 +92,7 @@
 - **4 Nov 2026:** Work goes in small PRs, opened about 12 hours apart, with no AI credits or reviewer notes.
 - **5 Nov 2026:** Roadmap moved out of the README into this `PLAN.md`.
 - **5 Nov 2026:** Every change goes through a PR with a summary. No direct pushes to `main`.
+- **5 Nov 2026:** Keepr is free for now: no Premium tier, scan limits or in-app payments.
 
 ## Notes and to-dos
 
