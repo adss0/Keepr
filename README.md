@@ -4,7 +4,7 @@
 
 Snap a receipt and Keepr pulls out the product, price and return deadline. It reminds you before your return window or warranty runs out. When something breaks, it tells you exactly what you're entitled to under UK consumer law, and how to claim it.
 
-> **Status:** Early development. The Expo app skeleton is set up, and features are being built step by step.
+> **Status:** Early development. The Expo app skeleton is set up, and features are being built step by step. See the [build plan](PLAN.md).
 
 ---
 
@@ -18,6 +18,7 @@ Snap a receipt and Keepr pulls out the product, price and return deadline. It re
 - [Business model](#business-model)
 - [Privacy and security](#privacy-and-security)
 - [Tech stack](#tech-stack)
+- [Build plan](#build-plan)
 - [Getting started](#getting-started)
 - [Project structure](#project-structure)
 - [License](#license)
@@ -166,6 +167,12 @@ Keepr is always on the user's side. Partnerships never change what the rights en
 
 ---
 
+## Build plan
+
+The development phases, full feature list and decisions log are in [PLAN.md](PLAN.md).
+
+---
+
 ## Getting started
 
 ### Prerequisites
@@ -213,6 +220,7 @@ Keepr/
 │   └── types/          # Shared TypeScript types
 │       └── receipt.ts  #   The Receipt data model
 ├── assets/             # App icons and splash screen
+├── PLAN.md             # Build plan: phases, features and decisions
 ├── AGENTS.md           # Notes for AI coding assistants working on this repo
 ├── app.json            # Expo app configuration (name, icons, plugins)
 ├── eslint.config.js    # Lint rules (Expo defaults)
