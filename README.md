@@ -1,5 +1,7 @@
 # Keepr
 
+[![CI](https://github.com/adss0/Keepr/actions/workflows/ci.yml/badge.svg)](https://github.com/adss0/Keepr/actions/workflows/ci.yml)
+
 > **You keep your receipts. Keepr keeps your rights.**
 
 Snap a receipt and Keepr pulls out the product, price and return deadline. It reminds you before your return window or warranty runs out. When something breaks, it tells you exactly what you're entitled to under UK consumer law, and how to claim it.
@@ -199,6 +201,14 @@ You can also press `w` to open the app in a web browser.
 | `npm run lint` | Lints the code |
 | `npx expo install <package>` | Adds a package at a version compatible with this Expo SDK. Use this instead of `npm install <package>`. |
 
+### Continuous integration
+
+Every pull request to `main`, and every merge into it, runs [CI](.github/workflows/ci.yml) on GitHub Actions. It checks types, lints the code and builds the app. `main` is protected:
+
+- Changes reach `main` only through a pull request.
+- A PR can only be merged when CI passes, the branch is up to date with `main` and it has no conflicts.
+- Force-pushing to `main` and deleting it are blocked.
+
 ---
 
 ## Project structure
@@ -213,6 +223,7 @@ Keepr/
 │   │   └── deadlines.ts#   Works out return, cancellation and warranty dates
 │   └── types/          # Shared TypeScript types
 │       └── receipt.ts  #   The Receipt data model
+├── .github/workflows/  # CI checks run on every PR and merge
 ├── assets/             # App icons and splash screen
 ├── PLAN.md             # Build plan: phases, features and decisions
 ├── AGENTS.md           # Notes for AI coding assistants working on this repo

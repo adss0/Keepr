@@ -2,8 +2,6 @@
 
 > The development phases, features and decisions for Keepr. Updated as work lands.
 
-**Last updated:** 5 Nov 2026
-
 ---
 
 ## Where we are
@@ -12,6 +10,7 @@
 - ✅ Receipt data model and deadline calculator (merged via PR #3)
 - ✅ README rewritten around the product (PR #3)
 - ✅ Build plan moved into `PLAN.md`
+- ✅ CI on every PR and merge, and `main` protected by a ruleset
 - ⏭️ **Next:** receipts list screen with sample data
 
 ---
@@ -87,12 +86,13 @@ All features are free for now.
 
 ## Decisions log
 
-- **4 Nov 2026:** Chose Expo + TypeScript + Supabase to keep costs near £0 and use one language.
-- **4 Nov 2026:** Prices stored in pence to avoid rounding errors.
-- **4 Nov 2026:** Work goes in small PRs, opened about 12 hours apart, with no AI credits or reviewer notes.
-- **5 Nov 2026:** Roadmap moved out of the README into this `PLAN.md`.
-- **5 Nov 2026:** Every change goes through a PR with a summary. No direct pushes to `main`.
-- **5 Nov 2026:** Keepr is free for now: no Premium tier, scan limits or in-app payments.
+- Chose Expo + TypeScript + Supabase to keep costs near £0 and use one language.
+- Prices stored in pence to avoid rounding errors.
+- Work goes in small PRs, opened about 12 hours apart, with no AI credits or reviewer notes.
+- Roadmap moved out of the README into this `PLAN.md`.
+- Every change goes through a PR with a summary. No direct pushes to `main`.
+- Keepr is free for now: no Premium tier, scan limits or in-app payments.
+- Added CI (typecheck, lint, web build). `main` ruleset: PR required, CI must pass, branch must be up to date, no force-push or deletion.
 
 ## Notes and to-dos
 
