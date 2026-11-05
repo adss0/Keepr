@@ -12,6 +12,7 @@
 - ✅ Receipt data model and deadline calculator (merged via PR #3)
 - ✅ README rewritten around the product (PR #3)
 - ✅ Build plan moved into `PLAN.md`
+- ✅ CI on every PR and merge, and `main` protected by a ruleset
 - ⏭️ **Next:** receipts list screen with sample data
 
 ---
@@ -93,6 +94,7 @@ All features are free for now.
 - **5 Nov 2026:** Roadmap moved out of the README into this `PLAN.md`.
 - **5 Nov 2026:** Every change goes through a PR with a summary. No direct pushes to `main`.
 - **5 Nov 2026:** Keepr is free for now: no Premium tier, scan limits or in-app payments.
+- **5 Nov 2026:** Added CI (typecheck, lint, web build). `main` ruleset: PR required, CI must pass, branch must be up to date, no force-push or deletion.
 
 ## Notes and to-dos
 
