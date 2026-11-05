@@ -4,7 +4,7 @@
 
 Snap a receipt and Keepr pulls out the product, price and return deadline. It reminds you before your return window or warranty runs out. When something breaks, it tells you exactly what you're entitled to under UK consumer law, and how to claim it.
 
-> **Status:** Early development. The Expo app skeleton is set up, and features are being built phase by phase (see [Roadmap](#roadmap)).
+> **Status:** Early development. The Expo app skeleton is set up, and features are being built step by step.
 
 ---
 
@@ -18,7 +18,6 @@ Snap a receipt and Keepr pulls out the product, price and return deadline. It re
 - [Business model](#business-model)
 - [Privacy and security](#privacy-and-security)
 - [Tech stack](#tech-stack)
-- [Roadmap](#roadmap)
 - [Getting started](#getting-started)
 - [Project structure](#project-structure)
 - [License](#license)
@@ -164,34 +163,6 @@ Keepr is always on the user's side. Partnerships never change what the rights en
 | Notifications | Expo Push Notifications | One API for iOS and Android push. |
 | In-app payments | **RevenueCat** | Handles Apple and Google subscriptions (required for digital subscriptions sold in mobile apps) and receipts. |
 | Email capture (later) | Gmail API / Microsoft Graph | Official read-only access. |
-
----
-
-## Roadmap
-
-### Phase 1: MVP
-- [x] Expo app setup (TypeScript, Expo Router)
-- [x] Receipt data model and deadline calculator (return, 14-day cancellation, 30-day reject, warranty)
-- [ ] Receipt list screen with mock data
-- [ ] Supabase project setup, sign-up and log-in
-- [ ] Snap a receipt → AI extraction → review and save
-- [ ] Receipt vault with search
-- [ ] Return deadline and warranty reminders (push notifications)
-
-### Phase 2: Rights
-- [ ] Rights engine (Consumer Rights Act, Consumer Contracts Regulations, Section 75)
-- [ ] "It broke" flow with a generated claim letter
-- [ ] Known retailer return policies
-
-### Phase 3: Subscriptions and automation
-- [ ] Subscription tracker with renewal and trial alerts
-- [ ] Gmail / Outlook auto-capture
-- [ ] Keepr Premium via RevenueCat
-
-### Phase 4: Partnerships
-- [ ] Retailer digital receipt integration
-- [ ] Opt-in insurer offers
-- [ ] PDF / CSV export
 
 ---
 
