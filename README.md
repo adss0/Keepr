@@ -15,7 +15,7 @@ Snap a receipt and Keepr pulls out the product, price and return deadline. It re
 - [Core features](#core-features)
 - [Your rights, explained](#your-rights-explained)
 - [How it works](#how-it-works)
-- [Business model](#business-model)
+- [Pricing](#pricing)
 - [Privacy and security](#privacy-and-security)
 - [Tech stack](#tech-stack)
 - [Build plan](#build-plan)
@@ -129,14 +129,9 @@ Keepr also makes clear what the law **doesn't** cover. For example, a "change of
 
 ---
 
-## Business model
+## Pricing
 
-1. **Subscription (Keepr Premium).** Free tier: a limited number of receipts and basic reminders. Premium: unlimited receipts, email auto-capture, the full rights engine with claim letters, subscription tracking and exports.
-2. **Partnerships with retailers and insurers.**
-   - **Retailers:** verified digital receipts sent straight into Keepr at checkout, so customers never need a paper receipt.
-   - **Insurers:** extended warranty or gadget insurance offered at the moment it's relevant, such as when a manufacturer warranty is about to end. Only with clear user consent.
-
-Keepr is always on the user's side. Partnerships never change what the rights engine tells you.
+**Keepr is free.** Every feature is free to use, with no subscription, no premium tier and no limits.
 
 ---
 
@@ -162,7 +157,6 @@ Keepr is always on the user's side. Partnerships never change what the rights en
 | Rights engine | **Rules in TypeScript**, with an LLM only for explanations | The deadlines and entitlements must be deterministic and testable. The AI explains the result in plain English but doesn't decide it. |
 | Scheduled jobs | Supabase cron / scheduled functions | Daily checks for upcoming deadlines that trigger reminders. |
 | Notifications | Expo Push Notifications | One API for iOS and Android push. |
-| In-app payments | **RevenueCat** | Handles Apple and Google subscriptions (required for digital subscriptions sold in mobile apps) and receipts. |
 | Email capture (later) | Gmail API / Microsoft Graph | Official read-only access. |
 
 ---
