@@ -12,7 +12,23 @@ export type Deadline = {
   date: string;
 };
 
-function addDays(isoDate: string, days: number): string {
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+/** Today's date (YYYY-MM-DD) in the device's local time zone. */
+export function todayIso(now: Date = new Date()): string {
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+/** Whole days from `fromDate` to `toDate` (negative if `toDate` has passed). */
+export function daysBetween(fromDate: string, toDate: string): number {
+  const from = Date.parse(`${fromDate}T00:00:00Z`);
+  const to = Date.parse(`${toDate}T00:00:00Z`);
+  return Math.round((to - from) / MS_PER_DAY);
+}
+
+export function addDays(isoDate: string, days: number): string {
   const d = new Date(`${isoDate}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
@@ -36,7 +52,7 @@ export function getDeadlines(receipt: Receipt): Deadline[] {
   const deadlines: Deadline[] = [
     {
       kind: "faulty_reject",
-      label: "Refund if faulty (30-day right to reject)",
+      label: "Refund if faulty",
       date: addDays(receipt.purchaseDate, SHORT_TERM_REJECT_DAYS),
     },
   ];
@@ -44,7 +60,7 @@ export function getDeadlines(receipt: Receipt): Deadline[] {
   if (receipt.channel === "online") {
     deadlines.push({
       kind: "online_cancellation",
-      label: "Cancel for any reason (14 days for online orders)",
+      label: "Cancel for any reason",
       date: addDays(receipt.purchaseDate, ONLINE_CANCELLATION_DAYS),
     });
   }
@@ -52,7 +68,7 @@ export function getDeadlines(receipt: Receipt): Deadline[] {
   if (receipt.returnWindowDays !== undefined) {
     deadlines.push({
       kind: "retailer_return",
-      label: `${receipt.retailer} return policy`,
+      label: "Store return",
       date: addDays(receipt.purchaseDate, receipt.returnWindowDays),
     });
   }
@@ -60,10 +76,18 @@ export function getDeadlines(receipt: Receipt): Deadline[] {
   if (receipt.warrantyMonths !== undefined) {
     deadlines.push({
       kind: "warranty",
-      label: "Manufacturer warranty",
+      label: "Warranty",
       date: addMonths(receipt.purchaseDate, receipt.warrantyMonths),
     });
   }
 
   return deadlines.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/** The soonest deadline that hasn't passed yet, or undefined if all have. */
+export function getNextDeadline(
+  receipt: Receipt,
+  today: string = todayIso(),
+): Deadline | undefined {
+  return getDeadlines(receipt).find((deadline) => deadline.date >= today);
 }

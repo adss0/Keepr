@@ -1,39 +1,72 @@
-import { StyleSheet, Text, View } from "react-native";
+import { useMemo } from "react";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 
-export default function Index() {
+import { ReceiptCard } from "@/components/receipt-card";
+import { useTheme } from "@/constants/theme";
+import { sampleReceipts } from "@/data/sample-receipts";
+import { daysBetween, getNextDeadline, todayIso } from "@/lib/deadlines";
+
+/** Sort key for receipts with no upcoming deadline, so they go last. */
+const NO_DEADLINE = "9999-12-31";
+
+export default function ReceiptsScreen() {
+  const theme = useTheme();
+  const today = todayIso();
+
+  const receipts = useMemo(
+    () =>
+      [...sampleReceipts].sort((a, b) => {
+        const aDate = getNextDeadline(a, today)?.date ?? NO_DEADLINE;
+        const bDate = getNextDeadline(b, today)?.date ?? NO_DEADLINE;
+        return aDate.localeCompare(bDate);
+      }),
+    [today],
+  );
+
+  const dueThisWeek = receipts.filter((receipt) => {
+    const deadline = getNextDeadline(receipt, today);
+    return deadline !== undefined && daysBetween(today, deadline.date) <= 7;
+  }).length;
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Keepr</Text>
-      <Text style={styles.tagline}>
-        You keep your receipts. Keepr keeps your rights.
-      </Text>
-      <Text style={styles.empty}>
-        No receipts yet. Snap your first one to get started.
-      </Text>
-    </View>
+    <FlatList
+      style={{ backgroundColor: theme.background }}
+      contentContainerStyle={styles.list}
+      data={receipts}
+      keyExtractor={(receipt) => receipt.id}
+      renderItem={({ item }) => <ReceiptCard receipt={item} today={today} />}
+      ItemSeparatorComponent={() => <View style={styles.separator} />}
+      ListHeaderComponent={
+        <View style={styles.header}>
+          <Text style={[styles.tagline, { color: theme.textMuted }]}>
+            You keep your receipts. Keepr keeps your rights.
+          </Text>
+          <Text style={[styles.summary, { color: theme.text }]}>
+            {dueThisWeek === 1 ? "1 deadline" : `${dueThisWeek} deadlines`} in the next 7 days
+          </Text>
+        </View>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 24,
-    gap: 12,
+  list: {
+    padding: 16,
+    paddingBottom: 32,
   },
-  title: {
-    fontSize: 36,
-    fontWeight: "700",
+  header: {
+    gap: 4,
+    marginBottom: 16,
   },
   tagline: {
-    fontSize: 16,
-    textAlign: "center",
+    fontSize: 13,
   },
-  empty: {
-    marginTop: 24,
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
+  summary: {
+    fontSize: 17,
+    fontWeight: "600",
+  },
+  separator: {
+    height: 10,
   },
 });

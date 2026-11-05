@@ -217,10 +217,17 @@ Every pull request to `main`, and every merge into it, runs [CI](.github/workflo
 Keepr/
 ├── src/
 │   ├── app/            # Screens (Expo Router: every file here is a screen)
-│   │   ├── _layout.tsx #   Root navigation layout
-│   │   └── index.tsx   #   Home screen
+│   │   ├── _layout.tsx #   Root navigation layout and header
+│   │   └── index.tsx   #   Receipts list (home screen)
+│   ├── components/     # Reusable UI
+│   │   └── receipt-card.tsx # One receipt with its next deadline
+│   ├── constants/      # Shared constants
+│   │   └── theme.ts    #   Light and dark mode colours
+│   ├── data/           # Temporary data
+│   │   └── sample-receipts.ts # Made-up receipts until saving works
 │   ├── lib/            # App logic, kept separate from screens
-│   │   └── deadlines.ts#   Works out return, cancellation and warranty dates
+│   │   ├── deadlines.ts#   Works out return, cancellation and warranty dates
+│   │   └── format.ts   #   Formats prices and dates
 │   └── types/          # Shared TypeScript types
 │       └── receipt.ts  #   The Receipt data model
 ├── .github/workflows/  # CI checks run on every PR and merge
@@ -233,7 +240,7 @@ Keepr/
 └── tsconfig.json       # TypeScript settings (`@/` points to `src/`)
 ```
 
-Planned additions: `supabase/` (database schema and server functions) and `src/components/` (reusable UI).
+Planned additions: `supabase/` (database schema and server functions).
 
 ---
 

@@ -11,7 +11,8 @@
 - ✅ README rewritten around the product (PR #3)
 - ✅ Build plan moved into `PLAN.md`
 - ✅ CI on every PR and merge, and `main` protected by a ruleset
-- ⏭️ **Next:** receipts list screen with sample data
+- ✅ Receipts list screen with sample data, showing each receipt’s next deadline
+- ⏭️ **Next:** receipt detail screen
 
 ---
 
@@ -20,7 +21,7 @@
 ### Phase 1: MVP (snap → save → remind)
 - [x] Expo app setup (TypeScript, Expo Router)
 - [x] Receipt data model and deadline calculator (30-day reject, 14-day online cancellation, retailer return window, warranty)
-- [ ] Receipts list screen with sample data, showing upcoming deadlines
+- [x] Receipts list screen with sample data, showing upcoming deadlines
 - [ ] Receipt detail screen
 - [ ] Supabase project: database tables, sign-up and log-in
 - [ ] Save receipts to Supabase (each user sees only their own)
@@ -93,6 +94,8 @@ All features are free for now.
 - Every change goes through a PR with a summary. No direct pushes to `main`.
 - Keepr is free for now: no Premium tier, scan limits or in-app payments.
 - Added CI (typecheck, lint, web build). `main` ruleset: PR required, CI must pass, branch must be up to date, no force-push or deletion.
+- Deadlines within 3 days are shown in red, and within 7 days in amber. Receipts are sorted by their soonest deadline.
+- Web preview runs as a single-page app (no server rendering), since Keepr is a phone app first.
 
 ## Notes and to-dos
 
