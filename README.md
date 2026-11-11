@@ -191,6 +191,10 @@ Then scan the QR code in the terminal:
 
 You can also press `w` to open the app in a web browser.
 
+### Run it on your phone
+
+See **[Run Keepr on your phone](docs/run-on-your-phone.md)** for step-by-step instructions using Expo Go (free), an Android APK (free) or an iPhone build (TestFlight).
+
 ### Useful commands
 
 | Command | What it does |
@@ -233,6 +237,8 @@ Keepr/
 ├── .github/workflows/  # CI checks run on every PR and merge
 ├── assets/             # App icons and splash screen
 ├── PLAN.md             # Build plan: phases, features and decisions
+├── docs/               # Guides (running on your phone)
+├── eas.json            # EAS cloud build settings (Android APK, iPhone)
 ├── AGENTS.md           # Notes for AI coding assistants working on this repo
 ├── app.json            # Expo app configuration (name, icons, plugins)
 ├── eslint.config.js    # Lint rules (Expo defaults)
