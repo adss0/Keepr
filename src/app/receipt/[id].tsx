@@ -87,7 +87,7 @@ export default function ReceiptDetailScreen() {
           onPress={async () => {
             const confirmed = await confirmAsync(
               "Delete this receipt?",
-              `${receipt.product} will be removed from Keepr.`,
+              `${receipt.product} and its reminders will be removed from Keepr.`,
               "Delete",
             );
             if (confirmed) {

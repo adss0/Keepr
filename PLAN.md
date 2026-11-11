@@ -17,7 +17,8 @@
 - ✅ Receipt detail screen: every deadline with a plain-English explanation
 - ✅ Add, edit and delete receipts, saved on the phone
 - ✅ Search receipts by product or shop
-- ⏭️ **Next:** reminders before deadlines
+- ✅ Reminders 3 days before each deadline and on the last day (9am, phone notifications)
+- ⏭️ **Next:** rights engine and the "It broke" flow
 
 ---
 
@@ -33,7 +34,7 @@
 - [ ] Save receipts to Supabase (each user sees only their own)
 - [ ] Snap a receipt → AI extraction → review and save
 - [x] Search the receipt vault
-- [ ] Push reminders before deadlines (daily scheduled check)
+- [x] Reminders before deadlines (local notifications scheduled on the phone)
 
 ### Phase 2: Rights engine
 - [ ] Rules for Consumer Rights Act 2015 (30 days / 6 months / up to 6 years)
@@ -109,6 +110,8 @@ All features are free for now.
 
 - Receipts are saved on the phone with AsyncStorage (works in Expo Go and on the web). A new install starts empty, with a button to load sample receipts.
 - Dates are typed as YYYY-MM-DD for now; a date picker can come later.
+
+- Reminders are local notifications scheduled by the phone, so they need no server and work in Expo Go. All are rescheduled whenever receipts change, capped at 60 (iOS allows 64).
 
 ## Notes and to-dos
 

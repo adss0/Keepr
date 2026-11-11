@@ -229,17 +229,20 @@ Keepr/
 │   │   ├── deadline-pill.tsx # Colour-coded deadline label
 │   │   ├── form.tsx    #   Text field, option picker and button
 │   │   ├── receipt-card.tsx # One receipt with its next deadline
+│   │   ├── reminders-banner.tsx # Asks to turn on reminders
 │   │   └── receipt-form.tsx # Add/edit receipt form
 │   ├── constants/      # Shared constants
 │   │   └── theme.ts    #   Light and dark mode colours
 │   ├── data/           # Where receipts come from
 │   │   ├── receipts.tsx #  Saves receipts on the phone (useReceipts, add, edit, delete)
+│   │   ├── reminders.tsx # Schedules deadline notifications on the phone
 │   │   └── sample-receipts.ts # Example receipts for trying the app
 │   ├── lib/            # App logic, kept separate from screens
 │   │   ├── confirm.ts  #   "Are you sure?" prompts
 │   │   ├── deadlines.ts#   Works out return, cancellation and warranty dates
 │   │   ├── format.ts   #   Formats prices and dates
 │   │   ├── receipt-input.ts # Checks and parses the receipt form
+│   │   ├── reminders.ts #  Plans which reminders to send, and when
 │   │   └── search.ts   #   Receipt search
 │   └── types/          # Shared TypeScript types
 │       └── receipt.ts  #   The Receipt data model

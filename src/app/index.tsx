@@ -4,8 +4,10 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, Vi
 
 import { Button } from "@/components/form";
 import { ReceiptCard } from "@/components/receipt-card";
+import { RemindersBanner } from "@/components/reminders-banner";
 import { useTheme } from "@/constants/theme";
 import { useReceiptsStore } from "@/data/receipts";
+import { useReminders } from "@/data/reminders";
 import { daysBetween, getNextDeadline, todayIso } from "@/lib/deadlines";
 import { searchReceipts } from "@/lib/search";
 
@@ -17,6 +19,7 @@ export default function ReceiptsScreen() {
   const today = todayIso();
   const { receipts: allReceipts, ready, addSampleReceipts } = useReceiptsStore();
   const [query, setQuery] = useState("");
+  const reminders = useReminders();
 
   const receipts = useMemo(
     () =>
@@ -93,6 +96,7 @@ export default function ReceiptsScreen() {
             <Text style={[styles.summary, { color: theme.text }]}>
               {dueThisWeek === 1 ? "1 deadline" : `${dueThisWeek} deadlines`} in the next 7 days
             </Text>
+            <RemindersBanner permission={reminders.permission} onEnable={reminders.request} />
             <TextInput
               value={query}
               onChangeText={setQuery}
