@@ -1,9 +1,11 @@
-import { Stack, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { DeadlinePill } from "@/components/deadline-pill";
+import { Button } from "@/components/form";
 import { useTheme } from "@/constants/theme";
-import { useReceipt } from "@/data/receipts";
+import { useReceipt, useReceiptsStore } from "@/data/receipts";
+import { confirmAsync } from "@/lib/confirm";
 import { DEADLINE_EXPLANATIONS, getDeadlines, todayIso } from "@/lib/deadlines";
 import { formatDate, formatPrice } from "@/lib/format";
 import type { PaymentMethod } from "@/types/receipt";
@@ -18,6 +20,7 @@ const PAYMENT_LABELS: Record<PaymentMethod, string> = {
 export default function ReceiptDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const receipt = useReceipt(id);
+  const { deleteReceipt } = useReceiptsStore();
   const theme = useTheme();
   const today = todayIso();
 
@@ -25,7 +28,7 @@ export default function ReceiptDetailScreen() {
     return (
       <View style={[styles.empty, { backgroundColor: theme.background }]}>
         <Stack.Screen options={{ title: "Receipt" }} />
-        <Text style={{ color: theme.textMuted }}>This receipt doesn't exist any more.</Text>
+        <Text style={{ color: theme.textMuted }}>This receipt doesn&apos;t exist any more.</Text>
       </View>
     );
   }
@@ -72,6 +75,28 @@ export default function ReceiptDetailScreen() {
           </Text>
         </View>
       ))}
+
+      <View style={styles.actions}>
+        <Button
+          title="Edit"
+          onPress={() => router.push({ pathname: "/receipt/edit/[id]", params: { id: receipt.id } })}
+        />
+        <Button
+          title="Delete receipt"
+          variant="danger"
+          onPress={async () => {
+            const confirmed = await confirmAsync(
+              "Delete this receipt?",
+              `${receipt.product} will be removed from Keepr.`,
+              "Delete",
+            );
+            if (confirmed) {
+              deleteReceipt(receipt.id);
+              router.back();
+            }
+          }}
+        />
+      </View>
     </ScrollView>
   );
 }
@@ -116,6 +141,10 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "600",
     marginTop: 8,
+  },
+  actions: {
+    marginTop: 12,
+    gap: 10,
   },
   explanation: {
     fontSize: 13,
