@@ -14,6 +14,7 @@ concurrency:
 jobs:
   check:
     name: Typecheck, lint and build
+    # The job name is a required status check in the "Protect main" ruleset; keep it unchanged.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -31,6 +32,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Unit tests
+        run: npm test -- --ci
 
       - name: Build (web bundle)
         run: npx expo export --platform web

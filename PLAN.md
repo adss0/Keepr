@@ -13,6 +13,7 @@
 - ✅ CI on every PR and merge, and `main` protected by a ruleset
 - ✅ Receipts list screen with sample data, showing each receipt’s next deadline
 - ✅ Guide for running Keepr on a phone (Expo Go, Android APK, iPhone TestFlight)
+- ✅ Unit tests (Jest) for deadlines and formatting, run in CI
 - ⏭️ **Next:** receipt detail screen
 
 ---
@@ -99,6 +100,8 @@ All features are free for now.
 - Web preview runs as a single-page app (no server rendering), since Keepr is a phone app first.
 
 - Phone builds use EAS: `preview` makes an installable Android APK, `production` is for the app stores.
+
+- Unit tests use `jest-expo`, live next to the code in `__tests__` folders and import `describe`/`it`/`expect` from `@jest/globals`.
 
 ## Notes and to-dos
 
