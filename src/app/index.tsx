@@ -41,6 +41,13 @@ export default function ReceiptsScreen() {
   const header = (
     <Stack.Screen
       options={{
+        headerLeft: () => (
+          <Link href="/subscriptions" asChild>
+            <Pressable accessibilityRole="button" accessibilityLabel="Subscriptions" hitSlop={8}>
+              <Text style={[styles.headerButton, { color: theme.accent }]}>Subscriptions</Text>
+            </Pressable>
+          </Link>
+        ),
         headerRight: () => (
           <Link href="/receipt/new" asChild>
             <Pressable accessibilityRole="button" accessibilityLabel="Add receipt" hitSlop={8}>

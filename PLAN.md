@@ -19,7 +19,8 @@
 - ✅ Search receipts by product or shop
 - ✅ Reminders 3 days before each deadline and on the last day (9am, phone notifications)
 - ✅ Rights engine and "It broke" flow with a claim letter you can send or copy
-- ⏭️ **Next:** subscription tracker
+- ✅ Subscription tracker with monthly/yearly totals, renewal and free-trial reminders
+- ⏭️ **Next:** export receipts to CSV
 
 ---
 
@@ -47,8 +48,8 @@
 - [x] Unit tests for every rule
 
 ### Phase 3: Subscription tracking and automation
-- [ ] Subscription tracker: cost, renewal date, trial end
-- [ ] Renewal and trial-ending alerts
+- [x] Subscription tracker: cost, renewal date, trial end
+- [x] Renewal and trial-ending alerts
 - [ ] Gmail / Outlook auto-capture (read-only)
 
 ### Phase 4: Partnerships and polish
@@ -115,6 +116,8 @@ All features are free for now.
 - Reminders are local notifications scheduled by the phone, so they need no server and work in Expo Go. All are rescheduled whenever receipts change, capped at 60 (iOS allows 64).
 
 - The rights engine is plain TypeScript rules with tests at every boundary (day 30/31, 6 months, 6 years, £100 for Section 75). Legal dates always show the year.
+
+- Subscriptions roll their renewal date forward automatically by whole billing cycles, counting from the original date so the 31st stays the 31st.
 
 ## Notes and to-dos
 

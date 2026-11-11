@@ -45,3 +45,25 @@ describe("planReminders", () => {
     expect([...times].sort((a, b) => a - b)).toEqual(times);
   });
 });
+
+describe("planReminders for subscriptions", () => {
+  const netflix = { id: "s1", name: "Netflix", pricePence: 1099, cycle: "monthly" as const, nextRenewal: "2026-11-20" };
+
+  it("reminds 3 days before the next renewal", () => {
+    const reminders = planReminders([], new Date(2026, 10, 11, 12), [netflix]);
+    expect(reminders).toHaveLength(1);
+    expect(reminders[0].subscriptionId).toBe("s1");
+    expect([reminders[0].date.getMonth() + 1, reminders[0].date.getDate()]).toEqual([11, 17]);
+    expect(reminders[0].body).toContain("£10.99");
+  });
+
+  it("uses the next renewal after a passed one", () => {
+    const reminders = planReminders([], new Date(2026, 10, 25, 12), [netflix]);
+    expect([reminders[0].date.getMonth() + 1, reminders[0].date.getDate()]).toEqual([12, 17]);
+  });
+
+  it("warns before a free trial ends instead", () => {
+    const reminders = planReminders([], new Date(2026, 10, 11, 12), [{ ...netflix, trialEnds: "2026-11-18" }]);
+    expect(reminders.map((r) => r.title)).toEqual(["Netflix trial ends in 3 days", "Netflix trial ends today"]);
+  });
+});
