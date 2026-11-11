@@ -203,11 +203,12 @@ See **[Run Keepr on your phone](docs/run-on-your-phone.md)** for step-by-step in
 | `npm run web` | Opens the app in a browser |
 | `npm run typecheck` | Checks the TypeScript types |
 | `npm run lint` | Lints the code |
+| `npm test` | Runs the unit tests |
 | `npx expo install <package>` | Adds a package at a version compatible with this Expo SDK. Use this instead of `npm install <package>`. |
 
 ### Continuous integration
 
-Every pull request to `main`, and every merge into it, runs [CI](.github/workflows/ci.yml) on GitHub Actions. It checks types, lints the code and builds the app. `main` is protected:
+Every pull request to `main`, and every merge into it, runs [CI](.github/workflows/ci.yml) on GitHub Actions. It checks types, lints the code, runs the unit tests and builds the app. `main` is protected:
 
 - Changes reach `main` only through a pull request.
 - A PR can only be merged when CI passes, the branch is up to date with `main` and it has no conflicts.
