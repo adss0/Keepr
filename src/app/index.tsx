@@ -3,7 +3,7 @@ import { FlatList, StyleSheet, Text, View } from "react-native";
 
 import { ReceiptCard } from "@/components/receipt-card";
 import { useTheme } from "@/constants/theme";
-import { sampleReceipts } from "@/data/sample-receipts";
+import { useReceipts } from "@/data/receipts";
 import { daysBetween, getNextDeadline, todayIso } from "@/lib/deadlines";
 
 /** Sort key for receipts with no upcoming deadline, so they go last. */
@@ -12,15 +12,16 @@ const NO_DEADLINE = "9999-12-31";
 export default function ReceiptsScreen() {
   const theme = useTheme();
   const today = todayIso();
+  const allReceipts = useReceipts();
 
   const receipts = useMemo(
     () =>
-      [...sampleReceipts].sort((a, b) => {
+      [...allReceipts].sort((a, b) => {
         const aDate = getNextDeadline(a, today)?.date ?? NO_DEADLINE;
         const bDate = getNextDeadline(b, today)?.date ?? NO_DEADLINE;
         return aDate.localeCompare(bDate);
       }),
-    [today],
+    [allReceipts, today],
   );
 
   const dueThisWeek = receipts.filter((receipt) => {

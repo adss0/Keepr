@@ -14,7 +14,8 @@
 - ✅ Receipts list screen with sample data, showing each receipt’s next deadline
 - ✅ Guide for running Keepr on a phone (Expo Go, Android APK, iPhone TestFlight)
 - ✅ Unit tests (Jest) for deadlines and formatting, run in CI
-- ⏭️ **Next:** receipt detail screen
+- ✅ Receipt detail screen: every deadline with a plain-English explanation
+- ⏭️ **Next:** save receipts on the phone and add them by hand
 
 ---
 
@@ -24,7 +25,7 @@
 - [x] Expo app setup (TypeScript, Expo Router)
 - [x] Receipt data model and deadline calculator (30-day reject, 14-day online cancellation, retailer return window, warranty)
 - [x] Receipts list screen with sample data, showing upcoming deadlines
-- [ ] Receipt detail screen
+- [x] Receipt detail screen
 - [ ] Supabase project: database tables, sign-up and log-in
 - [ ] Save receipts to Supabase (each user sees only their own)
 - [ ] Snap a receipt → AI extraction → review and save
