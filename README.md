@@ -224,7 +224,7 @@ Keepr/
 │   ├── app/            # Screens (Expo Router: every file here is a screen)
 │   │   ├── _layout.tsx #   Root navigation layout and header
 │   │   ├── index.tsx   #   Receipts list (home screen)
-│   │   └── receipt/    #   Receipt detail ([id]), add (new) and edit (edit/[id]) screens
+│   │   └── receipt/    #   Receipt detail ([id]), add (new), edit (edit/[id]) and rights (rights/[id]) screens
 │   ├── components/     # Reusable UI
 │   │   ├── deadline-pill.tsx # Colour-coded deadline label
 │   │   ├── form.tsx    #   Text field, option picker and button
@@ -243,6 +243,7 @@ Keepr/
 │   │   ├── format.ts   #   Formats prices and dates
 │   │   ├── receipt-input.ts # Checks and parses the receipt form
 │   │   ├── reminders.ts #  Plans which reminders to send, and when
+│   │   ├── rights.ts   #   UK consumer rights engine and claim letters
 │   │   └── search.ts   #   Receipt search
 │   └── types/          # Shared TypeScript types
 │       └── receipt.ts  #   The Receipt data model

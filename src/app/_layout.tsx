@@ -21,6 +21,7 @@ export default function RootLayout() {
           <Stack.Screen name="receipt/[id]" options={{ title: "Receipt" }} />
           <Stack.Screen name="receipt/new" options={{ title: "Add receipt", presentation: "modal" }} />
           <Stack.Screen name="receipt/edit/[id]" options={{ title: "Edit receipt", presentation: "modal" }} />
+          <Stack.Screen name="receipt/rights/[id]" options={{ title: "Your rights" }} />
         </Stack>
       </RemindersProvider>
     </ReceiptsProvider>

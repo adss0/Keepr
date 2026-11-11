@@ -78,6 +78,11 @@ export default function ReceiptDetailScreen() {
 
       <View style={styles.actions}>
         <Button
+          title="Something wrong? Check your rights"
+          variant="primary"
+          onPress={() => router.push({ pathname: "/receipt/rights/[id]", params: { id: receipt.id } })}
+        />
+        <Button
           title="Edit"
           onPress={() => router.push({ pathname: "/receipt/edit/[id]", params: { id: receipt.id } })}
         />
