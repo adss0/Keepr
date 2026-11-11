@@ -16,7 +16,8 @@
 - ✅ Unit tests (Jest) for deadlines and formatting, run in CI
 - ✅ Receipt detail screen: every deadline with a plain-English explanation
 - ✅ Add, edit and delete receipts, saved on the phone
-- ⏭️ **Next:** search receipts
+- ✅ Search receipts by product or shop
+- ⏭️ **Next:** reminders before deadlines
 
 ---
 
@@ -31,7 +32,7 @@
 - [x] Save receipts on the phone, and add, edit and delete them by hand
 - [ ] Save receipts to Supabase (each user sees only their own)
 - [ ] Snap a receipt → AI extraction → review and save
-- [ ] Search the receipt vault
+- [x] Search the receipt vault
 - [ ] Push reminders before deadlines (daily scheduled check)
 
 ### Phase 2: Rights engine

@@ -239,7 +239,8 @@ Keepr/
 │   │   ├── confirm.ts  #   "Are you sure?" prompts
 │   │   ├── deadlines.ts#   Works out return, cancellation and warranty dates
 │   │   ├── format.ts   #   Formats prices and dates
-│   │   └── receipt-input.ts # Checks and parses the receipt form
+│   │   ├── receipt-input.ts # Checks and parses the receipt form
+│   │   └── search.ts   #   Receipt search
 │   └── types/          # Shared TypeScript types
 │       └── receipt.ts  #   The Receipt data model
 ├── .github/workflows/  # CI checks run on every PR and merge

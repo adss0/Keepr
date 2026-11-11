@@ -1,12 +1,13 @@
 import { Link, router, Stack } from "expo-router";
-import { useMemo } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useMemo, useState } from "react";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Button } from "@/components/form";
 import { ReceiptCard } from "@/components/receipt-card";
 import { useTheme } from "@/constants/theme";
 import { useReceiptsStore } from "@/data/receipts";
 import { daysBetween, getNextDeadline, todayIso } from "@/lib/deadlines";
+import { searchReceipts } from "@/lib/search";
 
 /** Sort key for receipts with no upcoming deadline, so they go last. */
 const NO_DEADLINE = "9999-12-31";
@@ -15,6 +16,7 @@ export default function ReceiptsScreen() {
   const theme = useTheme();
   const today = todayIso();
   const { receipts: allReceipts, ready, addSampleReceipts } = useReceiptsStore();
+  const [query, setQuery] = useState("");
 
   const receipts = useMemo(
     () =>
@@ -25,6 +27,8 @@ export default function ReceiptsScreen() {
       }),
     [allReceipts, today],
   );
+
+  const visibleReceipts = useMemo(() => searchReceipts(receipts, query), [receipts, query]);
 
   const dueThisWeek = receipts.filter((receipt) => {
     const deadline = getNextDeadline(receipt, today);
@@ -76,7 +80,8 @@ export default function ReceiptsScreen() {
       <FlatList
         style={{ backgroundColor: theme.background }}
         contentContainerStyle={styles.list}
-        data={receipts}
+        data={visibleReceipts}
+        keyboardShouldPersistTaps="handled"
         keyExtractor={(receipt) => receipt.id}
         renderItem={({ item }) => <ReceiptCard receipt={item} today={today} />}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -88,7 +93,20 @@ export default function ReceiptsScreen() {
             <Text style={[styles.summary, { color: theme.text }]}>
               {dueThisWeek === 1 ? "1 deadline" : `${dueThisWeek} deadlines`} in the next 7 days
             </Text>
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search by product or shop"
+              placeholderTextColor={theme.textMuted}
+              accessibilityLabel="Search receipts"
+              autoCorrect={false}
+              clearButtonMode="while-editing"
+              style={[styles.search, { color: theme.text, backgroundColor: theme.card, borderColor: theme.border }]}
+            />
           </View>
+        }
+        ListEmptyComponent={
+          <Text style={[styles.noResults, { color: theme.textMuted }]}>No receipts match “{query.trim()}”.</Text>
         }
       />
     </>
@@ -122,6 +140,19 @@ const styles = StyleSheet.create({
   summary: {
     fontSize: 17,
     fontWeight: "600",
+  },
+  search: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+  },
+  noResults: {
+    textAlign: "center",
+    marginTop: 24,
+    fontSize: 15,
   },
   separator: {
     height: 10,
