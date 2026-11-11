@@ -12,6 +12,7 @@
 - ✅ Build plan moved into `PLAN.md`
 - ✅ CI on every PR and merge, and `main` protected by a ruleset
 - ✅ Receipts list screen with sample data, showing each receipt’s next deadline
+- ✅ Guide for running Keepr on a phone (Expo Go, Android APK, iPhone TestFlight)
 - ⏭️ **Next:** receipt detail screen
 
 ---
@@ -96,6 +97,8 @@ All features are free for now.
 - Added CI (typecheck, lint, web build). `main` ruleset: PR required, CI must pass, branch must be up to date, no force-push or deletion.
 - Deadlines within 3 days are shown in red, and within 7 days in amber. Receipts are sorted by their soonest deadline.
 - Web preview runs as a single-page app (no server rendering), since Keepr is a phone app first.
+
+- Phone builds use EAS: `preview` makes an installable Android APK, `production` is for the app stores.
 
 ## Notes and to-dos
 
