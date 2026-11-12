@@ -12,6 +12,7 @@ export default function NewReceiptScreen() {
     <ReceiptForm
       initial={emptyReceiptInput(todayIso())}
       submitLabel="Save receipt"
+      allowScan
       onSubmit={(fields) => {
         const receipt = addReceipt(fields);
         router.replace({ pathname: "/receipt/[id]", params: { id: receipt.id } });

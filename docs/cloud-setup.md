@@ -1,8 +1,9 @@
-# Cloud sync setup (Supabase)
+# Cloud sync and AI scanning setup (Supabase)
 
 Keepr works fully on the phone with no accounts. This guide turns on the optional cloud features:
 
 - **Sign in and cloud backup:** receipts and subscriptions are saved to your own Supabase database, so they survive a lost phone and appear on every device you sign in on.
+- **AI receipt scanning:** take a photo of a receipt and Claude fills in the product, shop, price, date and payment method for you.
 
 Supabase's free tier is enough for Keepr.
 
@@ -42,6 +43,30 @@ This creates the `receipts` and `subscriptions` tables with **row level security
 3. Your receipts and subscriptions upload straight away, and every change after that is saved within a second.
 
 To turn off email confirmation while testing, open **Authentication → Sign In / Providers → Email** in Supabase and switch off **Confirm email**.
+
+## 5. Turn on AI receipt scanning
+
+Scanning runs in a Supabase **Edge Function** ([`supabase/functions/extract-receipt`](../supabase/functions/extract-receipt/index.ts)). The app sends the photo to the function, and the function asks Claude to read it. Your Claude API key is stored as a secret on Supabase, so it is never inside the app.
+
+1. Create a Claude API key at https://platform.claude.com (**API Keys → Create key**) and add some credit. Each scan costs roughly a penny.
+2. Log in to Supabase from the Keepr folder and link the project (the project ref is the part before `.supabase.co` in your URL):
+   ```bash
+   npx supabase login
+   ```
+   ```bash
+   npx supabase link --project-ref your-project-ref
+   ```
+3. Save the Claude key as a secret:
+   ```bash
+   npx supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
+   ```
+4. Deploy the function:
+   ```bash
+   npx supabase functions deploy extract-receipt
+   ```
+5. In Keepr, sign in, tap **Add**, then **Scan a receipt**. Check the details it fills in, then save.
+
+Only signed-in users can use the function, because Supabase checks their sign-in before it runs. The function uses Claude Opus 5.5 with Claude's server-side fallback switched on, so a declined request is retried on another model automatically.
 
 ## Phone builds (EAS)
 

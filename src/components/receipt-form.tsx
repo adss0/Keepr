@@ -2,10 +2,12 @@ import { useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 
 import { Button, Field, Segmented } from "@/components/form";
+import { ScanPanel } from "@/components/scan-panel";
 import { useTheme } from "@/constants/theme";
 import type { ReceiptFields } from "@/data/receipts";
 import { todayIso } from "@/lib/deadlines";
 import { type ReceiptInput, type ReceiptInputErrors, validateReceiptInput } from "@/lib/receipt-input";
+import { scanResultToInput } from "@/lib/scan-result";
 import type { PaymentMethod, PurchaseChannel } from "@/types/receipt";
 
 const CHANNEL_OPTIONS: { value: PurchaseChannel; label: string }[] = [
@@ -24,9 +26,11 @@ type Props = {
   initial: ReceiptInput;
   submitLabel: string;
   onSubmit: (fields: ReceiptFields) => void;
+  /** Show the "Scan a receipt" buttons (for new receipts). */
+  allowScan?: boolean;
 };
 
-export function ReceiptForm({ initial, submitLabel, onSubmit }: Props) {
+export function ReceiptForm({ initial, submitLabel, onSubmit, allowScan = false }: Props) {
   const theme = useTheme();
   const [input, setInput] = useState(initial);
   const [errors, setErrors] = useState<ReceiptInputErrors>({});
@@ -51,6 +55,14 @@ export function ReceiptForm({ initial, submitLabel, onSubmit }: Props) {
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
     >
+      {allowScan && (
+        <ScanPanel
+          onScanned={(result) => {
+            setInput((current) => scanResultToInput(result, current) ?? current);
+            setErrors({});
+          }}
+        />
+      )}
       <Field
         label="What did you buy?"
         placeholder="Sony headphones"
