@@ -191,6 +191,10 @@ Then scan the QR code in the terminal:
 
 You can also press `w` to open the app in a web browser.
 
+### Optional: cloud sync
+
+Keepr works fully on the phone with no accounts. To add sign-in and cloud backup, follow **[Cloud sync setup](docs/cloud-setup.md)**.
+
 ### Run it on your phone
 
 See **[Run Keepr on your phone](docs/run-on-your-phone.md)** for step-by-step instructions using Expo Go (free), an Android APK (free) or an iPhone build (TestFlight).
@@ -223,6 +227,7 @@ Keepr/
 ├── src/
 │   ├── app/            # Screens (Expo Router: every file here is a screen)
 │   │   ├── _layout.tsx #   Root navigation layout and header
+│   │   ├── account.tsx #   Sign in and cloud sync
 │   │   ├── index.tsx   #   Receipts list (home screen)
 │   │   ├── receipt/    #   Receipt detail ([id]), add (new), edit (edit/[id]) and rights (rights/[id]) screens
 │   │   ├── subscriptions.tsx # Subscriptions list with monthly and yearly totals
@@ -237,13 +242,16 @@ Keepr/
 │   ├── constants/      # Shared constants
 │   │   └── theme.ts    #   Light and dark mode colours
 │   ├── data/           # Where receipts and subscriptions are kept
+│   │   ├── cloud.tsx   #   Supabase sign-in and sync
 │   │   ├── persisted-list.ts # Saves a list on the phone (AsyncStorage)
 │   │   ├── receipts.tsx #  Receipts store (useReceipts, add, edit, delete)
 │   │   ├── reminders.tsx # Schedules deadline notifications on the phone
 │   │   ├── sample-receipts.ts # Example receipts for trying the app
 │   │   ├── share-csv.ts #  Saves and shares the CSV export
-│   │   └── subscriptions.tsx # Subscriptions store
+│   │   ├── subscriptions.tsx # Subscriptions store
+│   │   └── supabase.ts #   Supabase client (only when configured)
 │   ├── lib/            # App logic, kept separate from screens
+│   │   ├── cloud-rows.ts # Converts to and from database rows, merges for sync
 │   │   ├── confirm.ts  #   "Are you sure?" prompts
 │   │   ├── deadlines.ts#   Works out return, cancellation and warranty dates
 │   │   ├── export.ts   #   Receipts to CSV
@@ -260,7 +268,9 @@ Keepr/
 ├── .github/workflows/  # CI checks run on every PR and merge
 ├── assets/             # App icons and splash screen
 ├── PLAN.md             # Build plan: phases, features and decisions
-├── docs/               # Guides (running on your phone)
+├── docs/               # Guides (running on your phone, cloud setup)
+├── supabase/           # Database schema (migrations) for cloud sync
+├── .env.example        # Template for Supabase settings (copy to .env)
 ├── eas.json            # EAS cloud build settings (Android APK, iPhone)
 ├── AGENTS.md           # Notes for AI coding assistants working on this repo
 ├── app.json            # Expo app configuration (name, icons, plugins)
@@ -269,7 +279,6 @@ Keepr/
 └── tsconfig.json       # TypeScript settings (`@/` points to `src/`)
 ```
 
-Planned additions: `supabase/` (database schema and server functions).
 
 ---
 

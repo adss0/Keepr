@@ -120,6 +120,7 @@ export default function ReceiptsScreen() {
         }
         ListFooterComponent={
           <View style={styles.footer}>
+            <Button title="Account and sync" onPress={() => router.push("/account")} />
             <Button
               title="Export receipts (CSV)"
               onPress={() => {
@@ -181,6 +182,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     marginTop: 20,
+    gap: 10,
   },
   separator: {
     height: 10,

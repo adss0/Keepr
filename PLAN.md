@@ -21,7 +21,8 @@
 - ✅ Rights engine and "It broke" flow with a claim letter you can send or copy
 - ✅ Subscription tracker with monthly/yearly totals, renewal and free-trial reminders
 - ✅ Export receipts to CSV (share sheet on phones, download on the web)
-- ⏭️ **Next:** Supabase sign-in and cloud sync
+- ✅ Supabase sign-in (email and password) and cloud sync of receipts and subscriptions
+- ⏭️ **Next:** AI receipt scanning
 
 ---
 
@@ -32,9 +33,9 @@
 - [x] Receipt data model and deadline calculator (30-day reject, 14-day online cancellation, retailer return window, warranty)
 - [x] Receipts list screen with sample data, showing upcoming deadlines
 - [x] Receipt detail screen
-- [ ] Supabase project: database tables, sign-up and log-in
+- [x] Supabase project: database tables, sign-up and log-in
 - [x] Save receipts on the phone, and add, edit and delete them by hand
-- [ ] Save receipts to Supabase (each user sees only their own)
+- [x] Save receipts to Supabase (each user sees only their own)
 - [ ] Snap a receipt → AI extraction → review and save
 - [x] Search the receipt vault
 - [x] Reminders before deadlines (local notifications scheduled on the phone)
@@ -120,6 +121,10 @@ All features are free for now.
 
 - Subscriptions roll their renewal date forward automatically by whole billing cycles, counting from the original date so the 31st stays the 31st.
 
+- Cloud sync is optional and only on when `.env` has the Supabase URL and publishable key. The phone is the main copy: sign-in merges cloud items in (phone wins on a clash), and phone deletes are pushed to the cloud. Deletes made on another phone aren't pulled down yet.
+- Row level security on every table: users can only read or change their own rows.
+
 ## Notes and to-dos
 
+- Harden sign-in storage: keep the Supabase session encrypted (expo-secure-store) instead of AsyncStorage.
 - Local Node is 20.14. Expo SDK 58 needs **22.13+**, so upgrade to run the app.
