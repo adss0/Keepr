@@ -1,6 +1,6 @@
 import { Link, router, Stack } from "expo-router";
 import { useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Button } from "@/components/form";
 import { ReceiptCard } from "@/components/receipt-card";
@@ -8,7 +8,9 @@ import { RemindersBanner } from "@/components/reminders-banner";
 import { useTheme } from "@/constants/theme";
 import { useReceiptsStore } from "@/data/receipts";
 import { useReminders } from "@/data/reminders";
+import { shareCsv } from "@/data/share-csv";
 import { daysBetween, getNextDeadline, todayIso } from "@/lib/deadlines";
+import { receiptsToCsv } from "@/lib/export";
 import { searchReceipts } from "@/lib/search";
 
 /** Sort key for receipts with no upcoming deadline, so they go last. */
@@ -116,6 +118,18 @@ export default function ReceiptsScreen() {
             />
           </View>
         }
+        ListFooterComponent={
+          <View style={styles.footer}>
+            <Button
+              title="Export receipts (CSV)"
+              onPress={() => {
+                shareCsv(receiptsToCsv(allReceipts, today), `keepr-receipts-${today}.csv`).catch((error: unknown) =>
+                  Alert.alert("Couldn't export receipts", error instanceof Error ? error.message : String(error)),
+                );
+              }}
+            />
+          </View>
+        }
         ListEmptyComponent={
           <Text style={[styles.noResults, { color: theme.textMuted }]}>No receipts match “{query.trim()}”.</Text>
         }
@@ -164,6 +178,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 24,
     fontSize: 15,
+  },
+  footer: {
+    marginTop: 20,
   },
   separator: {
     height: 10,
