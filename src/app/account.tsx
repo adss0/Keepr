@@ -97,7 +97,7 @@ export default function AccountScreen() {
 
       {cloud.status === "not_set_up" && (
         <Text style={[styles.body, { color: theme.textMuted }]}>
-          Keepr is saving everything on this phone. To turn on sign-in and cloud backup, follow
+          Keepr is saving everything on this phone. To turn on sign-in, cloud backup and AI receipt scanning, follow
           docs/cloud-setup.md in the Keepr project.
         </Text>
       )}

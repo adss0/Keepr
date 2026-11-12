@@ -22,7 +22,8 @@
 - ✅ Subscription tracker with monthly/yearly totals, renewal and free-trial reminders
 - ✅ Export receipts to CSV (share sheet on phones, download on the web)
 - ✅ Supabase sign-in (email and password) and cloud sync of receipts and subscriptions
-- ⏭️ **Next:** AI receipt scanning
+- ✅ AI receipt scanning: photo → Supabase Edge Function → Claude → form filled in
+- ⏭️ **Next:** email auto-capture, known retailer return policies, PDF export
 
 ---
 
@@ -36,7 +37,7 @@
 - [x] Supabase project: database tables, sign-up and log-in
 - [x] Save receipts on the phone, and add, edit and delete them by hand
 - [x] Save receipts to Supabase (each user sees only their own)
-- [ ] Snap a receipt → AI extraction → review and save
+- [x] Snap a receipt → AI extraction → review and save
 - [x] Search the receipt vault
 - [x] Reminders before deadlines (local notifications scheduled on the phone)
 
@@ -123,6 +124,8 @@ All features are free for now.
 
 - Cloud sync is optional and only on when `.env` has the Supabase URL and publishable key. The phone is the main copy: sign-in merges cloud items in (phone wins on a clash), and phone deletes are pushed to the cloud. Deletes made on another phone aren't pulled down yet.
 - Row level security on every table: users can only read or change their own rows.
+
+- AI scanning runs in a Supabase Edge Function so the Claude API key stays on the server. It uses Claude Opus 5.5 at low effort with structured JSON output and server-side refusal fallback. Users always check the details before saving.
 
 ## Notes and to-dos
 

@@ -193,7 +193,7 @@ You can also press `w` to open the app in a web browser.
 
 ### Optional: cloud sync
 
-Keepr works fully on the phone with no accounts. To add sign-in and cloud backup, follow **[Cloud sync setup](docs/cloud-setup.md)**.
+Keepr works fully on the phone with no accounts. To add sign-in, cloud backup and AI receipt scanning, follow **[Cloud sync and AI scanning setup](docs/cloud-setup.md)**.
 
 ### Run it on your phone
 
@@ -238,6 +238,7 @@ Keepr/
 │   │   ├── receipt-card.tsx # One receipt with its next deadline
 │   │   ├── receipt-form.tsx # Add/edit receipt form
 │   │   ├── reminders-banner.tsx # Asks to turn on reminders
+│   │   ├── scan-panel.tsx # Scan a receipt with the camera
 │   │   └── subscription-form.tsx # Add/edit subscription form
 │   ├── constants/      # Shared constants
 │   │   └── theme.ts    #   Light and dark mode colours
@@ -247,6 +248,7 @@ Keepr/
 │   │   ├── receipts.tsx #  Receipts store (useReceipts, add, edit, delete)
 │   │   ├── reminders.tsx # Schedules deadline notifications on the phone
 │   │   ├── sample-receipts.ts # Example receipts for trying the app
+│   │   ├── scan-receipt.ts # Takes the photo and calls the AI scanning function
 │   │   ├── share-csv.ts #  Saves and shares the CSV export
 │   │   ├── subscriptions.tsx # Subscriptions store
 │   │   └── supabase.ts #   Supabase client (only when configured)
@@ -259,6 +261,7 @@ Keepr/
 │   │   ├── receipt-input.ts # Checks and parses the receipt form
 │   │   ├── reminders.ts #  Plans which reminders to send, and when
 │   │   ├── rights.ts   #   UK consumer rights engine and claim letters
+│   │   ├── scan-result.ts # Turns a scan into form fields
 │   │   ├── search.ts   #   Receipt search
 │   │   ├── subscription-input.ts # Checks and parses the subscription form
 │   │   └── subscriptions.ts # Costs, totals and renewal dates
@@ -269,7 +272,7 @@ Keepr/
 ├── assets/             # App icons and splash screen
 ├── PLAN.md             # Build plan: phases, features and decisions
 ├── docs/               # Guides (running on your phone, cloud setup)
-├── supabase/           # Database schema (migrations) for cloud sync
+├── supabase/           # Database schema (migrations) and the AI scanning function
 ├── .env.example        # Template for Supabase settings (copy to .env)
 ├── eas.json            # EAS cloud build settings (Android APK, iPhone)
 ├── AGENTS.md           # Notes for AI coding assistants working on this repo
