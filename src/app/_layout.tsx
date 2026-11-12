@@ -14,6 +14,7 @@ export default function RootLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ title: "Your receipts" }} />
+      <Stack.Screen name="receipt/[id]" options={{ title: "Receipt" }} />
     </Stack>
   );
 }

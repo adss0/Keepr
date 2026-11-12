@@ -5,11 +5,25 @@ const SHORT_TERM_REJECT_DAYS = 30;
 /** Consumer Contracts Regulations 2013: cancellation period for distance sales. */
 const ONLINE_CANCELLATION_DAYS = 14;
 
+export type DeadlineKind = "retailer_return" | "online_cancellation" | "faulty_reject" | "warranty";
+
 export type Deadline = {
-  kind: "retailer_return" | "online_cancellation" | "faulty_reject" | "warranty";
+  kind: DeadlineKind;
   label: string;
   /** ISO date (YYYY-MM-DD). */
   date: string;
+};
+
+/** Plain-English explanation of what each deadline means for the buyer. */
+export const DEADLINE_EXPLANATIONS: Record<DeadlineKind, string> = {
+  online_cancellation:
+    "Bought online, by phone or by mail order? You can cancel for any reason within 14 days of delivery, then return it within another 14 days for a full refund (Consumer Contracts Regulations 2013).",
+  retailer_return:
+    "The shop's own returns policy. This is a goodwill promise on top of your legal rights, so check its conditions (receipt, packaging, unused).",
+  faulty_reject:
+    "If it's faulty, not as described or not fit for purpose, you can reject it for a full refund within 30 days (Consumer Rights Act 2015). After that you're still entitled to a repair or replacement.",
+  warranty:
+    "The manufacturer's warranty. It's extra cover from the maker and doesn't replace your legal rights against the shop.",
 };
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;

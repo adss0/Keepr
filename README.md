@@ -223,12 +223,15 @@ Keepr/
 ├── src/
 │   ├── app/            # Screens (Expo Router: every file here is a screen)
 │   │   ├── _layout.tsx #   Root navigation layout and header
-│   │   └── index.tsx   #   Receipts list (home screen)
+│   │   ├── index.tsx   #   Receipts list (home screen)
+│   │   └── receipt/[id].tsx # Receipt detail with every deadline explained
 │   ├── components/     # Reusable UI
+│   │   ├── deadline-pill.tsx # Colour-coded deadline label
 │   │   └── receipt-card.tsx # One receipt with its next deadline
 │   ├── constants/      # Shared constants
 │   │   └── theme.ts    #   Light and dark mode colours
-│   ├── data/           # Temporary data
+│   ├── data/           # Where receipts come from
+│   │   ├── receipts.ts #   useReceipts / useReceipt hooks
 │   │   └── sample-receipts.ts # Made-up receipts until saving works
 │   ├── lib/            # App logic, kept separate from screens
 │   │   ├── deadlines.ts#   Works out return, cancellation and warranty dates
