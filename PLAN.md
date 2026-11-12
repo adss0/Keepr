@@ -20,7 +20,8 @@
 - ✅ Reminders 3 days before each deadline and on the last day (9am, phone notifications)
 - ✅ Rights engine and "It broke" flow with a claim letter you can send or copy
 - ✅ Subscription tracker with monthly/yearly totals, renewal and free-trial reminders
-- ⏭️ **Next:** export receipts to CSV
+- ✅ Export receipts to CSV (share sheet on phones, download on the web)
+- ⏭️ **Next:** Supabase sign-in and cloud sync
 
 ---
 
@@ -55,7 +56,7 @@
 ### Phase 4: Partnerships and polish
 - [ ] Retailer digital receipt integration
 - [ ] Opt-in insurer offers (extended warranty when one is ending)
-- [ ] PDF / CSV export
+- [x] CSV export (PDF still to do)
 - [ ] Spending insights
 - [ ] App Store and Google Play release
 

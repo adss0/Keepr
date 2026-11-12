@@ -241,10 +241,12 @@ Keepr/
 │   │   ├── receipts.tsx #  Receipts store (useReceipts, add, edit, delete)
 │   │   ├── reminders.tsx # Schedules deadline notifications on the phone
 │   │   ├── sample-receipts.ts # Example receipts for trying the app
+│   │   ├── share-csv.ts #  Saves and shares the CSV export
 │   │   └── subscriptions.tsx # Subscriptions store
 │   ├── lib/            # App logic, kept separate from screens
 │   │   ├── confirm.ts  #   "Are you sure?" prompts
 │   │   ├── deadlines.ts#   Works out return, cancellation and warranty dates
+│   │   ├── export.ts   #   Receipts to CSV
 │   │   ├── format.ts   #   Formats prices and dates
 │   │   ├── receipt-input.ts # Checks and parses the receipt form
 │   │   ├── reminders.ts #  Plans which reminders to send, and when
