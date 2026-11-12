@@ -49,7 +49,7 @@ export function addDays(isoDate: string, days: number): string {
 }
 
 /** Adds months, clamping to the last day of the month (31 Jan + 1 month = 28/29 Feb). */
-function addMonths(isoDate: string, months: number): string {
+export function addMonths(isoDate: string, months: number): string {
   const d = new Date(`${isoDate}T00:00:00Z`);
   const day = d.getUTCDate();
   d.setUTCDate(1);

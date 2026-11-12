@@ -13,3 +13,9 @@ export function formatDate(isoDate: string, currentYear?: number): string {
   const short = `${day} ${MONTHS[month - 1]}`;
   return currentYear === undefined || year === currentYear ? short : `${short} ${year}`;
 }
+
+/** "2026-11-05" → "5 Nov 2026". Use for legal deadlines and letters, where the year matters. */
+export function formatFullDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  return `${day} ${MONTHS[month - 1]} ${year}`;
+}

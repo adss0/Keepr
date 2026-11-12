@@ -15,7 +15,11 @@
 - ✅ Guide for running Keepr on a phone (Expo Go, Android APK, iPhone TestFlight)
 - ✅ Unit tests (Jest) for deadlines and formatting, run in CI
 - ✅ Receipt detail screen: every deadline with a plain-English explanation
-- ⏭️ **Next:** save receipts on the phone and add them by hand
+- ✅ Add, edit and delete receipts, saved on the phone
+- ✅ Search receipts by product or shop
+- ✅ Reminders 3 days before each deadline and on the last day (9am, phone notifications)
+- ✅ Rights engine and "It broke" flow with a claim letter you can send or copy
+- ⏭️ **Next:** subscription tracker
 
 ---
 
@@ -27,19 +31,20 @@
 - [x] Receipts list screen with sample data, showing upcoming deadlines
 - [x] Receipt detail screen
 - [ ] Supabase project: database tables, sign-up and log-in
+- [x] Save receipts on the phone, and add, edit and delete them by hand
 - [ ] Save receipts to Supabase (each user sees only their own)
 - [ ] Snap a receipt → AI extraction → review and save
-- [ ] Search the receipt vault
-- [ ] Push reminders before deadlines (daily scheduled check)
+- [x] Search the receipt vault
+- [x] Reminders before deadlines (local notifications scheduled on the phone)
 
 ### Phase 2: Rights engine
-- [ ] Rules for Consumer Rights Act 2015 (30 days / 6 months / up to 6 years)
-- [ ] Consumer Contracts Regulations 2013 (14-day cancellation)
-- [ ] Section 75 and chargeback guidance based on payment method
-- [ ] "It broke" flow: what you're owed and next steps
-- [ ] Generated claim letter or email to the retailer
+- [x] Rules for Consumer Rights Act 2015 (30 days / 6 months / up to 6 years)
+- [x] Consumer Contracts Regulations 2013 (14-day cancellation)
+- [x] Section 75 and chargeback guidance based on payment method
+- [x] "It broke" flow: what you're owed and next steps
+- [x] Generated claim letter or email to the retailer
 - [ ] Known retailer return policies
-- [ ] Unit tests for every rule
+- [x] Unit tests for every rule
 
 ### Phase 3: Subscription tracking and automation
 - [ ] Subscription tracker: cost, renewal date, trial end
@@ -103,6 +108,13 @@ All features are free for now.
 - Phone builds use EAS: `preview` makes an installable Android APK, `production` is for the app stores.
 
 - Unit tests use `jest-expo`, live next to the code in `__tests__` folders and import `describe`/`it`/`expect` from `@jest/globals`.
+
+- Receipts are saved on the phone with AsyncStorage (works in Expo Go and on the web). A new install starts empty, with a button to load sample receipts.
+- Dates are typed as YYYY-MM-DD for now; a date picker can come later.
+
+- Reminders are local notifications scheduled by the phone, so they need no server and work in Expo Go. All are rescheduled whenever receipts change, capped at 60 (iOS allows 64).
+
+- The rights engine is plain TypeScript rules with tests at every boundary (day 30/31, 6 months, 6 years, £100 for Section 75). Legal dates always show the year.
 
 ## Notes and to-dos
 
