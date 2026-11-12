@@ -12,14 +12,25 @@ type Props = {
   onScanned: (result: unknown) => void;
 };
 
-/** "Scan a receipt" buttons at the top of the add form. Hidden when cloud features aren't set up. */
+/** "Scan a receipt" buttons at the top of the add form, or what's needed before scanning can work. */
 export function ScanPanel({ onScanned }: Props) {
   const theme = useTheme();
   const { status } = useCloud();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
 
-  if (status === "not_set_up") return null;
+  if (status === "not_set_up") {
+    return (
+      <View style={[styles.panel, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <Text style={[styles.title, { color: theme.text }]}>Scan a receipt</Text>
+        <Text style={[styles.text, { color: theme.textMuted }]}>
+          Take a photo and Keepr fills in the product, shop, price, date and payment for you. Scanning needs a
+          one-time setup first: a free Supabase project and a Claude API key (see docs/cloud-setup.md). Until then,
+          fill in the details below by hand.
+        </Text>
+      </View>
+    );
+  }
 
   if (status === "signed_out") {
     return (
@@ -82,6 +93,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     paddingVertical: 8,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "600",
   },
   text: {
     fontSize: 14,
