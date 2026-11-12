@@ -25,7 +25,7 @@ export async function pickReceiptPhoto(source: "camera" | "library"): Promise<Re
   return { base64: asset.base64, mediaType: asset.mimeType ?? "image/jpeg" };
 }
 
-/** Sends the photo to the extract-receipt function, which reads it with Claude. Returns its raw JSON. */
+/** Sends the photo to the extract-receipt function, which reads it with Google Gemini. Returns its raw JSON. */
 export async function extractReceipt(photo: ReceiptPhoto): Promise<unknown> {
   if (!supabase) throw new Error("Receipt scanning isn't set up yet.");
   const { data, error } = await supabase.functions.invoke("extract-receipt", {

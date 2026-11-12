@@ -22,7 +22,7 @@
 - ✅ Subscription tracker with monthly/yearly totals, renewal and free-trial reminders
 - ✅ Export receipts to CSV (share sheet on phones, download on the web)
 - ✅ Supabase sign-in (email and password) and cloud sync of receipts and subscriptions
-- ✅ AI receipt scanning: photo → Supabase Edge Function → Claude → form filled in
+- ✅ AI receipt scanning: photo → Supabase Edge Function → Google Gemini (free tier) → form filled in
 - ⏭️ **Next:** email auto-capture, known retailer return policies, PDF export
 
 ---
@@ -90,7 +90,7 @@ All features are free for now.
 | **Expo + React Native** | One codebase for iPhone and Android. Camera and push notifications built in. Test free with Expo Go. |
 | **Expo Router** | File-based screens: every file in `src/app/` is a screen. |
 | **Supabase** | Free tier covers database, sign-in, photo storage and scheduled jobs. Standard Postgres, so no lock-in. |
-| **Vision AI (e.g. Claude)** | Reads messy receipts straight into structured data. |
+| **Google Gemini** (free tier) | Reads messy receipts straight into structured data, at no cost while in development. |
 | **Rules in code (not AI)** | Legal deadlines must be exact and testable. AI only explains results and drafts letters. |
 | **Expo Push Notifications** | One API for iOS and Android reminders. |
 | **Cloudflare R2** (if needed) | Cheap photo storage once Supabase's 1 GB fills up. |
@@ -125,11 +125,14 @@ All features are free for now.
 - Cloud sync is optional and only on when `.env` has the Supabase URL and publishable key. The phone is the main copy: sign-in merges cloud items in (phone wins on a clash), and phone deletes are pushed to the cloud. Deletes made on another phone aren't pulled down yet.
 - Row level security on every table: users can only read or change their own rows.
 
-- AI scanning runs in a Supabase Edge Function so the Claude API key stays on the server. It uses Claude Opus 5.5 at low effort with structured JSON output and server-side refusal fallback. Users always check the details before saving.
+- AI scanning runs in a Supabase Edge Function so the API key stays on the server. Users always check the details before saving.
+- Switched scanning from Claude to Google Gemini (`gemini-3.5-flash-lite`) to use Gemini's free tier. Trade-off: Google may use free-tier inputs to improve its products, so move to a paid plan before real users.
 
 - `npm start` checks the Node.js version first, because Expo SDK 58 crashes on Node below 22.13 with "URL.parse is not a function".
 
 ## Notes and to-dos
+
+- Before launch: move Gemini scanning to a paid plan (or another provider) so receipt photos aren't used for training.
 
 - Harden sign-in storage: keep the Supabase session encrypted (expo-secure-store) instead of AsyncStorage.
 - Local Node is 20.14. Expo SDK 58 needs **22.13+**, so upgrade to run the app.

@@ -155,7 +155,7 @@ Keepr also makes clear what the law **doesn't** cover. For example, a "change of
 | Language | **TypeScript** everywhere | One language across the app and backend. Strong typing catches bugs early. Huge ecosystem. |
 | Mobile app | **React Native + Expo** | One codebase for iOS and Android. Built-in camera, push notifications and over-the-air updates. Can also run on the web. |
 | Backend | **Supabase** (Postgres, Auth, Storage, Edge Functions) | A managed database, sign-in, image storage and server functions in one service. Very fast to start, and it's standard Postgres, so there's no lock-in. |
-| Receipt extraction | **Vision-capable LLM** (e.g. Claude) | Reads messy, crumpled or faded receipts and returns structured data (product, price, date) directly, rather than raw OCR text that still needs parsing. |
+| Receipt extraction | **Google Gemini** (free tier, via a Supabase Edge Function) | Reads messy, crumpled or faded receipts and returns structured data (product, price, date) directly, rather than raw OCR text that still needs parsing. |
 | Rights engine | **Rules in TypeScript**, with an LLM only for explanations | The deadlines and entitlements must be deterministic and testable. The AI explains the result in plain English but doesn't decide it. |
 | Scheduled jobs | Supabase cron / scheduled functions | Daily checks for upcoming deadlines that trigger reminders. |
 | Notifications | Expo Push Notifications | One API for iOS and Android push. |
