@@ -25,7 +25,7 @@ export default function ReceiptDetailScreen() {
     return (
       <View style={[styles.empty, { backgroundColor: theme.background }]}>
         <Stack.Screen options={{ title: "Receipt" }} />
-        <Text style={{ color: theme.textMuted }}>This receipt doesn't exist any more.</Text>
+        <Text style={{ color: theme.textMuted }}>This receipt doesn&apos;t exist any more.</Text>
       </View>
     );
   }
