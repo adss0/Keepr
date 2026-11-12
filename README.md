@@ -274,6 +274,8 @@ Keepr/
 ├── docs/               # Guides (running on your phone, cloud setup)
 ├── supabase/           # Database schema (migrations) and the AI scanning function
 ├── .env.example        # Template for Supabase settings (copy to .env)
+├── .nvmrc              # Node.js version (22)
+├── scripts/            # check-node.js: stops npm start on an old Node.js
 ├── eas.json            # EAS cloud build settings (Android APK, iPhone)
 ├── AGENTS.md           # Notes for AI coding assistants working on this repo
 ├── app.json            # Expo app configuration (name, icons, plugins)

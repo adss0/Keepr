@@ -127,6 +127,8 @@ All features are free for now.
 
 - AI scanning runs in a Supabase Edge Function so the Claude API key stays on the server. It uses Claude Opus 5.5 at low effort with structured JSON output and server-side refusal fallback. Users always check the details before saving.
 
+- `npm start` checks the Node.js version first, because Expo SDK 58 crashes on Node below 22.13 with "URL.parse is not a function".
+
 ## Notes and to-dos
 
 - Harden sign-in storage: keep the Supabase session encrypted (expo-secure-store) instead of AsyncStorage.
