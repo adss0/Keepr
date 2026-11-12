@@ -1,7 +1,7 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { randomUUID } from "expo-crypto";
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, type ReactNode, useCallback, useContext, useMemo } from "react";
 
+import { usePersistedList } from "@/data/persisted-list";
 import { sampleReceipts } from "@/data/sample-receipts";
 import type { Receipt } from "@/types/receipt";
 
@@ -24,51 +24,28 @@ type ReceiptsContextValue = {
 const ReceiptsContext = createContext<ReceiptsContextValue | null>(null);
 
 export function ReceiptsProvider({ children }: { children: ReactNode }) {
-  const [receipts, setReceipts] = useState<Receipt[]>([]);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then((stored) => {
-        if (!cancelled && stored) setReceipts(JSON.parse(stored) as Receipt[]);
-      })
-      .catch((error: unknown) => console.warn("Couldn't load saved receipts", error))
-      .finally(() => {
-        if (!cancelled) setReady(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!ready) return;
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(receipts)).catch((error: unknown) =>
-      console.warn("Couldn't save receipts", error),
-    );
-  }, [receipts, ready]);
+  const [receipts, setReceipts, ready] = usePersistedList<Receipt>(STORAGE_KEY);
 
   const addReceipt = useCallback((fields: ReceiptFields) => {
     const receipt: Receipt = { id: randomUUID(), ...fields };
     setReceipts((current) => [...current, receipt]);
     return receipt;
-  }, []);
+  }, [setReceipts]);
 
   const updateReceipt = useCallback((id: string, fields: ReceiptFields) => {
     setReceipts((current) => current.map((receipt) => (receipt.id === id ? { id, ...fields } : receipt)));
-  }, []);
+  }, [setReceipts]);
 
   const deleteReceipt = useCallback((id: string) => {
     setReceipts((current) => current.filter((receipt) => receipt.id !== id));
-  }, []);
+  }, [setReceipts]);
 
   const addSampleReceipts = useCallback(() => {
     setReceipts((current) => [
       ...current,
       ...sampleReceipts.map(({ id: _sampleId, ...fields }) => ({ id: randomUUID(), ...fields })),
     ]);
-  }, []);
+  }, [setReceipts]);
 
   const value = useMemo(
     () => ({ receipts, ready, addReceipt, updateReceipt, deleteReceipt, addSampleReceipts }),

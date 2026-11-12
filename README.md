@@ -224,19 +224,24 @@ Keepr/
 │   ├── app/            # Screens (Expo Router: every file here is a screen)
 │   │   ├── _layout.tsx #   Root navigation layout and header
 │   │   ├── index.tsx   #   Receipts list (home screen)
-│   │   └── receipt/    #   Receipt detail ([id]), add (new), edit (edit/[id]) and rights (rights/[id]) screens
+│   │   ├── receipt/    #   Receipt detail ([id]), add (new), edit (edit/[id]) and rights (rights/[id]) screens
+│   │   ├── subscriptions.tsx # Subscriptions list with monthly and yearly totals
+│   │   └── subscriptions/ #  Add (new) and edit (edit/[id]) subscription screens
 │   ├── components/     # Reusable UI
 │   │   ├── deadline-pill.tsx # Colour-coded deadline label
 │   │   ├── form.tsx    #   Text field, option picker and button
 │   │   ├── receipt-card.tsx # One receipt with its next deadline
+│   │   ├── receipt-form.tsx # Add/edit receipt form
 │   │   ├── reminders-banner.tsx # Asks to turn on reminders
-│   │   └── receipt-form.tsx # Add/edit receipt form
+│   │   └── subscription-form.tsx # Add/edit subscription form
 │   ├── constants/      # Shared constants
 │   │   └── theme.ts    #   Light and dark mode colours
-│   ├── data/           # Where receipts come from
-│   │   ├── receipts.tsx #  Saves receipts on the phone (useReceipts, add, edit, delete)
+│   ├── data/           # Where receipts and subscriptions are kept
+│   │   ├── persisted-list.ts # Saves a list on the phone (AsyncStorage)
+│   │   ├── receipts.tsx #  Receipts store (useReceipts, add, edit, delete)
 │   │   ├── reminders.tsx # Schedules deadline notifications on the phone
-│   │   └── sample-receipts.ts # Example receipts for trying the app
+│   │   ├── sample-receipts.ts # Example receipts for trying the app
+│   │   └── subscriptions.tsx # Subscriptions store
 │   ├── lib/            # App logic, kept separate from screens
 │   │   ├── confirm.ts  #   "Are you sure?" prompts
 │   │   ├── deadlines.ts#   Works out return, cancellation and warranty dates
@@ -244,9 +249,12 @@ Keepr/
 │   │   ├── receipt-input.ts # Checks and parses the receipt form
 │   │   ├── reminders.ts #  Plans which reminders to send, and when
 │   │   ├── rights.ts   #   UK consumer rights engine and claim letters
-│   │   └── search.ts   #   Receipt search
+│   │   ├── search.ts   #   Receipt search
+│   │   ├── subscription-input.ts # Checks and parses the subscription form
+│   │   └── subscriptions.ts # Costs, totals and renewal dates
 │   └── types/          # Shared TypeScript types
-│       └── receipt.ts  #   The Receipt data model
+│       ├── receipt.ts  #   The Receipt data model
+│       └── subscription.ts # The Subscription data model
 ├── .github/workflows/  # CI checks run on every PR and merge
 ├── assets/             # App icons and splash screen
 ├── PLAN.md             # Build plan: phases, features and decisions

@@ -4,8 +4,10 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useS
 import { Platform } from "react-native";
 
 import { useReceiptsStore } from "@/data/receipts";
+import { useSubscriptions } from "@/data/subscriptions";
 import { planReminders } from "@/lib/reminders";
 import type { Receipt } from "@/types/receipt";
+import type { Subscription } from "@/types/subscription";
 
 const CHANNEL_ID = "deadlines";
 
@@ -55,8 +57,13 @@ function useReminderPermission() {
   return { permission, request };
 }
 
-/** Keeps the phone's scheduled reminders in step with the saved receipts. */
-function useReminderSync(receipts: Receipt[], ready: boolean, permission: ReminderPermission) {
+/** Keeps the phone's scheduled reminders in step with the saved receipts and subscriptions. */
+function useReminderSync(
+  receipts: Receipt[],
+  subscriptions: Subscription[],
+  ready: boolean,
+  permission: ReminderPermission,
+) {
   useEffect(() => {
     if (!ready || permission !== "granted") return;
     let cancelled = false;
@@ -64,10 +71,14 @@ function useReminderSync(receipts: Receipt[], ready: boolean, permission: Remind
     async function sync() {
       await ensureAndroidChannel();
       await Notifications.cancelAllScheduledNotificationsAsync();
-      for (const reminder of planReminders(receipts)) {
+      for (const reminder of planReminders(receipts, new Date(), subscriptions)) {
         if (cancelled) return;
         await Notifications.scheduleNotificationAsync({
-          content: { title: reminder.title, body: reminder.body, data: { receiptId: reminder.receiptId } },
+          content: {
+            title: reminder.title,
+            body: reminder.body,
+            data: { receiptId: reminder.receiptId ?? null, subscriptionId: reminder.subscriptionId ?? null },
+          },
           trigger: {
             type: Notifications.SchedulableTriggerInputTypes.DATE,
             date: reminder.date,
@@ -81,7 +92,7 @@ function useReminderSync(receipts: Receipt[], ready: boolean, permission: Remind
     return () => {
       cancelled = true;
     };
-  }, [receipts, ready, permission]);
+  }, [receipts, subscriptions, ready, permission]);
 }
 
 type RemindersContextValue = {
@@ -92,11 +103,12 @@ type RemindersContextValue = {
 
 const RemindersContext = createContext<RemindersContextValue | null>(null);
 
-/** Schedules reminders for every saved receipt once notifications are allowed. */
+/** Schedules reminders for every saved receipt and subscription once notifications are allowed. */
 export function RemindersProvider({ children }: { children: ReactNode }) {
-  const { receipts, ready } = useReceiptsStore();
+  const { receipts, ready: receiptsReady } = useReceiptsStore();
+  const { subscriptions, ready: subscriptionsReady } = useSubscriptions();
   const { permission, request } = useReminderPermission();
-  useReminderSync(receipts, ready, permission);
+  useReminderSync(receipts, subscriptions, receiptsReady && subscriptionsReady, permission);
 
   return <RemindersContext.Provider value={{ permission, request }}>{children}</RemindersContext.Provider>;
 }
