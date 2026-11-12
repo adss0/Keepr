@@ -2,6 +2,7 @@ import { randomUUID } from "expo-crypto";
 import { createContext, type ReactNode, useCallback, useContext, useMemo } from "react";
 
 import { usePersistedList } from "@/data/persisted-list";
+import { mergeById } from "@/lib/cloud-rows";
 import type { Subscription } from "@/types/subscription";
 
 const STORAGE_KEY = "keepr.subscriptions.v1";
@@ -14,6 +15,8 @@ type SubscriptionsContextValue = {
   addSubscription: (fields: SubscriptionFields) => Subscription;
   updateSubscription: (id: string, fields: SubscriptionFields) => void;
   deleteSubscription: (id: string) => void;
+  /** Adds items saved in the cloud that aren't on this phone yet. */
+  mergeFromCloud: (remote: Subscription[]) => void;
 };
 
 const SubscriptionsContext = createContext<SubscriptionsContextValue | null>(null);
@@ -44,9 +47,14 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
     [setSubscriptions],
   );
 
+  const mergeFromCloud = useCallback(
+    (remote: Subscription[]) => setSubscriptions((current) => mergeById(current, remote)),
+    [setSubscriptions],
+  );
+
   const value = useMemo(
-    () => ({ subscriptions, ready, addSubscription, updateSubscription, deleteSubscription }),
-    [subscriptions, ready, addSubscription, updateSubscription, deleteSubscription],
+    () => ({ subscriptions, ready, addSubscription, updateSubscription, deleteSubscription, mergeFromCloud }),
+    [subscriptions, ready, addSubscription, updateSubscription, deleteSubscription, mergeFromCloud],
   );
 
   return <SubscriptionsContext.Provider value={value}>{children}</SubscriptionsContext.Provider>;
