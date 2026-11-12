@@ -3,7 +3,7 @@
 Keepr works fully on the phone with no accounts. This guide turns on the optional cloud features:
 
 - **Sign in and cloud backup:** receipts and subscriptions are saved to your own Supabase database, so they survive a lost phone and appear on every device you sign in on.
-- **AI receipt scanning:** take a photo of a receipt and Claude fills in the product, shop, price, date and payment method for you.
+- **AI receipt scanning:** take a photo of a receipt and Google Gemini fills in the product, shop, price, date and payment method for you.
 
 Supabase's free tier is enough for Keepr.
 
@@ -46,9 +46,9 @@ To turn off email confirmation while testing, open **Authentication → Sign In 
 
 ## 5. Turn on AI receipt scanning
 
-Scanning runs in a Supabase **Edge Function** ([`supabase/functions/extract-receipt`](../supabase/functions/extract-receipt/index.ts)). The app sends the photo to the function, and the function asks Claude to read it. Your Claude API key is stored as a secret on Supabase, so it is never inside the app.
+Scanning runs in a Supabase **Edge Function** ([`supabase/functions/extract-receipt`](../supabase/functions/extract-receipt/index.ts)). The app sends the photo to the function, and the function asks **Google Gemini** (`gemini-3.5-flash-lite`, on Gemini's free tier) to read it. Your Gemini API key is stored as a secret on Supabase, so it is never inside the app.
 
-1. Create a Claude API key at https://platform.claude.com (**API Keys → Create key**) and add some credit. Each scan costs roughly a penny.
+1. Get a free Gemini API key at https://aistudio.google.com/apikey (sign in with a Google account, then **Create API key**). No card is needed for the free tier.
 2. Log in to Supabase from the Keepr folder and link the project (the project ref is the part before `.supabase.co` in your URL):
    ```bash
    npx supabase login
@@ -56,9 +56,9 @@ Scanning runs in a Supabase **Edge Function** ([`supabase/functions/extract-rece
    ```bash
    npx supabase link --project-ref your-project-ref
    ```
-3. Save the Claude key as a secret:
+3. Save the Gemini key as a secret:
    ```bash
-   npx supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
+   npx supabase secrets set GEMINI_API_KEY=your-gemini-key
    ```
 4. Deploy the function:
    ```bash
@@ -66,7 +66,12 @@ Scanning runs in a Supabase **Edge Function** ([`supabase/functions/extract-rece
    ```
 5. In Keepr, sign in, tap **Add**, then **Scan a receipt**. Check the details it fills in, then save.
 
-Only signed-in users can use the function, because Supabase checks their sign-in before it runs. The function uses Claude Opus 5.5 with Claude's server-side fallback switched on, so a declined request is retried on another model automatically.
+Only signed-in users can use the function, because Supabase checks their sign-in before it runs.
+
+**About the free tier:**
+- **Daily limits:** it has request limits per minute and per day. If you hit them, Keepr shows "Too many scans right now".
+- **Data use:** Google may use what's sent on the free tier to improve its products, so receipt photos may be seen by Google. For real users, switch the key to a paid Gemini plan, or move scanning to a provider that doesn't use your data.
+- **Changing models:** if Google retires the model, change `MODEL` at the top of the function and deploy again.
 
 ## Phone builds (EAS)
 

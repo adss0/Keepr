@@ -25,7 +25,7 @@ export function ScanPanel({ onScanned }: Props) {
         <Text style={[styles.title, { color: theme.text }]}>Scan a receipt</Text>
         <Text style={[styles.text, { color: theme.textMuted }]}>
           Take a photo and Keepr fills in the product, shop, price, date and payment for you. Scanning needs a
-          one-time setup first: a free Supabase project and a Claude API key (see docs/cloud-setup.md). Until then,
+          one-time setup first: a free Supabase project and a free Gemini API key (see docs/cloud-setup.md). Until then,
           fill in the details below by hand.
         </Text>
       </View>
