@@ -61,6 +61,11 @@ export default function ReceiptsScreen() {
     />
   );
 
+  /** Opens Add receipt with the camera already open, so scanning is one tap from home. */
+  function scanReceipt() {
+    router.push({ pathname: "/receipt/new", params: { scan: "camera" } });
+  }
+
   if (!ready) {
     return (
       <View style={[styles.centered, { backgroundColor: theme.background }]}>
@@ -79,15 +84,16 @@ export default function ReceiptsScreen() {
           Add a purchase and Keepr works out your return, refund and warranty deadlines.
         </Text>
         <View style={styles.emptyButtons}>
-          <Button title="Add a receipt" variant="primary" onPress={() => router.push("/receipt/new")} />
-          <Button title="Try it with sample receipts" onPress={addSampleReceipts} />
+          <Button title="Scan a receipt" variant="primary" onPress={scanReceipt} />
+          <Button title="Add one by hand" onPress={() => router.push("/receipt/new")} />
+          <Button title="Try it with sample receipts" variant="ghost" onPress={addSampleReceipts} />
         </View>
       </View>
     );
   }
 
   return (
-    <>
+    <View style={[styles.screen, { backgroundColor: theme.background }]}>
       {header}
       <FlatList
         style={{ backgroundColor: theme.background }}
@@ -135,11 +141,31 @@ export default function ReceiptsScreen() {
           <Text style={[styles.noResults, { color: theme.textMuted }]}>No receipts match “{query.trim()}”.</Text>
         }
       />
-    </>
+      <View style={[styles.actionBar, { backgroundColor: theme.card, borderTopColor: theme.border }]}>
+        <View style={styles.actionMain}>
+          <Button title="Scan a receipt" variant="primary" onPress={scanReceipt} />
+        </View>
+        <Button title="Add by hand" onPress={() => router.push("/receipt/new")} />
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
+  actionBar: {
+    flexDirection: "row",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 24,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  actionMain: {
+    flex: 1,
+  },
   list: {
     padding: 16,
     paddingBottom: 32,

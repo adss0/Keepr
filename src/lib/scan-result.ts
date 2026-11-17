@@ -38,3 +38,8 @@ export function scanResultToInput(result: unknown, current: ReceiptInput): Recei
     warrantyMonths: warranty !== undefined ? String(warranty) : current.warrantyMonths,
   };
 }
+
+/** How many form fields differ between `before` and `after`, to tell the user what a scan filled in. */
+export function countChangedFields(before: ReceiptInput, after: ReceiptInput): number {
+  return (Object.keys(after) as (keyof ReceiptInput)[]).filter((key) => after[key] !== before[key]).length;
+}
