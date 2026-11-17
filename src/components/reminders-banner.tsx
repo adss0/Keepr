@@ -6,10 +6,12 @@ import type { ReminderPermission } from "@/data/reminders";
 type Props = {
   permission: ReminderPermission;
   onEnable: () => void;
+  /** From Settings, to say when reminders arrive. */
+  daysBefore: number;
 };
 
 /** Asks the user to turn on reminders, or explains how if they said no before. */
-export function RemindersBanner({ permission, onEnable }: Props) {
+export function RemindersBanner({ permission, onEnable, daysBefore }: Props) {
   const theme = useTheme();
   if (permission === "granted" || permission === "unsupported") return null;
 
@@ -19,7 +21,7 @@ export function RemindersBanner({ permission, onEnable }: Props) {
       <Text style={[styles.text, { color: theme.soonText }]}>
         {denied
           ? "Reminders are turned off. Turn on notifications for Keepr in Settings so you don't miss a deadline."
-          : "Get a reminder 3 days before each deadline, and on the last day."}
+          : `Get a reminder ${daysBefore === 1 ? "the day" : `${daysBefore} days`} before each deadline.`}
       </Text>
       <Pressable
         accessibilityRole="button"
