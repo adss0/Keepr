@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { ExampleReceipt } from "@/components/example-receipt";
 import { Button } from "@/components/form";
@@ -14,6 +14,7 @@ import { usePullToSync } from "@/data/cloud";
 import { useReceiptsStore } from "@/data/receipts";
 import { useReminders } from "@/data/reminders";
 import { useSettings } from "@/data/settings";
+import { useSpaces } from "@/data/spaces";
 import { daysBetween, getNextDeadline, todayIso } from "@/lib/deadlines";
 import { searchReceipts } from "@/lib/search";
 
@@ -33,6 +34,11 @@ export default function ReceiptsScreen() {
   const reminders = useReminders();
   const { settings } = useSettings();
   const pull = usePullToSync();
+  const { spaces } = useSpaces();
+  /** "all", "mine" (personal only) or a space id. */
+  const [filter, setFilter] = useState("all");
+  // A space you've left (or that was deleted) can't stay selected.
+  const activeFilter = filter === "all" || filter === "mine" || spaces.some((space) => space.id === filter) ? filter : "all";
 
   const receipts = useMemo(
     () =>
@@ -44,7 +50,19 @@ export default function ReceiptsScreen() {
     [allReceipts, today],
   );
 
-  const visibleReceipts = useMemo(() => searchReceipts(receipts, query), [receipts, query]);
+  const filteredReceipts = useMemo(
+    () =>
+      activeFilter === "all"
+        ? receipts
+        : receipts.filter((receipt) => (activeFilter === "mine" ? !receipt.spaceId : receipt.spaceId === activeFilter)),
+    [receipts, activeFilter],
+  );
+  const visibleReceipts = useMemo(() => searchReceipts(filteredReceipts, query), [filteredReceipts, query]);
+  const filters = [
+    { id: "all", label: "All" },
+    { id: "mine", label: "Just mine" },
+    ...spaces.map((space) => ({ id: space.id, label: space.name })),
+  ];
 
   const dueThisWeek = receipts.filter((receipt) => {
     const deadline = getNextDeadline(receipt, today);
@@ -112,7 +130,38 @@ export default function ReceiptsScreen() {
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListHeaderComponent={
           <View style={styles.listHeader}>
-            {query.length === 0 && <NextDeadlineCard receipts={allReceipts} today={today} />}
+            {query.length === 0 && <NextDeadlineCard receipts={filteredReceipts} today={today} />}
+            {spaces.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.chips}
+                accessibilityRole="tablist"
+              >
+                {filters.map((item) => {
+                  const selected = item.id === activeFilter;
+                  return (
+                    <Pressable
+                      key={item.id}
+                      accessibilityRole="tab"
+                      accessibilityState={{ selected }}
+                      onPress={() => setFilter(item.id)}
+                      style={[
+                        styles.chip,
+                        {
+                          backgroundColor: selected ? theme.text : theme.card,
+                          borderColor: selected ? theme.text : theme.border,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.chipText, { color: selected ? theme.background : theme.text }]} numberOfLines={1}>
+                        {item.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            )}
             <RemindersBanner
               permission={reminders.permission}
               onEnable={reminders.request}
@@ -139,7 +188,9 @@ export default function ReceiptsScreen() {
           </View>
         }
         ListEmptyComponent={
-          <Text style={[styles.noResults, { color: theme.textMuted }]}>No receipts match “{query.trim()}”.</Text>
+          <Text style={[styles.noResults, { color: theme.textMuted }]}>
+            {query.trim() ? `No receipts match “${query.trim()}”.` : "No receipts here yet."}
+          </Text>
         }
       />
     </View>
@@ -165,6 +216,20 @@ const styles = StyleSheet.create({
   listHeader: {
     gap: 12,
     marginBottom: 16,
+  },
+  chips: {
+    gap: 8,
+  },
+  chip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    maxWidth: 200,
+  },
+  chipText: {
+    fontSize: 14,
+    fontWeight: "600",
   },
   search: {
     flexDirection: "row",

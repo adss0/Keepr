@@ -6,6 +6,7 @@ import { SubscriptionForm } from "@/components/subscription-form";
 import { useTheme } from "@/constants/theme";
 import { useToast } from "@/components/toast";
 import { haptics } from "@/data/haptics";
+import { useCloud } from "@/data/cloud";
 import { useSubscriptions } from "@/data/subscriptions";
 import { subscriptionToInput } from "@/lib/subscription-input";
 import { goBack } from "@/lib/navigation";
@@ -15,6 +16,7 @@ export default function EditSubscriptionScreen() {
   const { subscriptions, updateSubscription, deleteSubscription, restoreSubscription } = useSubscriptions();
   const { showToast } = useToast();
   const subscription = subscriptions.find((item) => item.id === id);
+  const { userId } = useCloud();
   const theme = useTheme();
 
   if (!subscription) {
@@ -28,6 +30,8 @@ export default function EditSubscriptionScreen() {
   return (
     <SubscriptionForm
       initial={subscriptionToInput(subscription)}
+      initialSpaceId={subscription.spaceId}
+      allowPersonal={!subscription.ownerId || subscription.ownerId === userId}
       submitLabel="Save changes"
       onSubmit={(fields) => {
         updateSubscription(subscription.id, fields);

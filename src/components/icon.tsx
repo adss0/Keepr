@@ -17,6 +17,7 @@ export const ICONS = {
   account: { ios: "person.crop.circle", android: "account_circle", web: "account_circle" },
   bell: { ios: "bell", android: "notifications", web: "notifications" },
   close: { ios: "xmark.circle.fill", android: "cancel", web: "cancel" },
+  people: { ios: "person.2", android: "group", web: "group" },
 } as const;
 
 export type IconName = keyof typeof ICONS;
