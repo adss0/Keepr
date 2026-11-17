@@ -1,6 +1,8 @@
 // Supabase Edge Function: reads a photo of a receipt with Google Gemini and returns its details as JSON.
 // The Gemini API key stays here on the server (as the GEMINI_API_KEY secret), never in the app.
-// Only signed-in Keepr users can call it, because Supabase checks their sign-in token first.
+// Only signed-in Keepr users can call it: the function asks Supabase Auth to confirm the caller's sign-in
+// token first. Deploy it with "Verify JWT with legacy secret" turned OFF (--no-verify-jwt), because that
+// older check also lets anyone with the app's public key through.
 
 import { GoogleGenAI } from "npm:@google/genai@^3.2.0";
 
@@ -47,9 +49,25 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
+/** True if the request carries the sign-in token of a real Keepr user, checked with Supabase Auth. */
+async function isSignedInUser(request: Request): Promise<boolean> {
+  const token = request.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
+  const projectKey = request.headers.get("apikey");
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  if (!token || !projectKey || !supabaseUrl) return false;
+
+  const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    headers: { Authorization: `Bearer ${token}`, apikey: projectKey },
+  });
+  if (!response.ok) return false;
+  const user = await response.json().catch(() => null);
+  return typeof user?.id === "string";
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (request.method !== "POST") return json({ error: "Use POST" }, 405);
+  if (!(await isSignedInUser(request))) return json({ error: "Sign in to scan receipts" }, 401);
 
   const apiKey = Deno.env.get("GEMINI_API_KEY");
   if (!apiKey) return json({ error: "Receipt scanning isn't set up on the server" }, 500);
