@@ -12,6 +12,7 @@ import { useCloud } from "@/data/cloud";
 import { useReceipts } from "@/data/receipts";
 import { useReminders } from "@/data/reminders";
 import { useSettings } from "@/data/settings";
+import { useSpaces } from "@/data/spaces";
 import { shareCsv, shareXlsx } from "@/data/share-csv";
 import { useSubscriptions } from "@/data/subscriptions";
 import { todayIso } from "@/lib/deadlines";
@@ -56,6 +57,7 @@ export default function SettingsScreen() {
   const { settings, update } = useSettings();
   const cloud = useCloud();
   const reminders = useReminders();
+  const { spaces } = useSpaces();
   const receipts = useReceipts();
   const { subscriptions } = useSubscriptions();
   const r = settings.reminders;
@@ -80,6 +82,15 @@ export default function SettingsScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <Section title="Account">
           <LinkRow icon="account" title="Account and sync" value={cloud.email ?? STATUS_TEXT[cloud.status]} onPress={() => router.push("/account")} />
+        </Section>
+
+        <Section title="Sharing" footer="Share receipts and subscriptions with your family or organisation.">
+          <LinkRow
+            icon="people"
+            title="Shared spaces"
+            value={spaces.length === 0 ? undefined : spaces.length === 1 ? spaces[0].name : `${spaces.length} spaces`}
+            onPress={() => router.push("/spaces")}
+          />
         </Section>
 
         <Section

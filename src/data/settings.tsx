@@ -3,6 +3,7 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useM
 import { Appearance as RNAppearance, Platform } from "react-native";
 
 import { type Appearance, AppearanceContext } from "@/constants/theme";
+import type { ReceiptsSort, ReceiptsView } from "@/lib/receipt-views";
 import { DEFAULT_REMINDER_OPTIONS, type ReminderOptions } from "@/lib/reminders";
 import type { PaymentMethod, PurchaseChannel } from "@/types/receipt";
 
@@ -14,6 +15,9 @@ export type Settings = {
   defaultChannel: PurchaseChannel;
   defaultPaymentMethod: PaymentMethod;
   appearance: Appearance;
+  /** How the Receipts tab shows receipts, and in what order. */
+  receiptsView: ReceiptsView;
+  receiptsSort: ReceiptsSort;
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -21,6 +25,8 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultChannel: "in_store",
   defaultPaymentMethod: "debit_card",
   appearance: "system",
+  receiptsView: "list",
+  receiptsSort: "deadline",
 };
 
 type SettingsContextValue = {

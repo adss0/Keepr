@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { DateField } from "@/components/date-field";
 import { Button, Field, Segmented } from "@/components/form";
 import { ScanPanel } from "@/components/scan-panel";
+import { SpacePicker } from "@/components/space-picker";
 import { useTheme } from "@/constants/theme";
 import { photosStoredLocally, type ReceiptPhoto } from "@/data/receipt-photos";
 import { haptics } from "@/data/haptics";
@@ -38,14 +39,29 @@ type Props = {
   allowScan?: boolean;
   /** Open the camera as soon as the form appears (with allowScan). */
   autoScan?: boolean;
+  /** The shared space it's in ("" or undefined for personal). */
+  initialSpaceId?: string;
+  /** False for someone else's shared receipt, which can't become your personal one. */
+  allowPersonal?: boolean;
 };
 
-export function ReceiptForm({ initial, submitLabel, onSubmit, onSubmitMany, allowScan = false, autoScan = false }: Props) {
+export function ReceiptForm({
+  initial,
+  submitLabel,
+  onSubmit,
+  onSubmitMany,
+  allowScan = false,
+  autoScan = false,
+  initialSpaceId,
+  allowPersonal = true,
+}: Props) {
   const theme = useTheme();
   const [input, setInput] = useState(initial);
   const [errors, setErrors] = useState<ReceiptInputErrors>({});
   const [photo, setPhoto] = useState<ReceiptPhoto>();
   const [items, setItems] = useState<ScannedItem[]>([]);
+  const [spaceId, setSpaceId] = useState(initialSpaceId ?? "");
+  const withSpace = (fields: ReceiptFields): ReceiptFields => (spaceId ? { ...fields, spaceId } : fields);
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
 
   /** Errors sit next to their fields near the top, so bring them into view. */
@@ -66,7 +82,7 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, onSubmitMany, allo
       showErrors(result.errors);
       return;
     }
-    onSubmit(result.value, photo);
+    onSubmit(withSpace(result.value), photo);
   }
 
   function pickItem(item: ScannedItem) {
@@ -90,7 +106,7 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, onSubmitMany, allo
         showErrors(result.errors.price ? { ...result.errors, price: `Enter a price for ${item.name}` } : result.errors);
         return;
       }
-      values.push(result.value);
+      values.push(withSpace(result.value));
     }
     onSubmitMany?.(values, photo);
   }
@@ -214,6 +230,7 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, onSubmitMany, allo
         options={PAYMENT_OPTIONS}
         onChange={(value) => update("paymentMethod", value)}
       />
+      <SpacePicker value={spaceId} onChange={setSpaceId} allowPersonal={allowPersonal} />
       <Field
         label="Shop return window (days)"
         placeholder="e.g. 28"

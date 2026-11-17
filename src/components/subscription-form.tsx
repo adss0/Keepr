@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet } from "react-native";
 
 import { DateField } from "@/components/date-field";
 import { Button, Field, Segmented } from "@/components/form";
+import { SpacePicker } from "@/components/space-picker";
 import { useTheme } from "@/constants/theme";
 import type { SubscriptionFields } from "@/data/subscriptions";
 import {
@@ -24,12 +25,17 @@ type Props = {
   onSubmit: (fields: SubscriptionFields) => void;
   /** Extra buttons under the form, such as Delete. */
   footer?: ReactNode;
+  /** The shared space it's in ("" or undefined for personal). */
+  initialSpaceId?: string;
+  /** False for someone else's shared subscription, which can't become your personal one. */
+  allowPersonal?: boolean;
 };
 
-export function SubscriptionForm({ initial, submitLabel, onSubmit, footer }: Props) {
+export function SubscriptionForm({ initial, submitLabel, onSubmit, footer, initialSpaceId, allowPersonal = true }: Props) {
   const theme = useTheme();
   const [input, setInput] = useState(initial);
   const [errors, setErrors] = useState<SubscriptionInputErrors>({});
+  const [spaceId, setSpaceId] = useState(initialSpaceId ?? "");
 
   function update<K extends keyof SubscriptionInput>(key: K, value: SubscriptionInput[K]) {
     setInput((current) => ({ ...current, [key]: value }));
@@ -42,7 +48,7 @@ export function SubscriptionForm({ initial, submitLabel, onSubmit, footer }: Pro
       setErrors(result.errors);
       return;
     }
-    onSubmit(result.value);
+    onSubmit(spaceId ? { ...result.value, spaceId } : result.value);
   }
 
   return (
@@ -67,6 +73,7 @@ export function SubscriptionForm({ initial, submitLabel, onSubmit, footer }: Pro
         error={errors.price}
       />
       <Segmented label="How often?" value={input.cycle} options={CYCLE_OPTIONS} onChange={(value) => update("cycle", value)} />
+      <SpacePicker value={spaceId} onChange={setSpaceId} allowPersonal={allowPersonal} />
       <DateField
         label="Next payment"
         hint="Keepr moves it on automatically after each payment."

@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { DeadlinePill, toneFor } from "@/components/deadline-pill";
 import { PressScale } from "@/components/press-scale";
 import { useTheme } from "@/constants/theme";
+import { useSpaces } from "@/data/spaces";
 import { daysBetween, getNextDeadline } from "@/lib/deadlines";
 import { formatDate, formatPrice } from "@/lib/format";
 import type { Receipt } from "@/types/receipt";
@@ -20,6 +21,7 @@ export function ReceiptCard({ receipt, today }: Props) {
   const tone = toneFor(theme, daysLeft);
   const currentYear = Number(today.slice(0, 4));
   const channel = receipt.channel === "online" ? "online" : "in store";
+  const space = useSpaces().spaceName(receipt.spaceId);
 
   return (
     <Link href={{ pathname: "/receipt/[id]", params: { id: receipt.id } }} asChild>
@@ -38,6 +40,11 @@ export function ReceiptCard({ receipt, today }: Props) {
         <Text style={[styles.meta, { color: theme.textMuted }]}>
           {receipt.retailer} · {channel} · {formatDate(receipt.purchaseDate, currentYear)}
         </Text>
+        {space && (
+          <Text style={[styles.space, { color: theme.accent }]} numberOfLines={1}>
+            Shared · {space}
+          </Text>
+        )}
         <View style={[styles.tear, { borderColor: theme.border }]} />
         <View style={styles.pill}>
           <DeadlinePill deadline={deadline} today={today} />
@@ -78,6 +85,10 @@ const styles = StyleSheet.create({
   },
   meta: {
     fontSize: 13,
+  },
+  space: {
+    fontSize: 12,
+    fontWeight: "600",
   },
   pill: {
     marginTop: 8,

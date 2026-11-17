@@ -12,6 +12,7 @@ import { haptics } from "@/data/haptics";
 import { usePhotoUri } from "@/data/receipt-photos";
 import { shareReceiptPdf } from "@/data/receipt-pdf";
 import { useReceipt, useReceiptsStore } from "@/data/receipts";
+import { useSpaces } from "@/data/spaces";
 import { DEADLINE_EXPLANATIONS, getDeadlines, todayIso } from "@/lib/deadlines";
 import { formatDate, formatPrice } from "@/lib/format";
 import { PAYMENT_LABELS } from "@/lib/export";
@@ -27,6 +28,7 @@ export default function ReceiptDetailScreen() {
   const { userId } = useCloud();
   const photoUri = usePhotoUri(receipt?.photo, receipt?.ownerId ?? userId);
   const [exporting, setExporting] = useState(false);
+  const spaces = useSpaces();
 
   if (!receipt) {
     return (
@@ -43,6 +45,12 @@ export default function ReceiptDetailScreen() {
     ["Bought", `${formatDate(receipt.purchaseDate, currentYear)} · ${receipt.channel === "online" ? "online" : "in store"}`],
     ["Paid by", PAYMENT_LABELS[receipt.paymentMethod]],
   ];
+  const sharedIn = spaces.spaceName(receipt.spaceId);
+  if (sharedIn) {
+    details.push(["Shared in", sharedIn]);
+    const addedBy = spaces.memberName(receipt.spaceId, receipt.ownerId);
+    if (addedBy) details.push(["Added by", addedBy]);
+  }
   if (receipt.returnWindowDays !== undefined) {
     details.push(["Shop return window", `${receipt.returnWindowDays} days`]);
   }
