@@ -5,6 +5,7 @@ import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Tex
 import { ExampleReceipt } from "@/components/example-receipt";
 import { Button } from "@/components/form";
 import { Icon } from "@/components/icon";
+import { NextDeadlineCard } from "@/components/next-deadline-card";
 import { ReceiptCard } from "@/components/receipt-card";
 import { RemindersBanner } from "@/components/reminders-banner";
 import { ScreenHeader } from "@/components/screen-header";
@@ -111,6 +112,7 @@ export default function ReceiptsScreen() {
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListHeaderComponent={
           <View style={styles.listHeader}>
+            {query.length === 0 && <NextDeadlineCard receipts={allReceipts} today={today} />}
             <RemindersBanner
               permission={reminders.permission}
               onEnable={reminders.request}

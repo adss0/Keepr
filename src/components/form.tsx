@@ -171,9 +171,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderRadius: 14,
+    paddingVertical: 13,
     paddingHorizontal: 16,
+    minHeight: 48,
   },
   buttonText: {
     fontSize: 16,

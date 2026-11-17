@@ -38,6 +38,7 @@ export function ReceiptCard({ receipt, today }: Props) {
         <Text style={[styles.meta, { color: theme.textMuted }]}>
           {receipt.retailer} · {channel} · {formatDate(receipt.purchaseDate, currentYear)}
         </Text>
+        <View style={[styles.tear, { borderColor: theme.border }]} />
         <View style={styles.pill}>
           <DeadlinePill deadline={deadline} today={today} />
         </View>
@@ -49,9 +50,16 @@ export function ReceiptCard({ receipt, today }: Props) {
 const styles = StyleSheet.create({
   card: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: 16,
+    padding: 16,
     gap: 4,
+  },
+  tear: {
+    // Dashed on iOS and the web; Android draws single-side dashes as a solid hairline, which still reads fine.
+    borderTopWidth: 1,
+    borderStyle: "dashed",
+    marginTop: 10,
+    marginHorizontal: -16,
   },
   row: {
     flexDirection: "row",
@@ -65,11 +73,13 @@ const styles = StyleSheet.create({
   },
   price: {
     fontSize: 16,
+    fontWeight: "600",
+    fontVariant: ["tabular-nums"],
   },
   meta: {
     fontSize: 13,
   },
   pill: {
-    marginTop: 6,
+    marginTop: 8,
   },
 });
