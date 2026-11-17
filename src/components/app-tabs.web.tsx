@@ -10,6 +10,7 @@ const TABS: { name: string; href: Href; label: string; icon: IconName }[] = [
   { name: "index", href: HOME, label: "Receipts", icon: "receipts" },
   { name: "calendar", href: "/calendar", label: "Calendar", icon: "calendar" },
   { name: "subscriptions", href: "/subscriptions", label: "Subscriptions", icon: "subscriptions" },
+  { name: "insights", href: "/insights", label: "Insights", icon: "insights" },
   { name: "settings", href: "/settings", label: "Settings", icon: "settings" },
 ];
 
