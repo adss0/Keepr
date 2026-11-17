@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 
+import { ExampleReceipt } from "@/components/example-receipt";
 import { Button } from "@/components/form";
 import { ReceiptCard } from "@/components/receipt-card";
 import { RemindersBanner } from "@/components/reminders-banner";
@@ -30,7 +31,7 @@ const NO_DEADLINE = "9999-12-31";
 export default function ReceiptsScreen() {
   const theme = useTheme();
   const today = todayIso();
-  const { receipts: allReceipts, ready, addSampleReceipts } = useReceiptsStore();
+  const { receipts: allReceipts, ready } = useReceiptsStore();
   const [query, setQuery] = useState("");
   const reminders = useReminders();
   const pull = usePullToSync();
@@ -91,6 +92,7 @@ export default function ReceiptsScreen() {
     return (
       <View style={[styles.centered, { backgroundColor: theme.background }]}>
         {header}
+        <ExampleReceipt today={today} />
         <Text style={[styles.emptyTitle, { color: theme.text }]}>Keep your first receipt</Text>
         <Text style={[styles.emptyBody, { color: theme.textMuted }]}>
           Add a purchase and Keepr works out your return, refund and warranty deadlines.
@@ -98,7 +100,6 @@ export default function ReceiptsScreen() {
         <View style={styles.emptyButtons}>
           <Button title="Scan a receipt" variant="primary" onPress={scanReceipt} />
           <Button title="Add one by hand" onPress={() => router.push("/receipt/new")} />
-          <Button title="Try it with sample receipts" variant="ghost" onPress={addSampleReceipts} />
         </View>
       </View>
     );
