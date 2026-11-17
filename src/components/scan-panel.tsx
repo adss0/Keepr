@@ -7,11 +7,11 @@ import { Button } from "@/components/form";
 import { useTheme } from "@/constants/theme";
 import { useCloud } from "@/data/cloud";
 import { haptics } from "@/data/haptics";
-import { extractReceipt, pickReceiptPhoto } from "@/data/scan-receipt";
+import { extractReceipt, pickReceiptPhoto, type ReceiptPhoto } from "@/data/scan-receipt";
 
 type Props = {
-  /** Called with the raw scan result to fill in the form. Returns how many details it filled in. */
-  onScanned: (result: unknown) => number;
+  /** Called with the raw scan result and the photo, to fill in the form. Returns how many details it filled in. */
+  onScanned: (result: unknown, photo: ReceiptPhoto) => number;
   /** Open the camera straight away, for the home screen's Scan button. Ignored on the web. */
   autoStart?: boolean;
 };
@@ -57,7 +57,7 @@ export function ScanPanel({ onScanned, autoStart = false }: Props) {
         setMessage("That doesn't look like a receipt. Try another photo.");
         return;
       }
-      const filled = onScanned(result);
+      const filled = onScanned(result, photo);
       if (filled > 0) haptics.success();
       setMessage(
         filled > 0

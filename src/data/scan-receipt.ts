@@ -1,9 +1,10 @@
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import * as ImagePicker from "expo-image-picker";
 
+import type { ReceiptPhoto } from "@/data/receipt-photos";
 import { supabase } from "@/data/supabase";
 
-export type ReceiptPhoto = { base64: string; mediaType: string };
+export type { ReceiptPhoto };
 
 /** Lets the user take or choose a photo of a receipt. Undefined if they cancel. */
 export async function pickReceiptPhoto(source: "camera" | "library"): Promise<ReceiptPhoto | undefined> {
