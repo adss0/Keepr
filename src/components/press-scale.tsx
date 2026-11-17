@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from "react";
 import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
-import Animated, { useReducedMotion } from "react-native-reanimated";
+import Animated, { cubicBezier, useReducedMotion } from "react-native-reanimated";
 
 type Props = Omit<PressableProps, "style" | "children"> & {
   style?: StyleProp<ViewStyle>;
@@ -32,7 +32,7 @@ export function PressScale({ style, children, onPressIn, onPressOut, ...pressabl
             opacity: pressed && reduced ? 0.7 : 1,
             transitionProperty: ["transform", "opacity"],
             transitionDuration: 120,
-            transitionTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)",
+            transitionTimingFunction: cubicBezier(0.23, 1, 0.32, 1),
           },
         ]}
       >
