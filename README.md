@@ -229,6 +229,7 @@ Keepr/
 │   │   ├── _layout.tsx #   Root stack: tabs, plus detail and form screens on top
 │   │   ├── (tabs)/     #   Tab screens: Receipts (index), Calendar, Subscriptions, Insights and Settings
 │   │   ├── account.tsx #   Sign in and cloud sync
+│   │   ├── spaces/     #   Shared spaces: list, create and join (index), and one space's members and invites ([id])
 │   │   ├── receipt/    #   Receipt detail ([id]), add (new), edit, rights and full-screen photo screens
 │   │   └── subscriptions/ #  Add (new) and edit (edit/[id]) subscription screens
 │   ├── components/     # Reusable UI
@@ -245,6 +246,7 @@ Keepr/
 │   │   ├── reminders-banner.tsx # Asks to turn on reminders
 │   │   ├── scan-panel.tsx # Scan a photo, PDF or screenshot
 │   │   ├── screen-header.tsx # Large title and round action buttons for tab screens
+│   │   ├── space-picker.tsx # "Who's it for?": just me or a shared space
 │   │   ├── subscription-form.tsx # Add/edit subscription form
 │   │   └── toast.tsx   #   Short messages with Undo
 │   ├── constants/      # Shared constants
@@ -259,6 +261,7 @@ Keepr/
 │   │   ├── reminders.tsx # Schedules deadline notifications on the phone
 │   │   ├── scan-receipt.ts # Picks a photo or document and calls the AI scanning function
 │   │   ├── settings.tsx #  Saved settings (reminders, defaults, theme)
+│   │   ├── spaces.tsx  #   Shared spaces: load, create, invite, join and manage
 │   │   ├── share-csv.ts #  Saves and shares CSV and Excel exports
 │   │   ├── subscriptions.tsx # Subscriptions store
 │   │   └── supabase.ts #   Supabase client (only when configured)
@@ -276,6 +279,7 @@ Keepr/
 │   │   ├── rights.ts   #   UK consumer rights engine and claim letters
 │   │   ├── scan-result.ts # Turns a scan into form fields and items
 │   │   ├── search.ts   #   Receipt search
+│   │   ├── spaces.ts   #   Shared-space labels and invite-code formatting
 │   │   ├── spending-workbook.ts # The Excel spending breakdown's sheets
 │   │   ├── subscription-input.ts # Checks and parses the subscription form
 │   │   ├── subscriptions.ts # Costs, totals and renewal dates
