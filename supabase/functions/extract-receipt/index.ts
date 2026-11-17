@@ -97,7 +97,8 @@ Deno.serve(async (request) => {
   if (!image || image.length > MAX_IMAGE_BASE64_LENGTH) return json({ error: "The file is missing or larger than 5 MB" }, 400);
   if (!ALLOWED_MEDIA_TYPES.includes(mediaType)) return json({ error: "Use a photo, screenshot or PDF" }, 400);
 
-  const client = new GoogleGenAI({ apiKey });
+  // Image input in the Interactions API is only on v1beta; the default v1 rejects it with a 400.
+  const client = new GoogleGenAI({ apiKey, apiVersion: "v1beta" });
 
   let outputText: string | undefined;
   try {
@@ -112,9 +113,12 @@ Deno.serve(async (request) => {
     outputText = interaction.output_text;
   } catch (error) {
     const status = (error as { status?: number }).status;
+    const reason = error instanceof Error ? error.message : String(error);
+    console.error(`Gemini request failed (${status ?? "no status"}): ${reason}`);
     if (status === 429) return json({ error: "Too many scans right now. Try again in a minute." }, 429);
     if (status === 400 || status === 401 || status === 403) {
-      return json({ error: "Receipt scanning isn't set up correctly on the server" }, 500);
+      // Gemini's reason (bad key, API not enabled, region not supported) is what's needed to fix the setup.
+      return json({ error: `Receipt scanning isn't set up correctly on the server. Gemini said: ${reason}` }, 500);
     }
     return json({ error: "The scanning service had a problem. Try again." }, 502);
   }
