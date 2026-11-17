@@ -32,8 +32,9 @@ const COMING_UP_DAYS = 60;
 
 function eventColour(theme: Theme, event: CalendarEvent, today: string): string {
   if (event.kind === "renewal") return theme.accent;
-  if (event.kind === "trial") return theme.soonText;
+  if (event.kind === "trial") return theme.trial;
   const days = daysBetween(today, event.date);
+  if (days < 0) return theme.textMuted;
   return days <= 3 ? theme.urgentText : days <= 14 ? theme.soonText : theme.calmText;
 }
 
@@ -182,8 +183,9 @@ export default function CalendarScreen() {
 
           <View style={styles.legend}>
             {[
-              { label: "Deadline", colour: theme.urgentText },
-              { label: "Trial ends", colour: theme.soonText },
+              { label: "Due in 3 days", colour: theme.urgentText },
+              { label: "Deadline", colour: theme.soonText },
+              { label: "Trial ends", colour: theme.trial },
               { label: "Payment", colour: theme.accent },
             ].map((item) => (
               <View key={item.label} style={styles.legendItem}>
