@@ -4,6 +4,7 @@ import { ReceiptForm } from "@/components/receipt-form";
 import { useToast } from "@/components/toast";
 import { haptics } from "@/data/haptics";
 import { useReceiptsStore } from "@/data/receipts";
+import { useSettings } from "@/data/settings";
 import { todayIso } from "@/lib/deadlines";
 import { emptyReceiptInput } from "@/lib/receipt-input";
 
@@ -11,10 +12,15 @@ export default function NewReceiptScreen() {
   const { addReceipt } = useReceiptsStore();
   const { showToast } = useToast();
   const { scan } = useLocalSearchParams<{ scan?: string }>();
+  const { settings } = useSettings();
 
   return (
     <ReceiptForm
-      initial={emptyReceiptInput(todayIso())}
+      initial={{
+        ...emptyReceiptInput(todayIso()),
+        channel: settings.defaultChannel,
+        paymentMethod: settings.defaultPaymentMethod,
+      }}
       submitLabel="Save receipt"
       allowScan
       autoScan={scan === "camera"}

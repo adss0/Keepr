@@ -1,12 +1,13 @@
 import { router } from "expo-router";
 import * as Notifications from "expo-notifications";
 import { AndroidImportance } from "expo-notifications";
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Platform } from "react-native";
 
 import { useReceiptsStore } from "@/data/receipts";
 import { useSubscriptions } from "@/data/subscriptions";
-import { planReminders } from "@/lib/reminders";
+import { planReminders, type ReminderOptions } from "@/lib/reminders";
+import { useSettings } from "@/data/settings";
 import type { Receipt } from "@/types/receipt";
 import type { Subscription } from "@/types/subscription";
 
@@ -64,7 +65,11 @@ function useReminderSync(
   subscriptions: Subscription[],
   ready: boolean,
   permission: ReminderPermission,
+  options: ReminderOptions,
 ) {
+  // Syncs run one after another: an overlapping run could schedule after the next run's "cancel all" and duplicate it.
+  const queue = useRef<Promise<void>>(Promise.resolve());
+
   useEffect(() => {
     if (!ready || permission !== "granted") return;
     let cancelled = false;
@@ -72,7 +77,7 @@ function useReminderSync(
     async function sync() {
       await ensureAndroidChannel();
       await Notifications.cancelAllScheduledNotificationsAsync();
-      for (const reminder of planReminders(receipts, new Date(), subscriptions)) {
+      for (const reminder of planReminders(receipts, new Date(), subscriptions, options)) {
         if (cancelled) return;
         await Notifications.scheduleNotificationAsync({
           content: {
@@ -89,11 +94,13 @@ function useReminderSync(
       }
     }
 
-    sync().catch((error: unknown) => console.warn("Couldn't schedule reminders", error));
+    queue.current = queue.current
+      .then(() => (cancelled ? undefined : sync()))
+      .catch((error: unknown) => console.warn("Couldn't schedule reminders", error));
     return () => {
       cancelled = true;
     };
-  }, [receipts, subscriptions, ready, permission]);
+  }, [receipts, subscriptions, ready, permission, options]);
 }
 
 type RemindersContextValue = {
@@ -104,7 +111,6 @@ type RemindersContextValue = {
 
 const RemindersContext = createContext<RemindersContextValue | null>(null);
 
-/** Schedules reminders for every saved receipt and subscription once notifications are allowed. */
 /** Tapping a reminder opens the receipt or subscription it's about, including when it starts the app. */
 function useOpenRemindersOnTap() {
   useEffect(() => {
@@ -135,7 +141,8 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
   const { receipts, ready: receiptsReady } = useReceiptsStore();
   const { subscriptions, ready: subscriptionsReady } = useSubscriptions();
   const { permission, request } = useReminderPermission();
-  useReminderSync(receipts, subscriptions, receiptsReady && subscriptionsReady, permission);
+  const { settings, ready: settingsReady } = useSettings();
+  useReminderSync(receipts, subscriptions, receiptsReady && subscriptionsReady && settingsReady, permission, settings.reminders);
   useOpenRemindersOnTap();
 
   return <RemindersContext.Provider value={{ permission, request }}>{children}</RemindersContext.Provider>;

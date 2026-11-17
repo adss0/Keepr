@@ -4,15 +4,9 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { Button, Field } from "@/components/form";
 import { useTheme } from "@/constants/theme";
-import { type CloudStatus, useCloud } from "@/data/cloud";
+import { useCloud } from "@/data/cloud";
+import { STATUS_TEXT } from "@/lib/cloud-status";
 
-const STATUS_TEXT: Record<CloudStatus, string> = {
-  not_set_up: "Cloud sync isn't set up",
-  signed_out: "Not signed in",
-  syncing: "Syncing…",
-  synced: "Backed up",
-  error: "Couldn't sync",
-};
 
 function SignInForm() {
   const theme = useTheme();
