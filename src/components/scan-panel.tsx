@@ -7,7 +7,7 @@ import { Button } from "@/components/form";
 import { useTheme } from "@/constants/theme";
 import { useCloud } from "@/data/cloud";
 import { haptics } from "@/data/haptics";
-import { extractReceipt, pickReceiptPhoto, type ReceiptPhoto } from "@/data/scan-receipt";
+import { extractReceipt, pickReceiptDocument, pickReceiptPhoto, type ReceiptPhoto } from "@/data/scan-receipt";
 
 type Props = {
   /** Called with the raw scan result and the photo, to fill in the form. Returns how many details it filled in. */
@@ -38,7 +38,7 @@ export function ScanPanel({ onScanned, autoStart = false }: Props) {
       <View style={[styles.panel, { backgroundColor: theme.card, borderColor: theme.border }]}>
         <Text style={[styles.title, { color: theme.text }]}>Scan a receipt</Text>
         <Text style={[styles.text, { color: theme.textMuted }]}>
-          Take a photo and Keepr fills in the product, shop, price, date and payment for you. Scanning needs a
+          Take a photo (or pick a PDF or screenshot) and Keepr fills in the product, shop, price, date and payment for you. Scanning needs a
           one-time setup first: a free Supabase project and a free Gemini API key (see docs/cloud-setup.md). Until then,
           fill in the details below by hand.
         </Text>
@@ -46,10 +46,10 @@ export function ScanPanel({ onScanned, autoStart = false }: Props) {
     );
   }
 
-  async function scan(source: "camera" | "library") {
+  async function scan(source: "camera" | "library" | "document") {
     setMessage(undefined);
     try {
-      const photo = await pickReceiptPhoto(source);
+      const photo = source === "document" ? await pickReceiptDocument() : await pickReceiptPhoto(source);
       if (!photo) return;
       setBusy(true);
       const result = await extractReceipt(photo);
@@ -82,7 +82,14 @@ export function ScanPanel({ onScanned, autoStart = false }: Props) {
       ) : (
         <>
           <Button title="Scan a receipt" variant="primary" onPress={() => scan("camera")} />
-          <Button title="Choose a photo" onPress={() => scan("library")} />
+          <View style={styles.row}>
+            <View style={styles.half}>
+              <Button title="Choose a photo" onPress={() => scan("library")} />
+            </View>
+            <View style={styles.half}>
+              <Button title="PDF or screenshot" onPress={() => scan("document")} />
+            </View>
+          </View>
         </>
       )}
       {message && (
@@ -100,6 +107,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     gap: 10,
+  },
+  row: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  half: {
+    flex: 1,
   },
   busy: {
     flexDirection: "row",
