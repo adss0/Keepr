@@ -132,6 +132,8 @@ All features are free for now.
 
 - Forgot password uses Supabase's emailed reset link, which reopens Keepr at /reset-password. Email templates can't be edited on the free plan without custom SMTP, so a code-based reset isn't possible yet.
 
+- Scanning is one tap from home: the Scan button opens Add receipt with the camera already open (on phones; browsers need a second tap), and the form says how many details were filled in.
+
 ## Notes and to-dos
 
 - Before launch: move Gemini scanning to a paid plan (or another provider) so receipt photos aren't used for training.

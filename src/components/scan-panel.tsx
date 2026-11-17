@@ -1,6 +1,6 @@
 import { router } from "expo-router";
-import { useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/form";
 import { useTheme } from "@/constants/theme";
@@ -8,16 +8,28 @@ import { useCloud } from "@/data/cloud";
 import { extractReceipt, pickReceiptPhoto } from "@/data/scan-receipt";
 
 type Props = {
-  /** Called with the raw scan result, to fill in the form. */
-  onScanned: (result: unknown) => void;
+  /** Called with the raw scan result to fill in the form. Returns how many details it filled in. */
+  onScanned: (result: unknown) => number;
+  /** Open the camera straight away, for the home screen's Scan button. Ignored on the web. */
+  autoStart?: boolean;
 };
 
 /** "Scan a receipt" buttons at the top of the add form, or what's needed before scanning can work. */
-export function ScanPanel({ onScanned }: Props) {
+export function ScanPanel({ onScanned, autoStart = false }: Props) {
   const theme = useTheme();
   const { status } = useCloud();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
+  const autoStarted = useRef(false);
+  const canScan = status !== "not_set_up" && status !== "signed_out";
+
+  // Browsers only open the camera from a tap, so on the web the user taps Scan themselves.
+  useEffect(() => {
+    if (!autoStart || !canScan || autoStarted.current || Platform.OS === "web") return;
+    autoStarted.current = true;
+    const timer = setTimeout(() => scan("camera"), 300);
+    return () => clearTimeout(timer);
+  });
 
   if (status === "not_set_up") {
     return (
@@ -54,8 +66,12 @@ export function ScanPanel({ onScanned }: Props) {
         setMessage("That doesn't look like a receipt. Try another photo.");
         return;
       }
-      onScanned(result);
-      setMessage("Check the details below, then save.");
+      const filled = onScanned(result);
+      setMessage(
+        filled > 0
+          ? `Filled in ${filled} ${filled === 1 ? "detail" : "details"} from your receipt. Check them, then save.`
+          : "Couldn't read any details. Try a clearer, flatter photo, or fill them in below.",
+      );
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error));
     } finally {

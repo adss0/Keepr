@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 
 import { emptyReceiptInput } from "@/lib/receipt-input";
-import { scanResultToInput } from "@/lib/scan-result";
+import { countChangedFields, scanResultToInput } from "@/lib/scan-result";
 
 const blank = emptyReceiptInput("2026-11-12");
 
@@ -56,5 +56,16 @@ describe("scanResultToInput", () => {
   it("returns undefined when the image isn't a receipt", () => {
     expect(scanResultToInput({ is_receipt: false }, blank)).toBeUndefined();
     expect(scanResultToInput("nonsense", blank)).toBeUndefined();
+  });
+});
+
+describe("countChangedFields", () => {
+  it("counts the fields a scan filled in", () => {
+    const after = scanResultToInput({ is_receipt: true, retailer: "Argos", product: "Kettle", total_pence: 3499 }, blank);
+    expect(after && countChangedFields(blank, after)).toBe(3);
+  });
+
+  it("is zero when nothing changed", () => {
+    expect(countChangedFields(blank, { ...blank })).toBe(0);
   });
 });

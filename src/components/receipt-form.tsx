@@ -7,7 +7,7 @@ import { useTheme } from "@/constants/theme";
 import type { ReceiptFields } from "@/data/receipts";
 import { todayIso } from "@/lib/deadlines";
 import { type ReceiptInput, type ReceiptInputErrors, validateReceiptInput } from "@/lib/receipt-input";
-import { scanResultToInput } from "@/lib/scan-result";
+import { countChangedFields, scanResultToInput } from "@/lib/scan-result";
 import type { PaymentMethod, PurchaseChannel } from "@/types/receipt";
 
 const CHANNEL_OPTIONS: { value: PurchaseChannel; label: string }[] = [
@@ -28,9 +28,11 @@ type Props = {
   onSubmit: (fields: ReceiptFields) => void;
   /** Show the "Scan a receipt" buttons (for new receipts). */
   allowScan?: boolean;
+  /** Open the camera as soon as the form appears (with allowScan). */
+  autoScan?: boolean;
 };
 
-export function ReceiptForm({ initial, submitLabel, onSubmit, allowScan = false }: Props) {
+export function ReceiptForm({ initial, submitLabel, onSubmit, allowScan = false, autoScan = false }: Props) {
   const theme = useTheme();
   const [input, setInput] = useState(initial);
   const [errors, setErrors] = useState<ReceiptInputErrors>({});
@@ -57,9 +59,13 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, allowScan = false 
     >
       {allowScan && (
         <ScanPanel
+          autoStart={autoScan}
           onScanned={(result) => {
-            setInput((current) => scanResultToInput(result, current) ?? current);
+            const scanned = scanResultToInput(result, input);
+            if (!scanned) return 0;
+            setInput(scanned);
             setErrors({});
+            return countChangedFields(input, scanned);
           }}
         />
       )}
