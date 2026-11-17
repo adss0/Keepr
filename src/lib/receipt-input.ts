@@ -16,6 +16,11 @@ export type ReceiptInputErrors = Partial<Record<keyof ReceiptInput, string>>;
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
+/** Upper limits, so a typo can't produce a date too far away to calculate (which would crash the app). */
+export const MAX_RETURN_WINDOW_DAYS = 3650; // 10 years
+export const MAX_WARRANTY_MONTHS = 1200; // 100 years
+export const MAX_PRICE_PENCE = 100_000_000; // £1,000,000, well inside the database's integer column
+
 /** "79.99", "£79.99" or "1,234.5" → pence. Undefined if it isn't a valid amount. */
 export function parsePriceToPence(text: string): number | undefined {
   const cleaned = text.replace(/[£,\s]/g, "");
@@ -78,6 +83,7 @@ export function validateReceiptInput(
 
   const pricePence = parsePriceToPence(input.price);
   if (pricePence === undefined) errors.price = "Enter a price, like 79.99";
+  else if (pricePence > MAX_PRICE_PENCE) errors.price = "Enter a price under £1,000,000";
 
   if (!isRealDate(input.purchaseDate)) {
     errors.purchaseDate = "Choose the date you bought it";
@@ -88,11 +94,15 @@ export function validateReceiptInput(
   const returnWindowDays = input.returnWindowDays.trim() ? parseWholeNumber(input.returnWindowDays) : undefined;
   if (input.returnWindowDays.trim() && returnWindowDays === undefined) {
     errors.returnWindowDays = "Enter a number of days, or leave it blank";
+  } else if (returnWindowDays !== undefined && returnWindowDays > MAX_RETURN_WINDOW_DAYS) {
+    errors.returnWindowDays = "Enter 3650 days (10 years) or fewer";
   }
 
   const warrantyMonths = input.warrantyMonths.trim() ? parseWholeNumber(input.warrantyMonths) : undefined;
   if (input.warrantyMonths.trim() && warrantyMonths === undefined) {
     errors.warrantyMonths = "Enter a number of months, or leave it blank";
+  } else if (warrantyMonths !== undefined && warrantyMonths > MAX_WARRANTY_MONTHS) {
+    errors.warrantyMonths = "Enter 1200 months (100 years) or fewer";
   }
 
   if (Object.keys(errors).length > 0 || pricePence === undefined) return { errors };

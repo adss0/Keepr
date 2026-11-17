@@ -1,9 +1,13 @@
 import { FunctionsHttpError } from "@supabase/supabase-js";
+import * as DocumentPicker from "expo-document-picker";
+import { File } from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
+import { Platform } from "react-native";
 
+import type { ReceiptPhoto } from "@/data/receipt-photos";
 import { supabase } from "@/data/supabase";
 
-export type ReceiptPhoto = { base64: string; mediaType: string };
+export type { ReceiptPhoto };
 
 /** Lets the user take or choose a photo of a receipt. Undefined if they cancel. */
 export async function pickReceiptPhoto(source: "camera" | "library"): Promise<ReceiptPhoto | undefined> {
@@ -23,6 +27,28 @@ export async function pickReceiptPhoto(source: "camera" | "library"): Promise<Re
   const asset = result.assets[0];
   if (!asset.base64) throw new Error("Couldn't read that photo. Try another one.");
   return { base64: asset.base64, mediaType: asset.mimeType ?? "image/jpeg" };
+}
+
+/** The scan function accepts up to about 5 MB. */
+const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024;
+
+/** Lets the user pick a PDF or screenshot of a receipt or order confirmation. Undefined if they cancel. */
+export async function pickReceiptDocument(): Promise<ReceiptPhoto | undefined> {
+  const result = await DocumentPicker.getDocumentAsync({
+    type: ["application/pdf", "image/*"],
+    copyToCacheDirectory: true,
+  });
+  if (result.canceled) return undefined;
+
+  const asset = result.assets[0];
+  if (asset.size !== undefined && asset.size > MAX_DOCUMENT_BYTES) {
+    throw new Error("That file is over 5 MB. Try a smaller PDF or a screenshot.");
+  }
+  const mediaType = asset.mimeType ?? (asset.name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "image/png");
+  // Browsers hand over the file as base64 already; on phones it's read from the copy in the cache.
+  const base64 = Platform.OS === "web" ? asset.base64?.replace(/^data:[^,]*,/, "") : await new File(asset.uri).base64();
+  if (!base64) throw new Error("Couldn't read that file. Try another one.");
+  return { base64, mediaType };
 }
 
 /** Sends the photo to the extract-receipt function, which reads it with Google Gemini. Returns its raw JSON. */

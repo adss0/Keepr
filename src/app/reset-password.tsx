@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, Text } from "react-native";
 
 import { Button, Field } from "@/components/form";
 import { useTheme } from "@/constants/theme";
+import { HOME } from "@/lib/navigation";
 import { useCloud } from "@/data/cloud";
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -146,7 +147,7 @@ export default function ResetPasswordScreen() {
         <>
           <Text style={[styles.title, { color: theme.text }]}>Password changed</Text>
           <Text style={body}>You&apos;re signed in, and your receipts are syncing.</Text>
-          <Button title="Back to your receipts" variant="primary" onPress={() => router.replace("/")} />
+          <Button title="Back to your receipts" variant="primary" onPress={() => router.replace(HOME)} />
         </>
       )}
     </ScrollView>

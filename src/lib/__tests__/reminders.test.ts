@@ -29,6 +29,16 @@ describe("planReminders", () => {
     expect(reminders[1].body).toContain("Headphones from Currys");
   });
 
+  it("follows the user's reminder settings", () => {
+    const reminders = planReminders([receipt()], new Date(2026, 10, 1, 12), [], {
+      daysBefore: 1,
+      onLastDay: false,
+      hour: 18,
+    });
+    expect(reminders.map((r) => [r.date.getMonth() + 1, r.date.getDate(), r.date.getHours()])).toEqual([[11, 30, 18]]);
+    expect(reminders[0].title).toBe("Refund if faulty tomorrow");
+  });
+
   it("skips reminders whose time has passed", () => {
     const reminders = planReminders([receipt()], new Date(2026, 10, 29));
     expect(reminders).toHaveLength(1);

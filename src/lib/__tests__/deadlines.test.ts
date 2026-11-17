@@ -86,3 +86,21 @@ describe("getNextDeadline", () => {
     expect(getNextDeadline(receipt(), "2026-03-03")).toBeUndefined();
   });
 });
+
+describe("getDeadlines with huge saved values", () => {
+  it("caps them instead of crashing", () => {
+    const deadlines = getDeadlines({
+      id: "x",
+      product: "Kettle",
+      retailer: "Argos",
+      pricePence: 100,
+      purchaseDate: "2026-01-01",
+      channel: "in_store",
+      paymentMethod: "cash",
+      returnWindowDays: 99_999_999,
+      warrantyMonths: 99_999_999,
+    });
+    expect(deadlines.find((d) => d.kind === "retailer_return")?.date).toBe("2035-12-30");
+    expect(deadlines.find((d) => d.kind === "warranty")?.date).toBe("2126-01-01");
+  });
+});

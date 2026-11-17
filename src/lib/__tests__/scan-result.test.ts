@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 
 import { emptyReceiptInput } from "@/lib/receipt-input";
-import { countChangedFields, scanResultToInput } from "@/lib/scan-result";
+import { countChangedFields, scannedItems, scanResultToInput } from "@/lib/scan-result";
 
 const blank = emptyReceiptInput("2026-11-12");
 
@@ -67,5 +67,23 @@ describe("countChangedFields", () => {
 
   it("is zero when nothing changed", () => {
     expect(countChangedFields(blank, { ...blank })).toBe(0);
+  });
+});
+
+describe("scannedItems", () => {
+  it("keeps named items with valid prices and drops the rest", () => {
+    expect(
+      scannedItems({
+        items: [
+          { name: " Kettle ", price_pence: 3499 },
+          { name: "Toaster", price_pence: -5 },
+          { name: "", price_pence: 100 },
+          { price_pence: 100 },
+          "nonsense",
+        ],
+      }),
+    ).toEqual([{ name: "Kettle", pricePence: 3499 }, { name: "Toaster", pricePence: undefined }]);
+    expect(scannedItems({ is_receipt: true })).toEqual([]);
+    expect(scannedItems(null)).toEqual([]);
   });
 });

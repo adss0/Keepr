@@ -1,3 +1,4 @@
+import { MAX_RETURN_WINDOW_DAYS, MAX_WARRANTY_MONTHS } from "@/lib/receipt-input";
 import type { Receipt } from "@/types/receipt";
 
 /** Consumer Rights Act 2015: short-term right to reject faulty goods. */
@@ -83,7 +84,8 @@ export function getDeadlines(receipt: Receipt): Deadline[] {
     deadlines.push({
       kind: "retailer_return",
       label: "Store return",
-      date: addDays(receipt.purchaseDate, receipt.returnWindowDays),
+      // Capped so a huge value saved before the form had limits can't crash date maths.
+      date: addDays(receipt.purchaseDate, Math.min(receipt.returnWindowDays, MAX_RETURN_WINDOW_DAYS)),
     });
   }
 
@@ -91,7 +93,7 @@ export function getDeadlines(receipt: Receipt): Deadline[] {
     deadlines.push({
       kind: "warranty",
       label: "Warranty",
-      date: addMonths(receipt.purchaseDate, receipt.warrantyMonths),
+      date: addMonths(receipt.purchaseDate, Math.min(receipt.warrantyMonths, MAX_WARRANTY_MONTHS)),
     });
   }
 

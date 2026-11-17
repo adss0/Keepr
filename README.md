@@ -226,48 +226,64 @@ Every pull request to `main`, and every merge into it, runs [CI](.github/workflo
 Keepr/
 ├── src/
 │   ├── app/            # Screens (Expo Router: every file here is a screen)
-│   │   ├── _layout.tsx #   Root navigation layout and header
+│   │   ├── _layout.tsx #   Root stack: tabs, plus detail and form screens on top
+│   │   ├── (tabs)/     #   Tab screens: Receipts (index), Calendar, Subscriptions, Insights and Settings
 │   │   ├── account.tsx #   Sign in and cloud sync
-│   │   ├── index.tsx   #   Receipts list (home screen)
-│   │   ├── receipt/    #   Receipt detail ([id]), add (new), edit (edit/[id]) and rights (rights/[id]) screens
-│   │   ├── subscriptions.tsx # Subscriptions list with monthly and yearly totals
+│   │   ├── spaces/     #   Shared spaces: list, create and join (index), and one space's members and invites ([id])
+│   │   ├── receipt/    #   Receipt detail ([id]), add (new), edit, rights and full-screen photo screens
 │   │   └── subscriptions/ #  Add (new) and edit (edit/[id]) subscription screens
 │   ├── components/     # Reusable UI
+│   │   ├── app-tabs.tsx #  Native tab bar (app-tabs.web.tsx: the web's bottom bar)
 │   │   ├── date-field.tsx # Date picker (native on phones, date input on the web)
 │   │   ├── deadline-pill.tsx # Colour-coded deadline label
+│   │   ├── example-receipt.tsx # Blurred example card for the empty home screen
 │   │   ├── form.tsx    #   Text field, option picker and button
+│   │   ├── icon.tsx    #   App icons (SF Symbols on iOS, Material Symbols elsewhere)
+│   │   ├── press-scale.tsx # Pressable that shrinks slightly while held
 │   │   ├── receipt-card.tsx # One receipt with its next deadline
-│   │   ├── receipt-form.tsx # Add/edit receipt form
+│   │   ├── receipt-form.tsx # Add/edit receipt form, with the multi-item picker
+│   │   ├── receipt-photo-card.tsx # The receipt photo, or ways to add one
 │   │   ├── reminders-banner.tsx # Asks to turn on reminders
-│   │   ├── scan-panel.tsx # Scan a receipt with the camera
+│   │   ├── scan-panel.tsx # Scan a photo, PDF or screenshot
+│   │   ├── screen-header.tsx # Large title and round action buttons for tab screens
+│   │   ├── space-picker.tsx # "Who's it for?": just me or a shared space
 │   │   ├── subscription-form.tsx # Add/edit subscription form
 │   │   └── toast.tsx   #   Short messages with Undo
 │   ├── constants/      # Shared constants
-│   │   └── theme.ts    #   Light and dark mode colours
+│   │   └── theme.ts    #   Light and dark colours, and the appearance setting
 │   ├── data/           # Where receipts and subscriptions are kept
 │   │   ├── cloud.tsx   #   Supabase sign-in, sync and password reset
 │   │   ├── haptics.ts  #   Small vibrations for save, delete and errors
 │   │   ├── persisted-list.ts # Saves a list on the phone (AsyncStorage)
+│   │   ├── receipt-pdf.ts # Makes and shares a receipt PDF
+│   │   ├── receipt-photos.ts # Saves, backs up and loads receipt photos
 │   │   ├── receipts.tsx #  Receipts store (useReceipts, add, edit, delete)
 │   │   ├── reminders.tsx # Schedules deadline notifications on the phone
-│   │   ├── sample-receipts.ts # Example receipts for trying the app
-│   │   ├── scan-receipt.ts # Takes the photo and calls the AI scanning function
-│   │   ├── share-csv.ts #  Saves and shares the CSV export
+│   │   ├── scan-receipt.ts # Picks a photo or document and calls the AI scanning function
+│   │   ├── settings.tsx #  Saved settings (reminders, defaults, theme)
+│   │   ├── spaces.tsx  #   Shared spaces: load, create, invite, join and manage
+│   │   ├── share-csv.ts #  Saves and shares CSV and Excel exports
 │   │   ├── subscriptions.tsx # Subscriptions store
 │   │   └── supabase.ts #   Supabase client (only when configured)
 │   ├── lib/            # App logic, kept separate from screens
+│   │   ├── calendar.ts #   Calendar events and the month grid
 │   │   ├── cloud-rows.ts # Converts to and from database rows, merges for sync
 │   │   ├── deadlines.ts#   Works out return, cancellation and warranty dates
 │   │   ├── export.ts   #   Receipts to CSV
 │   │   ├── format.ts   #   Formats prices and dates
+│   │   ├── insights.ts #   Spending by month and by shop
 │   │   ├── navigation.ts # Go back, or home when there's nowhere to go back to
 │   │   ├── receipt-input.ts # Checks and parses the receipt form
+│   │   ├── receipt-report.ts # The printable receipt page behind the PDF
 │   │   ├── reminders.ts #  Plans which reminders to send, and when
 │   │   ├── rights.ts   #   UK consumer rights engine and claim letters
-│   │   ├── scan-result.ts # Turns a scan into form fields
+│   │   ├── scan-result.ts # Turns a scan into form fields and items
 │   │   ├── search.ts   #   Receipt search
+│   │   ├── spaces.ts   #   Shared-space labels and invite-code formatting
+│   │   ├── spending-workbook.ts # The Excel spending breakdown's sheets
 │   │   ├── subscription-input.ts # Checks and parses the subscription form
-│   │   └── subscriptions.ts # Costs, totals and renewal dates
+│   │   ├── subscriptions.ts # Costs, totals and renewal dates
+│   │   └── xlsx.ts     #   Minimal Excel (.xlsx) writer
 │   └── types/          # Shared TypeScript types
 │       ├── receipt.ts  #   The Receipt data model
 │       └── subscription.ts # The Subscription data model

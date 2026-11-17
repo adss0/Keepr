@@ -53,14 +53,14 @@ export function SubscriptionForm({ initial, submitLabel, onSubmit, footer }: Pro
     >
       <Field
         label="Name"
-        placeholder="Netflix"
+        placeholder="e.g. Netflix"
         value={input.name}
         onChangeText={(text) => update("name", text)}
         error={errors.name}
       />
       <Field
         label="Price (£)"
-        placeholder="10.99"
+        placeholder="e.g. 10.99"
         keyboardType="decimal-pad"
         value={input.price}
         onChangeText={(text) => update("price", text)}

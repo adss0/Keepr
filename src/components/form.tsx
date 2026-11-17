@@ -62,7 +62,7 @@ export function Segmented<T extends string>({ label, value, options, onChange }:
   const theme = useTheme();
   return (
     <View style={styles.field}>
-      <Text style={[styles.label, { color: theme.text }]}>{label}</Text>
+      {label ? <Text style={[styles.label, { color: theme.text }]}>{label}</Text> : null}
       <View style={styles.segments} accessibilityRole="radiogroup">
         {options.map((option) => {
           const selected = option.value === value;
@@ -171,9 +171,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderRadius: 14,
+    paddingVertical: 13,
     paddingHorizontal: 16,
+    minHeight: 48,
   },
   buttonText: {
     fontSize: 16,

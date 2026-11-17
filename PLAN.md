@@ -23,7 +23,17 @@
 - ✅ Export receipts to CSV (share sheet on phones, download on the web)
 - ✅ Supabase sign-in (email and password) and cloud sync of receipts and subscriptions
 - ✅ AI receipt scanning: photo → Supabase Edge Function → Google Gemini (free tier) → form filled in
-- ⏭️ **Next:** email auto-capture, known retailer return policies, PDF export
+- ✅ Scan without an account (anonymous scan session)
+- ✅ App layout with tabs: Receipts, Calendar, Subscriptions, Insights and Settings
+- ✅ Settings: reminder timing, defaults for new receipts, and Light/Dark/Automatic theme
+- ✅ Calendar of every deadline, renewal and free-trial end
+- ✅ Spending insights and an Excel spending breakdown
+- ✅ Receipt photos kept as proof of purchase, backed up to Supabase Storage
+- ✅ Multi-item receipts (pick one item or add them all), and scanning PDFs and screenshots
+- ✅ Save a receipt as a PDF with its deadlines and photo
+- ✅ Receipt-paper look, a Next deadline card, and fixes from a full test of every screen
+- ✅ Shared spaces for families and organisations: invites, roles, shared receipts and subscriptions, live sync
+- ⏭️ **Next:** email auto-capture, known retailer return policies, receiving receipts from the share sheet (needs a development build)
 
 ---
 
@@ -58,8 +68,8 @@
 ### Phase 4: Partnerships and polish
 - [ ] Retailer digital receipt integration
 - [ ] Opt-in insurer offers (extended warranty when one is ending)
-- [x] CSV export (PDF still to do)
-- [ ] Spending insights
+- [x] CSV export, Excel spending breakdown and single-receipt PDF
+- [x] Spending insights
 - [ ] App Store and Google Play release
 
 ---
@@ -75,7 +85,9 @@
 | Claim letter generator | 2 |
 | Subscription tracker and alerts | 3 |
 | Email auto-capture | 3 |
-| Export to PDF / CSV | 4 |
+| Export to PDF / CSV / Excel | 4 |
+| Calendar of deadlines and renewals | 3 |
+| Spending insights | 4 |
 | Retailer and insurer partnerships | 4 |
 
 All features are free for now.
@@ -113,7 +125,8 @@ All features are free for now.
 
 - Unit tests use `jest-expo`, live next to the code in `__tests__` folders and import `describe`/`it`/`expect` from `@jest/globals`.
 
-- Receipts are saved on the phone with AsyncStorage (works in Expo Go and on the web). A new install starts empty, with a button to load sample receipts.
+- Receipts are saved on the phone with AsyncStorage (works in Expo Go and on the web). A new install starts empty and shows one blurred example receipt; the old sample receipts were removed (and cleaned up once from phones that had them). If saved data can't be read at startup, nothing is written back, so a bad read can't wipe it.
+- Return windows are capped at 10 years, warranties at 100 years and prices at £1,000,000, so a typo can't produce a date too far away to calculate.
 
 - Reminders are local notifications scheduled by the phone, so they need no server and work in Expo Go. All are rescheduled whenever receipts change, capped at 60 (iOS allows 64).
 
@@ -136,6 +149,16 @@ All features are free for now.
 - Motion is kept small and purposeful: buttons and receipt cards shrink slightly while pressed, toasts slide up, and scan results fade in. Reduce Motion swaps the press shrink for a dim. Screens keep the native transitions.
 
 - Deleting a receipt or subscription happens straight away with an Undo message, instead of an "Are you sure?" box.
+- Navigation uses native tabs on phones (`expo-router/native-tabs`) and a custom bottom bar on the web. Tab screens draw their own large-title header; detail and form screens open on top in the root stack.
+- Settings are saved on the phone, not synced: reminder lead time (1, 3, 7 or 14 days), last-day reminder, reminder hour, default channel and payment method, and theme. Reminder syncs and cloud pushes each run one at a time, so overlapping runs can't duplicate notifications or bring back deleted receipts.
+- Icons come from `expo-symbols`: SF Symbols on iOS, Material Symbols on Android and the web.
+- Excel files are written by a small in-house `.xlsx` writer on top of `fflate`, rather than SheetJS, whose npm release is old and has security advisories. Cells are text or numbers, never formulas.
+- Receipt photos are files in the app's documents folder, named after the receipt, and backed up to a private `receipt-photos` bucket at `<user id>/<file>`. Photo backup never blocks the main sync. Browsers have no app folder, so the web only shows backed-up photos.
+- Anonymous scan sessions are blocked from all tables and photos by restrictive row level security policies.
+- Look: warm receipt-paper background, ink text and a deep green accent; receipt cards have a dashed tear line. The home screen leads with the single most urgent deadline in the next 30 days.
+- Shared spaces: a space is a Family (anyone can delete shared items) or an Organisation (only owners and admins delete or invite). Items have an optional `space_id`; without one they stay personal. Invites are 8-character codes valid for 7 days, made and redeemed only through database functions so roles can't be forged. Deleting a space hands its items back to whoever added them.
+- Sync with several editors: each phone keeps a snapshot of what the cloud held at its last sync. Unpushed changes on the phone win; otherwise the cloud's copy wins, and items gone from the cloud are deleted locally. No clocks are compared. Pushes send only changed rows. Pulls run on Realtime changes and when the app returns to the front.
+- Scanning returns every item on the receipt; the form lets you pick one, or add each as its own receipt with a copy of the photo. PDFs go to Gemini as documents. Receiving files from the system share sheet needs a native share extension, so it waits for a development build.
 - Dates are picked with the native date picker on phones and the browser's date input on the web, with Today/Yesterday shortcuts for purchase dates.
 
 ## Notes and to-dos
@@ -143,4 +166,5 @@ All features are free for now.
 - Before launch: move Gemini scanning to a paid plan (or another provider) so receipt photos aren't used for training.
 
 - Harden sign-in storage: keep the Supabase session encrypted (expo-secure-store) instead of AsyncStorage.
-- Local Node is 20.14. Expo SDK 58 needs **22.13+**, so upgrade to run the app.
+- Apply migrations `20261117000000_receipt_photos_and_anonymous_guard.sql` and `20261118000000_shared_spaces.sql` to the Supabase project, and redeploy `extract-receipt` for item lists and PDF scanning. Until then the app falls back gracefully (unknown columns are dropped when syncing, no item list, PDFs refused, sharing shows that it needs the update).
+- Shared spaces later: transfer ownership, change a member's role after joining, and per-space reminder settings.

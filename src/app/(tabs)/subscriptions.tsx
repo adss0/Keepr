@@ -1,8 +1,10 @@
-import { Link, router, Stack } from "expo-router";
+import { Link, router } from "expo-router";
 import { useMemo } from "react";
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/form";
+import { PressScale } from "@/components/press-scale";
+import { ScreenHeader } from "@/components/screen-header";
 import { useTheme } from "@/constants/theme";
 import { usePullToSync } from "@/data/cloud";
 import { useSubscriptions } from "@/data/subscriptions";
@@ -23,17 +25,10 @@ function SubscriptionRow({ subscription, today }: { subscription: Subscription; 
 
   return (
     <Link href={{ pathname: "/subscriptions/edit/[id]", params: { id: subscription.id } }} asChild>
-      <Pressable
+      <PressScale
         accessibilityRole="button"
         accessibilityLabel={`${subscription.name}, ${formatPrice(subscription.pricePence)}${CYCLE_SUFFIX[subscription.cycle]}`}
-        style={({ pressed }) => [
-          styles.row,
-          {
-            backgroundColor: theme.card,
-            borderColor: soon ? theme.urgentText : theme.border,
-            opacity: pressed ? 0.7 : 1,
-          },
-        ]}
+        style={StyleSheet.flatten([styles.row, { backgroundColor: theme.card, borderColor: soon ? theme.urgentText : theme.border }])}
       >
         <View style={styles.rowTop}>
           <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
@@ -47,7 +42,7 @@ function SubscriptionRow({ subscription, today }: { subscription: Subscription; 
         <Text style={{ color: soon ? theme.urgentText : theme.textMuted, fontSize: 13 }}>
           {onTrial ? "Free trial ends" : "Renews"} {daysLeft === 0 ? "today" : formatDate(nextDate, currentYear)}
         </Text>
-      </Pressable>
+      </PressScale>
     </Link>
   );
 }
@@ -60,32 +55,29 @@ export default function SubscriptionsScreen() {
   const sorted = useMemo(() => sortByNextCharge(subscriptions, today), [subscriptions, today]);
 
   const header = (
-    <Stack.Screen
-      options={{
-        headerRight: () => (
-          <Link href="/subscriptions/new" asChild>
-            <Pressable accessibilityRole="button" accessibilityLabel="Add subscription" hitSlop={8}>
-              <Text style={[styles.headerButton, { color: theme.accent }]}>Add</Text>
-            </Pressable>
-          </Link>
-        ),
-      }}
+    <ScreenHeader
+      title="Subscriptions"
+      subtitle={subscriptions.length === 1 ? "1 active" : subscriptions.length > 1 ? `${subscriptions.length} active` : undefined}
+      actions={[{ icon: "add", label: "Add subscription", onPress: () => router.push("/subscriptions/new"), primary: true }]}
     />
   );
 
   if (!ready) {
     return (
-      <View style={[styles.centered, { backgroundColor: theme.background }]}>
+      <View style={[styles.screen, { backgroundColor: theme.background }]}>
         {header}
-        <ActivityIndicator color={theme.accent} />
+        <View style={styles.centered}>
+          <ActivityIndicator color={theme.accent} />
+        </View>
       </View>
     );
   }
 
   if (subscriptions.length === 0) {
     return (
-      <View style={[styles.centered, { backgroundColor: theme.background }]}>
+      <View style={[styles.screen, { backgroundColor: theme.background }]}>
         {header}
+        <View style={styles.centered}>
         <Text style={[styles.emptyTitle, { color: theme.text }]}>All your subscriptions in one place</Text>
         <Text style={[styles.emptyBody, { color: theme.textMuted }]}>
           Add streaming, apps, gyms and memberships to see what you spend, and get a reminder before each payment
@@ -94,12 +86,13 @@ export default function SubscriptionsScreen() {
         <View style={styles.emptyButton}>
           <Button title="Add a subscription" variant="primary" onPress={() => router.push("/subscriptions/new")} />
         </View>
+        </View>
       </View>
     );
   }
 
   return (
-    <>
+    <View style={[styles.screen, { backgroundColor: theme.background }]}>
       {header}
       <FlatList
         style={{ backgroundColor: theme.background }}
@@ -122,11 +115,14 @@ export default function SubscriptionsScreen() {
           </View>
         }
       />
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
   list: {
     padding: 16,
     paddingBottom: 32,
@@ -138,16 +134,11 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 8,
   },
-  headerButton: {
-    fontSize: 17,
-    fontWeight: "600",
-    paddingHorizontal: 8,
-  },
   totals: {
     flexDirection: "row",
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: 18,
+    padding: 16,
     marginBottom: 16,
   },
   total: {
@@ -163,7 +154,7 @@ const styles = StyleSheet.create({
   },
   row: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 14,
     gap: 4,
   },
