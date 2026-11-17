@@ -99,9 +99,12 @@ Deno.serve(async (request) => {
     outputText = interaction.output_text;
   } catch (error) {
     const status = (error as { status?: number }).status;
+    const reason = error instanceof Error ? error.message : String(error);
+    console.error(`Gemini request failed (${status ?? "no status"}): ${reason}`);
     if (status === 429) return json({ error: "Too many scans right now. Try again in a minute." }, 429);
     if (status === 400 || status === 401 || status === 403) {
-      return json({ error: "Receipt scanning isn't set up correctly on the server" }, 500);
+      // Gemini's reason (bad key, API not enabled, region not supported) is what's needed to fix the setup.
+      return json({ error: `Receipt scanning isn't set up correctly on the server. Gemini said: ${reason}` }, 500);
     }
     return json({ error: "The scanning service had a problem. Try again." }, 502);
   }
