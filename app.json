@@ -42,7 +42,8 @@
           "cameraPermission": "Keepr uses the camera to scan your receipts.",
           "photosPermission": "Keepr reads the receipt photos you choose to scan."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,

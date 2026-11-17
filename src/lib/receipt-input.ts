@@ -80,7 +80,7 @@ export function validateReceiptInput(
   if (pricePence === undefined) errors.price = "Enter a price, like 79.99";
 
   if (!isRealDate(input.purchaseDate)) {
-    errors.purchaseDate = "Use the format YYYY-MM-DD";
+    errors.purchaseDate = "Choose the date you bought it";
   } else if (input.purchaseDate > today) {
     errors.purchaseDate = "The purchase date can't be in the future";
   }

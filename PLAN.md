@@ -114,7 +114,6 @@ All features are free for now.
 - Unit tests use `jest-expo`, live next to the code in `__tests__` folders and import `describe`/`it`/`expect` from `@jest/globals`.
 
 - Receipts are saved on the phone with AsyncStorage (works in Expo Go and on the web). A new install starts empty, with a button to load sample receipts.
-- Dates are typed as YYYY-MM-DD for now; a date picker can come later.
 
 - Reminders are local notifications scheduled by the phone, so they need no server and work in Expo Go. All are rescheduled whenever receipts change, capped at 60 (iOS allows 64).
 
@@ -133,6 +132,9 @@ All features are free for now.
 - Forgot password uses Supabase's emailed reset link, which reopens Keepr at /reset-password. Email templates can't be edited on the free plan without custom SMTP, so a code-based reset isn't possible yet.
 
 - Scanning is one tap from home: the Scan button opens Add receipt with the camera already open (on phones; browsers need a second tap), and the form says how many details were filled in.
+
+- Deleting a receipt or subscription happens straight away with an Undo message, instead of an "Are you sure?" box.
+- Dates are picked with the native date picker on phones and the browser's date input on the web, with Today/Yesterday shortcuts for purchase dates.
 
 ## Notes and to-dos
 

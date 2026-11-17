@@ -47,10 +47,10 @@ export function validateSubscriptionInput(
   const pricePence = parsePriceToPence(input.price);
   if (pricePence === undefined) errors.price = "Enter a price, like 10.99";
 
-  if (!isRealDate(input.nextRenewal)) errors.nextRenewal = "Use the format YYYY-MM-DD";
+  if (!isRealDate(input.nextRenewal)) errors.nextRenewal = "Choose the date of the next payment";
 
   const trialEnds = input.trialEnds.trim();
-  if (trialEnds && !isRealDate(trialEnds)) errors.trialEnds = "Use the format YYYY-MM-DD, or leave it blank";
+  if (trialEnds && !isRealDate(trialEnds)) errors.trialEnds = "Choose a valid date, or clear it";
 
   if (Object.keys(errors).length > 0 || pricePence === undefined) return { errors };
 

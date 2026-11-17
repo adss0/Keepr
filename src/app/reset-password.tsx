@@ -108,7 +108,7 @@ export default function ResetPasswordScreen() {
             returnKeyType="send"
             error={error}
           />
-          <Button title={busy ? "Sending…" : "Send reset link"} variant="primary" onPress={sendLink} />
+          <Button title="Send reset link" variant="primary" busy={busy} onPress={sendLink} />
         </>
       )}
 
@@ -138,7 +138,7 @@ export default function ResetPasswordScreen() {
             returnKeyType="done"
             error={error}
           />
-          <Button title={busy ? "Saving…" : "Save new password"} variant="primary" onPress={savePassword} />
+          <Button title="Save new password" variant="primary" busy={busy} onPress={savePassword} />
         </>
       )}
 

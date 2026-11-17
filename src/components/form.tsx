@@ -1,7 +1,8 @@
-import type { ReactNode } from "react";
-import { Pressable, StyleSheet, Text, TextInput, type TextInputProps, View } from "react-native";
+import { type ReactNode, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, type TextInputProps, View } from "react-native";
 
 import { useTheme } from "@/constants/theme";
+import { haptics } from "@/data/haptics";
 
 type FieldProps = Omit<TextInputProps, "style"> & {
   label: string;
@@ -9,24 +10,37 @@ type FieldProps = Omit<TextInputProps, "style"> & {
   error?: string;
 };
 
-export function Field({ label, hint, error, ...inputProps }: FieldProps) {
+export function Field({ label, hint, error, secureTextEntry, ...inputProps }: FieldProps) {
   const theme = useTheme();
+  const [revealed, setRevealed] = useState(false);
   return (
     <View style={styles.field}>
       <Text style={[styles.label, { color: theme.text }]}>{label}</Text>
-      <TextInput
-        placeholderTextColor={theme.textMuted}
-        accessibilityLabel={label}
+      <View
         style={[
-          styles.input,
-          {
-            color: theme.text,
-            backgroundColor: theme.card,
-            borderColor: error ? theme.urgentText : theme.border,
-          },
+          styles.inputRow,
+          { backgroundColor: theme.card, borderColor: error ? theme.urgentText : theme.border },
         ]}
-        {...inputProps}
-      />
+      >
+        <TextInput
+          placeholderTextColor={theme.textMuted}
+          accessibilityLabel={label}
+          secureTextEntry={secureTextEntry && !revealed}
+          style={[styles.input, { color: theme.text }]}
+          {...inputProps}
+        />
+        {secureTextEntry && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={revealed ? "Hide password" : "Show password"}
+            hitSlop={8}
+            onPress={() => setRevealed((current) => !current)}
+            style={styles.reveal}
+          >
+            <Text style={{ color: theme.accent, fontWeight: "600" }}>{revealed ? "Hide" : "Show"}</Text>
+          </Pressable>
+        )}
+      </View>
       {error ? (
         <Text style={[styles.message, { color: theme.urgentText }]}>{error}</Text>
       ) : hint ? (
@@ -57,7 +71,10 @@ export function Segmented<T extends string>({ label, value, options, onChange }:
               accessibilityRole="radio"
               accessibilityLabel={option.label}
               accessibilityState={{ selected }}
-              onPress={() => onChange(option.value)}
+              onPress={() => {
+                if (option.value !== value) haptics.selection();
+                onChange(option.value);
+              }}
               style={[
                 styles.segment,
                 {
@@ -83,9 +100,11 @@ type ButtonProps = {
   /** "ghost" is a plain text link, for less important actions. */
   variant?: "primary" | "secondary" | "danger" | "ghost";
   icon?: ReactNode;
+  /** Shows a spinner and ignores taps while something is in progress. */
+  busy?: boolean;
 };
 
-export function Button({ title, onPress, variant = "secondary", icon }: ButtonProps) {
+export function Button({ title, onPress, variant = "secondary", icon, busy = false }: ButtonProps) {
   const theme = useTheme();
   const colours = {
     primary: { bg: theme.accent, text: theme.onAccent, border: theme.accent },
@@ -97,13 +116,15 @@ export function Button({ title, onPress, variant = "secondary", icon }: ButtonPr
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ busy, disabled: busy }}
+      disabled={busy}
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
         { backgroundColor: colours.bg, borderColor: colours.border, opacity: pressed ? 0.7 : 1 },
       ]}
     >
-      {icon}
+      {busy ? <ActivityIndicator color={colours.text} /> : icon}
       <Text style={[styles.buttonText, { color: colours.text }]}>{title}</Text>
     </Pressable>
   );
@@ -117,12 +138,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-  input: {
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
     borderRadius: 10,
+  },
+  input: {
+    flex: 1,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
+  },
+  reveal: {
+    paddingHorizontal: 12,
   },
   message: {
     fontSize: 12,

@@ -1,16 +1,19 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { Text, View } from "react-native";
 
 import { Button } from "@/components/form";
 import { SubscriptionForm } from "@/components/subscription-form";
 import { useTheme } from "@/constants/theme";
+import { useToast } from "@/components/toast";
+import { haptics } from "@/data/haptics";
 import { useSubscriptions } from "@/data/subscriptions";
-import { confirmAsync } from "@/lib/confirm";
 import { subscriptionToInput } from "@/lib/subscription-input";
+import { goBack } from "@/lib/navigation";
 
 export default function EditSubscriptionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { subscriptions, updateSubscription, deleteSubscription } = useSubscriptions();
+  const { subscriptions, updateSubscription, deleteSubscription, restoreSubscription } = useSubscriptions();
+  const { showToast } = useToast();
   const subscription = subscriptions.find((item) => item.id === id);
   const theme = useTheme();
 
@@ -28,22 +31,23 @@ export default function EditSubscriptionScreen() {
       submitLabel="Save changes"
       onSubmit={(fields) => {
         updateSubscription(subscription.id, fields);
-        router.back();
+        haptics.success();
+        showToast({ message: "Changes saved" });
+        goBack("/subscriptions");
       }}
       footer={
         <Button
           title="Delete subscription"
           variant="danger"
-          onPress={async () => {
-            const confirmed = await confirmAsync(
-              "Delete this subscription?",
-              `${subscription.name} and its reminders will be removed from Keepr. This doesn't cancel it with the provider.`,
-              "Delete",
-            );
-            if (confirmed) {
-              deleteSubscription(subscription.id);
-              router.back();
-            }
+          onPress={() => {
+            const deleted = subscription;
+            deleteSubscription(deleted.id);
+            haptics.warning();
+            showToast({
+              message: `Removed ${deleted.name}. This doesn't cancel it with the provider.`,
+              action: { label: "Undo", onPress: () => restoreSubscription(deleted) },
+            });
+            goBack("/subscriptions");
           }}
         />
       }

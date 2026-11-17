@@ -18,6 +18,8 @@ type ReceiptsContextValue = {
   addReceipt: (fields: ReceiptFields) => Receipt;
   updateReceipt: (id: string, fields: ReceiptFields) => void;
   deleteReceipt: (id: string) => void;
+  /** Puts a deleted receipt back, with its original id (for Undo). */
+  restoreReceipt: (receipt: Receipt) => void;
   /** Adds the made-up example receipts, so the app can be tried out. */
   addSampleReceipts: () => void;
   /** Adds items saved in the cloud that aren't on this phone yet. */
@@ -50,14 +52,19 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
     ]);
   }, [setReceipts]);
 
+  const restoreReceipt = useCallback(
+    (receipt: Receipt) => setReceipts((current) => [...current.filter((item) => item.id !== receipt.id), receipt]),
+    [setReceipts],
+  );
+
   const mergeFromCloud = useCallback(
     (remote: Receipt[]) => setReceipts((current) => mergeById(current, remote)),
     [setReceipts],
   );
 
   const value = useMemo(
-    () => ({ receipts, ready, addReceipt, updateReceipt, deleteReceipt, addSampleReceipts, mergeFromCloud }),
-    [receipts, ready, addReceipt, updateReceipt, deleteReceipt, addSampleReceipts, mergeFromCloud],
+    () => ({ receipts, ready, addReceipt, updateReceipt, deleteReceipt, restoreReceipt, addSampleReceipts, mergeFromCloud }),
+    [receipts, ready, addReceipt, updateReceipt, deleteReceipt, restoreReceipt, addSampleReceipts, mergeFromCloud],
   );
 
   return <ReceiptsContext.Provider value={value}>{children}</ReceiptsContext.Provider>;

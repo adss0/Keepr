@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 
+import { DateField } from "@/components/date-field";
 import { Button, Field, Segmented } from "@/components/form";
 import { useTheme } from "@/constants/theme";
 import type { SubscriptionFields } from "@/data/subscriptions";
@@ -66,20 +67,19 @@ export function SubscriptionForm({ initial, submitLabel, onSubmit, footer }: Pro
         error={errors.price}
       />
       <Segmented label="How often?" value={input.cycle} options={CYCLE_OPTIONS} onChange={(value) => update("cycle", value)} />
-      <Field
+      <DateField
         label="Next payment"
-        placeholder="2026-12-01"
-        hint="YYYY-MM-DD. Keepr moves it on automatically after each payment."
+        hint="Keepr moves it on automatically after each payment."
         value={input.nextRenewal}
-        onChangeText={(text) => update("nextRenewal", text)}
+        onChange={(date) => update("nextRenewal", date)}
         error={errors.nextRenewal}
       />
-      <Field
+      <DateField
         label="Free trial ends"
-        placeholder="2026-11-30"
         hint="Optional. You'll be reminded before you start paying."
         value={input.trialEnds}
-        onChangeText={(text) => update("trialEnds", text)}
+        onChange={(date) => update("trialEnds", date)}
+        clearable
         error={errors.trialEnds}
       />
       <Button title={submitLabel} variant="primary" onPress={submit} />

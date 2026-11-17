@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import * as Notifications from "expo-notifications";
 import { AndroidImportance } from "expo-notifications";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
@@ -104,11 +105,38 @@ type RemindersContextValue = {
 const RemindersContext = createContext<RemindersContextValue | null>(null);
 
 /** Schedules reminders for every saved receipt and subscription once notifications are allowed. */
+/** Tapping a reminder opens the receipt or subscription it's about, including when it starts the app. */
+function useOpenRemindersOnTap() {
+  useEffect(() => {
+    if (!remindersSupported) return;
+
+    function open(notification: Notifications.Notification) {
+      const data = notification.request.content.data as { receiptId?: unknown; subscriptionId?: unknown } | undefined;
+      if (typeof data?.receiptId === "string") {
+        router.push({ pathname: "/receipt/[id]", params: { id: data.receiptId } });
+      } else if (typeof data?.subscriptionId === "string") {
+        router.push({ pathname: "/subscriptions/edit/[id]", params: { id: data.subscriptionId } });
+      }
+      Notifications.clearLastNotificationResponse();
+    }
+
+    // Wait a moment on a cold start, so the screens exist before navigating.
+    const last = Notifications.getLastNotificationResponse();
+    const timer = last?.notification ? setTimeout(() => open(last.notification), 300) : undefined;
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => open(response.notification));
+    return () => {
+      if (timer) clearTimeout(timer);
+      subscription.remove();
+    };
+  }, []);
+}
+
 export function RemindersProvider({ children }: { children: ReactNode }) {
   const { receipts, ready: receiptsReady } = useReceiptsStore();
   const { subscriptions, ready: subscriptionsReady } = useSubscriptions();
   const { permission, request } = useReminderPermission();
   useReminderSync(receipts, subscriptions, receiptsReady && subscriptionsReady, permission);
+  useOpenRemindersOnTap();
 
   return <RemindersContext.Provider value={{ permission, request }}>{children}</RemindersContext.Provider>;
 }

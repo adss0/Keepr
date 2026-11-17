@@ -233,17 +233,20 @@ Keepr/
 │   │   ├── subscriptions.tsx # Subscriptions list with monthly and yearly totals
 │   │   └── subscriptions/ #  Add (new) and edit (edit/[id]) subscription screens
 │   ├── components/     # Reusable UI
+│   │   ├── date-field.tsx # Date picker (native on phones, date input on the web)
 │   │   ├── deadline-pill.tsx # Colour-coded deadline label
 │   │   ├── form.tsx    #   Text field, option picker and button
 │   │   ├── receipt-card.tsx # One receipt with its next deadline
 │   │   ├── receipt-form.tsx # Add/edit receipt form
 │   │   ├── reminders-banner.tsx # Asks to turn on reminders
 │   │   ├── scan-panel.tsx # Scan a receipt with the camera
-│   │   └── subscription-form.tsx # Add/edit subscription form
+│   │   ├── subscription-form.tsx # Add/edit subscription form
+│   │   └── toast.tsx   #   Short messages with Undo
 │   ├── constants/      # Shared constants
 │   │   └── theme.ts    #   Light and dark mode colours
 │   ├── data/           # Where receipts and subscriptions are kept
-│   │   ├── cloud.tsx   #   Supabase sign-in and sync
+│   │   ├── cloud.tsx   #   Supabase sign-in, sync and password reset
+│   │   ├── haptics.ts  #   Small vibrations for save, delete and errors
 │   │   ├── persisted-list.ts # Saves a list on the phone (AsyncStorage)
 │   │   ├── receipts.tsx #  Receipts store (useReceipts, add, edit, delete)
 │   │   ├── reminders.tsx # Schedules deadline notifications on the phone
@@ -254,10 +257,10 @@ Keepr/
 │   │   └── supabase.ts #   Supabase client (only when configured)
 │   ├── lib/            # App logic, kept separate from screens
 │   │   ├── cloud-rows.ts # Converts to and from database rows, merges for sync
-│   │   ├── confirm.ts  #   "Are you sure?" prompts
 │   │   ├── deadlines.ts#   Works out return, cancellation and warranty dates
 │   │   ├── export.ts   #   Receipts to CSV
 │   │   ├── format.ts   #   Formats prices and dates
+│   │   ├── navigation.ts # Go back, or home when there's nowhere to go back to
 │   │   ├── receipt-input.ts # Checks and parses the receipt form
 │   │   ├── reminders.ts #  Plans which reminders to send, and when
 │   │   ├── rights.ts   #   UK consumer rights engine and claim letters

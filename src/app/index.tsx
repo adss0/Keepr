@@ -1,11 +1,22 @@
 import { Link, router, Stack } from "expo-router";
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 import { Button } from "@/components/form";
 import { ReceiptCard } from "@/components/receipt-card";
 import { RemindersBanner } from "@/components/reminders-banner";
 import { useTheme } from "@/constants/theme";
+import { usePullToSync } from "@/data/cloud";
 import { useReceiptsStore } from "@/data/receipts";
 import { useReminders } from "@/data/reminders";
 import { shareCsv } from "@/data/share-csv";
@@ -22,6 +33,7 @@ export default function ReceiptsScreen() {
   const { receipts: allReceipts, ready, addSampleReceipts } = useReceiptsStore();
   const [query, setQuery] = useState("");
   const reminders = useReminders();
+  const pull = usePullToSync();
 
   const receipts = useMemo(
     () =>
@@ -100,6 +112,7 @@ export default function ReceiptsScreen() {
         contentContainerStyle={styles.list}
         data={visibleReceipts}
         keyboardShouldPersistTaps="handled"
+        refreshControl={<RefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} tintColor={theme.accent} />}
         keyExtractor={(receipt) => receipt.id}
         renderItem={({ item }) => <ReceiptCard receipt={item} today={today} />}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -112,16 +125,23 @@ export default function ReceiptsScreen() {
               {dueThisWeek === 1 ? "1 deadline" : `${dueThisWeek} deadlines`} in the next 7 days
             </Text>
             <RemindersBanner permission={reminders.permission} onEnable={reminders.request} />
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Search by product or shop"
-              placeholderTextColor={theme.textMuted}
-              accessibilityLabel="Search receipts"
-              autoCorrect={false}
-              clearButtonMode="while-editing"
-              style={[styles.search, { color: theme.text, backgroundColor: theme.card, borderColor: theme.border }]}
-            />
+            <View style={[styles.search, { backgroundColor: theme.card, borderColor: theme.border }]}>
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Search by product or shop"
+                placeholderTextColor={theme.textMuted}
+                accessibilityLabel="Search receipts"
+                autoCorrect={false}
+                returnKeyType="search"
+                style={[styles.searchInput, { color: theme.text }]}
+              />
+              {query.length > 0 && (
+                <Pressable accessibilityRole="button" accessibilityLabel="Clear search" hitSlop={8} onPress={() => setQuery("")}>
+                  <Text style={{ color: theme.accent, fontWeight: "600" }}>Clear</Text>
+                </Pressable>
+              )}
+            </View>
           </View>
         }
         ListFooterComponent={
@@ -195,9 +215,15 @@ const styles = StyleSheet.create({
   },
   search: {
     marginTop: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 12,
+  },
+  searchInput: {
+    flex: 1,
     paddingVertical: 10,
     fontSize: 16,
   },
