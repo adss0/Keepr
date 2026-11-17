@@ -130,6 +130,8 @@ All features are free for now.
 
 - `npm start` checks the Node.js version first, because Expo SDK 58 crashes on Node below 22.13 with "URL.parse is not a function".
 
+- Forgot password uses Supabase's emailed reset link, which reopens Keepr at /reset-password. Email templates can't be edited on the free plan without custom SMTP, so a code-based reset isn't possible yet.
+
 ## Notes and to-dos
 
 - Before launch: move Gemini scanning to a paid plan (or another provider) so receipt photos aren't used for training.

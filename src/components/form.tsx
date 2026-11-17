@@ -80,7 +80,8 @@ export function Segmented<T extends string>({ label, value, options, onChange }:
 type ButtonProps = {
   title: string;
   onPress: () => void;
-  variant?: "primary" | "secondary" | "danger";
+  /** "ghost" is a plain text link, for less important actions. */
+  variant?: "primary" | "secondary" | "danger" | "ghost";
   icon?: ReactNode;
 };
 
@@ -90,6 +91,7 @@ export function Button({ title, onPress, variant = "secondary", icon }: ButtonPr
     primary: { bg: theme.accent, text: theme.onAccent, border: theme.accent },
     secondary: { bg: theme.card, text: theme.text, border: theme.border },
     danger: { bg: theme.card, text: theme.urgentText, border: theme.urgentText },
+    ghost: { bg: "transparent", text: theme.accent, border: "transparent" },
   }[variant];
 
   return (
