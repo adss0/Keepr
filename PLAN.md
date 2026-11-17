@@ -31,6 +31,8 @@
 - ✅ Receipt photos kept as proof of purchase, backed up to Supabase Storage
 - ✅ Multi-item receipts (pick one item or add them all), and scanning PDFs and screenshots
 - ✅ Save a receipt as a PDF with its deadlines and photo
+- ✅ Receipt-paper look, a Next deadline card, and fixes from a full test of every screen
+- ✅ Shared spaces for families and organisations: invites, roles, shared receipts and subscriptions, live sync
 - ⏭️ **Next:** email auto-capture, known retailer return policies, receiving receipts from the share sheet (needs a development build)
 
 ---
@@ -153,6 +155,9 @@ All features are free for now.
 - Excel files are written by a small in-house `.xlsx` writer on top of `fflate`, rather than SheetJS, whose npm release is old and has security advisories. Cells are text or numbers, never formulas.
 - Receipt photos are files in the app's documents folder, named after the receipt, and backed up to a private `receipt-photos` bucket at `<user id>/<file>`. Photo backup never blocks the main sync. Browsers have no app folder, so the web only shows backed-up photos.
 - Anonymous scan sessions are blocked from all tables and photos by restrictive row level security policies.
+- Look: warm receipt-paper background, ink text and a deep green accent; receipt cards have a dashed tear line. The home screen leads with the single most urgent deadline in the next 30 days.
+- Shared spaces: a space is a Family (anyone can delete shared items) or an Organisation (only owners and admins delete or invite). Items have an optional `space_id`; without one they stay personal. Invites are 8-character codes valid for 7 days, made and redeemed only through database functions so roles can't be forged. Deleting a space hands its items back to whoever added them.
+- Sync with several editors: each phone keeps a snapshot of what the cloud held at its last sync. Unpushed changes on the phone win; otherwise the cloud's copy wins, and items gone from the cloud are deleted locally. No clocks are compared. Pushes send only changed rows. Pulls run on Realtime changes and when the app returns to the front.
 - Scanning returns every item on the receipt; the form lets you pick one, or add each as its own receipt with a copy of the photo. PDFs go to Gemini as documents. Receiving files from the system share sheet needs a native share extension, so it waits for a development build.
 - Dates are picked with the native date picker on phones and the browser's date input on the web, with Today/Yesterday shortcuts for purchase dates.
 
@@ -161,4 +166,5 @@ All features are free for now.
 - Before launch: move Gemini scanning to a paid plan (or another provider) so receipt photos aren't used for training.
 
 - Harden sign-in storage: keep the Supabase session encrypted (expo-secure-store) instead of AsyncStorage.
-- Apply migration `20261117000000_receipt_photos_and_anonymous_guard.sql` to the Supabase project, and redeploy `extract-receipt` for item lists and PDF scanning. Until then the app falls back gracefully (no photo backup column, no item list, PDFs refused).
+- Apply migrations `20261117000000_receipt_photos_and_anonymous_guard.sql` and `20261118000000_shared_spaces.sql` to the Supabase project, and redeploy `extract-receipt` for item lists and PDF scanning. Until then the app falls back gracefully (unknown columns are dropped when syncing, no item list, PDFs refused, sharing shows that it needs the update).
+- Shared spaces later: transfer ownership, change a member's role after joining, and per-space reminder settings.
