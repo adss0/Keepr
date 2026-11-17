@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type ComponentRef, useRef, useState } from "react";
 import { Image } from "expo-image";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
@@ -7,6 +7,7 @@ import { Button, Field, Segmented } from "@/components/form";
 import { ScanPanel } from "@/components/scan-panel";
 import { useTheme } from "@/constants/theme";
 import { photosStoredLocally, type ReceiptPhoto } from "@/data/receipt-photos";
+import { haptics } from "@/data/haptics";
 import type { ReceiptFields } from "@/data/receipts";
 import { todayIso } from "@/lib/deadlines";
 import { type ReceiptInput, type ReceiptInputErrors, validateReceiptInput } from "@/lib/receipt-input";
@@ -45,6 +46,14 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, onSubmitMany, allo
   const [errors, setErrors] = useState<ReceiptInputErrors>({});
   const [photo, setPhoto] = useState<ReceiptPhoto>();
   const [items, setItems] = useState<ScannedItem[]>([]);
+  const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
+
+  /** Errors sit next to their fields near the top, so bring them into view. */
+  function showErrors(next: ReceiptInputErrors) {
+    setErrors(next);
+    haptics.error();
+    scroll.current?.scrollTo({ y: 0, animated: true });
+  }
 
   function update<K extends keyof ReceiptInput>(key: K, value: ReceiptInput[K]) {
     setInput((current) => ({ ...current, [key]: value }));
@@ -54,7 +63,7 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, onSubmitMany, allo
   function submit() {
     const result = validateReceiptInput(input, todayIso());
     if (result.errors) {
-      setErrors(result.errors);
+      showErrors(result.errors);
       return;
     }
     onSubmit(result.value, photo);
@@ -78,7 +87,7 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, onSubmitMany, allo
       const result = validateReceiptInput({ ...input, product: item.name, price }, today);
       if (result.errors) {
         // A shared detail (shop, date) needs fixing, or an item has no price.
-        setErrors(result.errors.price ? { ...result.errors, price: `Enter a price for ${item.name}` } : result.errors);
+        showErrors(result.errors.price ? { ...result.errors, price: `Enter a price for ${item.name}` } : result.errors);
         return;
       }
       values.push(result.value);
@@ -88,6 +97,7 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, onSubmitMany, allo
 
   return (
     <ScrollView
+      ref={scroll}
       style={{ backgroundColor: theme.background }}
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
@@ -163,21 +173,21 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, onSubmitMany, allo
       )}
       <Field
         label="What did you buy?"
-        placeholder="Sony headphones"
+        placeholder="e.g. Sony headphones"
         value={input.product}
         onChangeText={(text) => update("product", text)}
         error={errors.product}
       />
       <Field
         label="Shop"
-        placeholder="Currys"
+        placeholder="e.g. Currys"
         value={input.retailer}
         onChangeText={(text) => update("retailer", text)}
         error={errors.retailer}
       />
       <Field
         label="Price (£)"
-        placeholder="79.99"
+        placeholder="e.g. 79.99"
         keyboardType="decimal-pad"
         value={input.price}
         onChangeText={(text) => update("price", text)}
@@ -206,7 +216,7 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, onSubmitMany, allo
       />
       <Field
         label="Shop return window (days)"
-        placeholder="28"
+        placeholder="e.g. 28"
         hint="Optional. Check the receipt or the shop's returns policy."
         keyboardType="number-pad"
         value={input.returnWindowDays}
@@ -215,7 +225,7 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, onSubmitMany, allo
       />
       <Field
         label="Warranty (months)"
-        placeholder="12"
+        placeholder="e.g. 12"
         hint="Optional. Most electronics come with 12 months."
         keyboardType="number-pad"
         value={input.warrantyMonths}

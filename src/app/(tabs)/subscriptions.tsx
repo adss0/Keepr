@@ -1,8 +1,9 @@
 import { Link, router } from "expo-router";
 import { useMemo } from "react";
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/form";
+import { PressScale } from "@/components/press-scale";
 import { ScreenHeader } from "@/components/screen-header";
 import { useTheme } from "@/constants/theme";
 import { usePullToSync } from "@/data/cloud";
@@ -24,17 +25,10 @@ function SubscriptionRow({ subscription, today }: { subscription: Subscription; 
 
   return (
     <Link href={{ pathname: "/subscriptions/edit/[id]", params: { id: subscription.id } }} asChild>
-      <Pressable
+      <PressScale
         accessibilityRole="button"
         accessibilityLabel={`${subscription.name}, ${formatPrice(subscription.pricePence)}${CYCLE_SUFFIX[subscription.cycle]}`}
-        style={({ pressed }) => [
-          styles.row,
-          {
-            backgroundColor: theme.card,
-            borderColor: soon ? theme.urgentText : theme.border,
-            opacity: pressed ? 0.7 : 1,
-          },
-        ]}
+        style={StyleSheet.flatten([styles.row, { backgroundColor: theme.card, borderColor: soon ? theme.urgentText : theme.border }])}
       >
         <View style={styles.rowTop}>
           <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
@@ -48,7 +42,7 @@ function SubscriptionRow({ subscription, today }: { subscription: Subscription; 
         <Text style={{ color: soon ? theme.urgentText : theme.textMuted, fontSize: 13 }}>
           {onTrial ? "Free trial ends" : "Renews"} {daysLeft === 0 ? "today" : formatDate(nextDate, currentYear)}
         </Text>
-      </Pressable>
+      </PressScale>
     </Link>
   );
 }
@@ -63,7 +57,7 @@ export default function SubscriptionsScreen() {
   const header = (
     <ScreenHeader
       title="Subscriptions"
-      subtitle={subscriptions.length > 0 ? `${formatPrice(totalMonthlyPence(subscriptions))} a month` : undefined}
+      subtitle={subscriptions.length === 1 ? "1 active" : subscriptions.length > 1 ? `${subscriptions.length} active` : undefined}
       actions={[{ icon: "add", label: "Add subscription", onPress: () => router.push("/subscriptions/new"), primary: true }]}
     />
   );
@@ -143,8 +137,8 @@ const styles = StyleSheet.create({
   totals: {
     flexDirection: "row",
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: 18,
+    padding: 16,
     marginBottom: 16,
   },
   total: {
@@ -160,7 +154,7 @@ const styles = StyleSheet.create({
   },
   row: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 14,
     gap: 4,
   },
