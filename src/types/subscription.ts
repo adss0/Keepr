@@ -11,4 +11,8 @@ export type Subscription = {
   nextRenewal: string;
   /** ISO date a free trial ends and paid billing starts, if on a trial. */
   trialEnds?: string;
+  /** The shared space (family or organisation) this belongs to; personal when missing. */
+  spaceId?: string;
+  /** Who added it, from the cloud. Used for shared items' names and photo folders. */
+  ownerId?: string;
 };
