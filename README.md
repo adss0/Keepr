@@ -250,7 +250,6 @@ Keepr/
 │   │   ├── persisted-list.ts # Saves a list on the phone (AsyncStorage)
 │   │   ├── receipts.tsx #  Receipts store (useReceipts, add, edit, delete)
 │   │   ├── reminders.tsx # Schedules deadline notifications on the phone
-│   │   ├── sample-receipts.ts # Example receipts for trying the app
 │   │   ├── scan-receipt.ts # Takes the photo and calls the AI scanning function
 │   │   ├── share-csv.ts #  Saves and shares the CSV export
 │   │   ├── subscriptions.tsx # Subscriptions store
