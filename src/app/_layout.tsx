@@ -9,6 +9,7 @@ import { CloudProvider } from "@/data/cloud";
 import { ReceiptsProvider } from "@/data/receipts";
 import { RemindersProvider } from "@/data/reminders";
 import { SettingsProvider } from "@/data/settings";
+import { SpacesProvider } from "@/data/spaces";
 import { SubscriptionsProvider } from "@/data/subscriptions";
 
 function AppStack() {
@@ -49,6 +50,8 @@ function AppStack() {
         <Stack.Screen name="subscriptions/new" options={modal("Add subscription")} />
         <Stack.Screen name="subscriptions/edit/[id]" options={modal("Edit subscription")} />
         <Stack.Screen name="account" options={{ title: "Account and sync" }} />
+        <Stack.Screen name="spaces/index" options={{ title: "Shared spaces" }} />
+        <Stack.Screen name="spaces/[id]" options={{ title: "Space" }} />
         <Stack.Screen name="reset-password" options={{ title: "Reset password" }} />
       </Stack>
     </>
@@ -61,11 +64,13 @@ export default function RootLayout() {
       <ReceiptsProvider>
         <SubscriptionsProvider>
           <CloudProvider>
-            <RemindersProvider>
-              <ToastProvider>
-                <AppStack />
-              </ToastProvider>
-            </RemindersProvider>
+            <SpacesProvider>
+              <RemindersProvider>
+                <ToastProvider>
+                  <AppStack />
+                </ToastProvider>
+              </RemindersProvider>
+            </SpacesProvider>
           </CloudProvider>
         </SubscriptionsProvider>
       </ReceiptsProvider>

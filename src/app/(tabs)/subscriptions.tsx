@@ -7,6 +7,7 @@ import { PressScale } from "@/components/press-scale";
 import { ScreenHeader } from "@/components/screen-header";
 import { useTheme } from "@/constants/theme";
 import { usePullToSync } from "@/data/cloud";
+import { useSpaces } from "@/data/spaces";
 import { useSubscriptions } from "@/data/subscriptions";
 import { daysBetween, todayIso } from "@/lib/deadlines";
 import { formatDate, formatPrice } from "@/lib/format";
@@ -22,6 +23,7 @@ function SubscriptionRow({ subscription, today }: { subscription: Subscription; 
   const nextDate = onTrial ? subscription.trialEnds! : nextRenewalOnOrAfter(subscription, today);
   const daysLeft = daysBetween(today, nextDate);
   const soon = daysLeft <= 3;
+  const space = useSpaces().spaceName(subscription.spaceId);
 
   return (
     <Link href={{ pathname: "/subscriptions/edit/[id]", params: { id: subscription.id } }} asChild>
@@ -41,6 +43,7 @@ function SubscriptionRow({ subscription, today }: { subscription: Subscription; 
         </View>
         <Text style={{ color: soon ? theme.urgentText : theme.textMuted, fontSize: 13 }}>
           {onTrial ? "Free trial ends" : "Renews"} {daysLeft === 0 ? "today" : formatDate(nextDate, currentYear)}
+          {space ? <Text style={{ color: theme.accent, fontWeight: "600" }}> · {space}</Text> : null}
         </Text>
       </PressScale>
     </Link>

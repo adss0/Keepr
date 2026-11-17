@@ -17,6 +17,11 @@ export const ICONS = {
   account: { ios: "person.crop.circle", android: "account_circle", web: "account_circle" },
   bell: { ios: "bell", android: "notifications", web: "notifications" },
   close: { ios: "xmark.circle.fill", android: "cancel", web: "cancel" },
+  people: { ios: "person.2", android: "group", web: "group" },
+  viewList: { ios: "list.bullet", android: "view_list", web: "view_list" },
+  viewGrid: { ios: "square.grid.2x2", android: "grid_view", web: "grid_view" },
+  viewTimeline: { ios: "clock", android: "timeline", web: "timeline" },
+  sort: { ios: "arrow.up.arrow.down", android: "swap_vert", web: "swap_vert" },
 } as const;
 
 export type IconName = keyof typeof ICONS;

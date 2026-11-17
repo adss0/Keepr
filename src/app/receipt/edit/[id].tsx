@@ -5,6 +5,7 @@ import { ReceiptForm } from "@/components/receipt-form";
 import { useToast } from "@/components/toast";
 import { haptics } from "@/data/haptics";
 import { useTheme } from "@/constants/theme";
+import { useCloud } from "@/data/cloud";
 import { useReceipt, useReceiptsStore } from "@/data/receipts";
 import { receiptToInput } from "@/lib/receipt-input";
 import { goBack } from "@/lib/navigation";
@@ -15,6 +16,7 @@ export default function EditReceiptScreen() {
   const { updateReceipt } = useReceiptsStore();
   const { showToast } = useToast();
   const theme = useTheme();
+  const { userId } = useCloud();
 
   if (!receipt) {
     return (
@@ -27,6 +29,8 @@ export default function EditReceiptScreen() {
   return (
     <ReceiptForm
       initial={receiptToInput(receipt)}
+      initialSpaceId={receipt.spaceId}
+      allowPersonal={!receipt.ownerId || receipt.ownerId === userId}
       submitLabel="Save changes"
       onSubmit={(fields) => {
         updateReceipt(receipt.id, fields);
