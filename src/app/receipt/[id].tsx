@@ -4,11 +4,13 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { DeadlinePill } from "@/components/deadline-pill";
 import { Button } from "@/components/form";
 import { useTheme } from "@/constants/theme";
+import { useToast } from "@/components/toast";
+import { haptics } from "@/data/haptics";
 import { useReceipt, useReceiptsStore } from "@/data/receipts";
-import { confirmAsync } from "@/lib/confirm";
 import { DEADLINE_EXPLANATIONS, getDeadlines, todayIso } from "@/lib/deadlines";
 import { formatDate, formatPrice } from "@/lib/format";
 import type { PaymentMethod } from "@/types/receipt";
+import { goBack } from "@/lib/navigation";
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   credit_card: "Credit card",
@@ -20,7 +22,8 @@ const PAYMENT_LABELS: Record<PaymentMethod, string> = {
 export default function ReceiptDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const receipt = useReceipt(id);
-  const { deleteReceipt } = useReceiptsStore();
+  const { deleteReceipt, restoreReceipt } = useReceiptsStore();
+  const { showToast } = useToast();
   const theme = useTheme();
   const today = todayIso();
 
@@ -89,16 +92,15 @@ export default function ReceiptDetailScreen() {
         <Button
           title="Delete receipt"
           variant="danger"
-          onPress={async () => {
-            const confirmed = await confirmAsync(
-              "Delete this receipt?",
-              `${receipt.product} and its reminders will be removed from Keepr.`,
-              "Delete",
-            );
-            if (confirmed) {
-              deleteReceipt(receipt.id);
-              router.back();
-            }
+          onPress={() => {
+            const deleted = receipt;
+            deleteReceipt(deleted.id);
+            haptics.warning();
+            showToast({
+              message: `Deleted ${deleted.product}`,
+              action: { label: "Undo", onPress: () => restoreReceipt(deleted) },
+            });
+            goBack();
           }}
         />
       </View>

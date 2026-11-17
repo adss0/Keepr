@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 
+import { ToastProvider } from "@/components/toast";
 import { useTheme } from "@/constants/theme";
 import { CloudProvider } from "@/data/cloud";
 import { ReceiptsProvider } from "@/data/receipts";
@@ -14,27 +15,29 @@ export default function RootLayout() {
       <SubscriptionsProvider>
         <CloudProvider>
           <RemindersProvider>
-            <Stack
-              screenOptions={{
-                headerStyle: { backgroundColor: theme.card },
-                headerTintColor: theme.text,
-                contentStyle: { backgroundColor: theme.background },
-              }}
-            >
-              <Stack.Screen name="index" options={{ title: "Your receipts" }} />
-              <Stack.Screen name="receipt/[id]" options={{ title: "Receipt" }} />
-              <Stack.Screen name="receipt/new" options={{ title: "Add receipt", presentation: "modal" }} />
-              <Stack.Screen name="receipt/edit/[id]" options={{ title: "Edit receipt", presentation: "modal" }} />
-              <Stack.Screen name="receipt/rights/[id]" options={{ title: "Your rights" }} />
-              <Stack.Screen name="subscriptions" options={{ title: "Subscriptions" }} />
-              <Stack.Screen name="subscriptions/new" options={{ title: "Add subscription", presentation: "modal" }} />
-              <Stack.Screen name="account" options={{ title: "Account and sync" }} />
-            <Stack.Screen name="reset-password" options={{ title: "Reset password" }} />
-              <Stack.Screen
-                name="subscriptions/edit/[id]"
-                options={{ title: "Edit subscription", presentation: "modal" }}
-              />
-            </Stack>
+            <ToastProvider>
+              <Stack
+                screenOptions={{
+                  headerStyle: { backgroundColor: theme.card },
+                  headerTintColor: theme.text,
+                  contentStyle: { backgroundColor: theme.background },
+                }}
+              >
+                <Stack.Screen name="index" options={{ title: "Your receipts" }} />
+                <Stack.Screen name="receipt/[id]" options={{ title: "Receipt" }} />
+                <Stack.Screen name="receipt/new" options={{ title: "Add receipt", presentation: "modal" }} />
+                <Stack.Screen name="receipt/edit/[id]" options={{ title: "Edit receipt", presentation: "modal" }} />
+                <Stack.Screen name="receipt/rights/[id]" options={{ title: "Your rights" }} />
+                <Stack.Screen name="subscriptions" options={{ title: "Subscriptions" }} />
+                <Stack.Screen name="subscriptions/new" options={{ title: "Add subscription", presentation: "modal" }} />
+                <Stack.Screen
+                  name="subscriptions/edit/[id]"
+                  options={{ title: "Edit subscription", presentation: "modal" }}
+                />
+                <Stack.Screen name="account" options={{ title: "Account and sync" }} />
+                <Stack.Screen name="reset-password" options={{ title: "Reset password" }} />
+              </Stack>
+            </ToastProvider>
           </RemindersProvider>
         </CloudProvider>
       </SubscriptionsProvider>

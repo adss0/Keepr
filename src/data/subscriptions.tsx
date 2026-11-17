@@ -15,6 +15,8 @@ type SubscriptionsContextValue = {
   addSubscription: (fields: SubscriptionFields) => Subscription;
   updateSubscription: (id: string, fields: SubscriptionFields) => void;
   deleteSubscription: (id: string) => void;
+  /** Puts a deleted subscription back, with its original id (for Undo). */
+  restoreSubscription: (subscription: Subscription) => void;
   /** Adds items saved in the cloud that aren't on this phone yet. */
   mergeFromCloud: (remote: Subscription[]) => void;
 };
@@ -47,14 +49,20 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
     [setSubscriptions],
   );
 
+  const restoreSubscription = useCallback(
+    (subscription: Subscription) =>
+      setSubscriptions((current) => [...current.filter((item) => item.id !== subscription.id), subscription]),
+    [setSubscriptions],
+  );
+
   const mergeFromCloud = useCallback(
     (remote: Subscription[]) => setSubscriptions((current) => mergeById(current, remote)),
     [setSubscriptions],
   );
 
   const value = useMemo(
-    () => ({ subscriptions, ready, addSubscription, updateSubscription, deleteSubscription, mergeFromCloud }),
-    [subscriptions, ready, addSubscription, updateSubscription, deleteSubscription, mergeFromCloud],
+    () => ({ subscriptions, ready, addSubscription, updateSubscription, deleteSubscription, restoreSubscription, mergeFromCloud }),
+    [subscriptions, ready, addSubscription, updateSubscription, deleteSubscription, restoreSubscription, mergeFromCloud],
   );
 
   return <SubscriptionsContext.Provider value={value}>{children}</SubscriptionsContext.Provider>;

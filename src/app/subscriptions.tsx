@@ -1,9 +1,10 @@
 import { Link, router, Stack } from "expo-router";
 import { useMemo } from "react";
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/form";
 import { useTheme } from "@/constants/theme";
+import { usePullToSync } from "@/data/cloud";
 import { useSubscriptions } from "@/data/subscriptions";
 import { daysBetween, todayIso } from "@/lib/deadlines";
 import { formatDate, formatPrice } from "@/lib/format";
@@ -55,6 +56,7 @@ export default function SubscriptionsScreen() {
   const theme = useTheme();
   const today = todayIso();
   const { subscriptions, ready } = useSubscriptions();
+  const pull = usePullToSync();
   const sorted = useMemo(() => sortByNextCharge(subscriptions, today), [subscriptions, today]);
 
   const header = (
@@ -103,6 +105,7 @@ export default function SubscriptionsScreen() {
         style={{ backgroundColor: theme.background }}
         contentContainerStyle={styles.list}
         data={sorted}
+        refreshControl={<RefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} tintColor={theme.accent} />}
         keyExtractor={(subscription) => subscription.id}
         renderItem={({ item }) => <SubscriptionRow subscription={item} today={today} />}
         ItemSeparatorComponent={() => <View style={styles.separator} />}

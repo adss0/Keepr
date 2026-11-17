@@ -233,3 +233,24 @@ export function useCloud(): CloudContextValue {
   if (!value) throw new Error("useCloud must be used inside <CloudProvider>");
   return value;
 }
+
+/** Pull-to-refresh for lists: syncs with the cloud when signed in, otherwise just acknowledges the pull. */
+export function usePullToSync() {
+  const { status, syncNow } = useCloud();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      if (status !== "not_set_up" && status !== "signed_out") {
+        await syncNow();
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  }, [status, syncNow]);
+
+  return { refreshing, onRefresh };
+}

@@ -5,6 +5,7 @@ import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-nativ
 import { Button } from "@/components/form";
 import { useTheme } from "@/constants/theme";
 import { useCloud } from "@/data/cloud";
+import { haptics } from "@/data/haptics";
 import { extractReceipt, pickReceiptPhoto } from "@/data/scan-receipt";
 
 type Props = {
@@ -67,12 +68,14 @@ export function ScanPanel({ onScanned, autoStart = false }: Props) {
         return;
       }
       const filled = onScanned(result);
+      if (filled > 0) haptics.success();
       setMessage(
         filled > 0
           ? `Filled in ${filled} ${filled === 1 ? "detail" : "details"} from your receipt. Check them, then save.`
           : "Couldn't read any details. Try a clearer, flatter photo, or fill them in below.",
       );
     } catch (error) {
+      haptics.error();
       setMessage(error instanceof Error ? error.message : String(error));
     } finally {
       setBusy(false);

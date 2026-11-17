@@ -66,7 +66,7 @@ function SignInForm() {
         error={error}
       />
       {message && <Text style={[styles.body, { color: theme.text }]}>{message}</Text>}
-      <Button title={busy ? "Please wait…" : "Sign in"} variant="primary" onPress={() => run(() => signIn(email, password))} />
+      <Button title="Sign in" variant="primary" busy={busy} onPress={() => run(() => signIn(email, password))} />
       <Button title="Create an account" onPress={() => run(() => signUp(email, password))} />
       <Button
         title="Forgot password?"

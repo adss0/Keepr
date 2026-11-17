@@ -1,15 +1,19 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { Text, View } from "react-native";
 
 import { ReceiptForm } from "@/components/receipt-form";
+import { useToast } from "@/components/toast";
+import { haptics } from "@/data/haptics";
 import { useTheme } from "@/constants/theme";
 import { useReceipt, useReceiptsStore } from "@/data/receipts";
 import { receiptToInput } from "@/lib/receipt-input";
+import { goBack } from "@/lib/navigation";
 
 export default function EditReceiptScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const receipt = useReceipt(id);
   const { updateReceipt } = useReceiptsStore();
+  const { showToast } = useToast();
   const theme = useTheme();
 
   if (!receipt) {
@@ -26,7 +30,9 @@ export default function EditReceiptScreen() {
       submitLabel="Save changes"
       onSubmit={(fields) => {
         updateReceipt(receipt.id, fields);
-        router.back();
+        haptics.success();
+        showToast({ message: "Changes saved" });
+        goBack();
       }}
     />
   );

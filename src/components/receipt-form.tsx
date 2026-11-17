@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 
+import { DateField } from "@/components/date-field";
 import { Button, Field, Segmented } from "@/components/form";
 import { ScanPanel } from "@/components/scan-panel";
 import { useTheme } from "@/constants/theme";
@@ -91,12 +92,13 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, allowScan = false,
         onChangeText={(text) => update("price", text)}
         error={errors.price}
       />
-      <Field
+      <DateField
         label="Date bought"
-        placeholder="2026-11-11"
-        hint="YYYY-MM-DD. For online orders, use the delivery date."
+        hint="For online orders, use the delivery date."
         value={input.purchaseDate}
-        onChangeText={(text) => update("purchaseDate", text)}
+        onChange={(date) => update("purchaseDate", date)}
+        maximumDate={todayIso()}
+        pastShortcuts
         error={errors.purchaseDate}
       />
       <Segmented
