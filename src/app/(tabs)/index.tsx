@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   gridRow: {
-    gap: 10,
+    justifyContent: "space-between",
   },
   sectionHeader: {
     flexDirection: "row",
