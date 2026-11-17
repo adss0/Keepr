@@ -1,12 +1,24 @@
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  SectionList,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 import { ExampleReceipt } from "@/components/example-receipt";
 import { Button } from "@/components/form";
-import { Icon } from "@/components/icon";
+import { Icon, type IconName } from "@/components/icon";
 import { NextDeadlineCard } from "@/components/next-deadline-card";
 import { ReceiptCard } from "@/components/receipt-card";
+import { ReceiptTile } from "@/components/receipt-tile";
 import { RemindersBanner } from "@/components/reminders-banner";
 import { ScreenHeader } from "@/components/screen-header";
 import { useTheme } from "@/constants/theme";
@@ -16,10 +28,16 @@ import { useReminders } from "@/data/reminders";
 import { useSettings } from "@/data/settings";
 import { useSpaces } from "@/data/spaces";
 import { daysBetween, getNextDeadline, todayIso } from "@/lib/deadlines";
+import { formatPrice } from "@/lib/format";
+import { groupByMonth, type ReceiptsSort, type ReceiptsView, SORT_LABELS, sortReceipts } from "@/lib/receipt-views";
 import { searchReceipts } from "@/lib/search";
 
-/** Sort key for receipts with no upcoming deadline, so they go last. */
-const NO_DEADLINE = "9999-12-31";
+const VIEWS: { view: ReceiptsView; icon: IconName; label: string }[] = [
+  { view: "list", icon: "viewList", label: "List" },
+  { view: "grid", icon: "viewGrid", label: "Grid" },
+  { view: "timeline", icon: "viewTimeline", label: "By month" },
+];
+const SORTS: ReceiptsSort[] = ["deadline", "newest", "price"];
 
 /** Opens Add receipt with the camera already open, so scanning is one tap from home. */
 function scanReceipt() {
@@ -32,7 +50,9 @@ export default function ReceiptsScreen() {
   const { receipts: allReceipts, ready } = useReceiptsStore();
   const [query, setQuery] = useState("");
   const reminders = useReminders();
-  const { settings } = useSettings();
+  const { settings, update } = useSettings();
+  const view = settings.receiptsView;
+  const sort = settings.receiptsSort;
   const pull = usePullToSync();
   const { spaces } = useSpaces();
   /** "all", "mine" (personal only) or a space id. */
@@ -40,15 +60,7 @@ export default function ReceiptsScreen() {
   // A space you've left (or that was deleted) can't stay selected.
   const activeFilter = filter === "all" || filter === "mine" || spaces.some((space) => space.id === filter) ? filter : "all";
 
-  const receipts = useMemo(
-    () =>
-      [...allReceipts].sort((a, b) => {
-        const aDate = getNextDeadline(a, today)?.date ?? NO_DEADLINE;
-        const bDate = getNextDeadline(b, today)?.date ?? NO_DEADLINE;
-        return aDate.localeCompare(bDate);
-      }),
-    [allReceipts, today],
-  );
+  const receipts = useMemo(() => sortReceipts(allReceipts, sort, today), [allReceipts, sort, today]);
 
   const filteredReceipts = useMemo(
     () =>
@@ -115,20 +127,16 @@ export default function ReceiptsScreen() {
     );
   }
 
-  return (
-    <View style={[styles.screen, { backgroundColor: theme.background }]}>
-      {header}
-      <FlatList
-        style={{ backgroundColor: theme.background }}
-        contentContainerStyle={styles.list}
-        data={visibleReceipts}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        refreshControl={<RefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} tintColor={theme.accent} />}
-        keyExtractor={(receipt) => receipt.id}
-        renderItem={({ item }) => <ReceiptCard receipt={item} today={today} />}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        ListHeaderComponent={
+  const sections = view === "timeline" ? groupByMonth(visibleReceipts) : [];
+  const listProps = {
+    style: { backgroundColor: theme.background },
+    contentContainerStyle: styles.list,
+    keyboardShouldPersistTaps: "handled" as const,
+    keyboardDismissMode: "on-drag" as const,
+    refreshControl: <RefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} tintColor={theme.accent} />,
+    keyExtractor: (receipt: { id: string }) => receipt.id,
+    ItemSeparatorComponent: () => <View style={styles.separator} />,
+    ListHeaderComponent: (
           <View style={styles.listHeader}>
             {query.length === 0 && <NextDeadlineCard receipts={filteredReceipts} today={today} />}
             {spaces.length > 0 && (
@@ -185,14 +193,77 @@ export default function ReceiptsScreen() {
                 </Pressable>
               )}
             </View>
+            <View style={styles.toolbar}>
+              <View style={[styles.viewSwitch, { backgroundColor: theme.card, borderColor: theme.border }]} accessibilityRole="tablist">
+                {VIEWS.map((item) => {
+                  const selected = item.view === view;
+                  return (
+                    <Pressable
+                      key={item.view}
+                      accessibilityRole="tab"
+                      accessibilityLabel={`${item.label} view`}
+                      accessibilityState={{ selected }}
+                      hitSlop={4}
+                      onPress={() => update({ receiptsView: item.view })}
+                      style={[styles.viewButton, selected && { backgroundColor: theme.accentSoft }]}
+                    >
+                      <Icon name={item.icon} size={18} color={selected ? theme.accent : theme.textMuted} />
+                    </Pressable>
+                  );
+                })}
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Sorted by ${SORT_LABELS[sort]}. Change order`}
+                onPress={() => update({ receiptsSort: SORTS[(SORTS.indexOf(sort) + 1) % SORTS.length] })}
+                style={[styles.sortButton, { backgroundColor: theme.card, borderColor: theme.border }]}
+              >
+                <Icon name="sort" size={16} color={theme.textMuted} />
+                <Text style={[styles.sortText, { color: theme.text }]}>{SORT_LABELS[sort]}</Text>
+              </Pressable>
+            </View>
           </View>
-        }
-        ListEmptyComponent={
-          <Text style={[styles.noResults, { color: theme.textMuted }]}>
-            {query.trim() ? `No receipts match “${query.trim()}”.` : "No receipts here yet."}
-          </Text>
-        }
-      />
+    ),
+    ListEmptyComponent: (
+      <Text style={[styles.noResults, { color: theme.textMuted }]}>
+        {query.trim() ? `No receipts match “${query.trim()}”.` : "No receipts here yet."}
+      </Text>
+    ),
+  };
+
+  return (
+    <View style={[styles.screen, { backgroundColor: theme.background }]}>
+      {header}
+      {view === "timeline" ? (
+        <SectionList
+          {...listProps}
+          sections={sections}
+          stickySectionHeadersEnabled={false}
+          renderItem={({ item }) => <ReceiptCard receipt={item} today={today} />}
+          renderSectionHeader={({ section }) => (
+            <View style={styles.sectionHeader}>
+              <Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.text }]}>
+                {section.title}
+              </Text>
+              <Text style={[styles.sectionTotal, { color: theme.textMuted }]}>
+                {formatPrice(section.totalPence)} · {section.data.length === 1 ? "1 receipt" : `${section.data.length} receipts`}
+              </Text>
+            </View>
+          )}
+        />
+      ) : (
+        <FlatList
+          {...listProps}
+          // Changing the column count needs a fresh list.
+          key={view}
+          data={visibleReceipts}
+          numColumns={view === "grid" ? 2 : 1}
+          columnWrapperStyle={view === "grid" ? styles.gridRow : undefined}
+          renderItem={({ item }) =>
+            view === "grid" ? <ReceiptTile receipt={item} today={today} /> : <ReceiptCard receipt={item} today={today} />
+          }
+        />
+      )}
     </View>
   );
 }
@@ -219,6 +290,57 @@ const styles = StyleSheet.create({
   },
   chips: {
     gap: 8,
+  },
+  toolbar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  viewSwitch: {
+    flexDirection: "row",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 12,
+    padding: 3,
+    gap: 2,
+  },
+  viewButton: {
+    width: 40,
+    height: 34,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sortButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 40,
+  },
+  sortText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  gridRow: {
+    gap: 10,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    paddingTop: 14,
+    paddingBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  sectionTotal: {
+    fontSize: 13,
+    fontVariant: ["tabular-nums"],
   },
   chip: {
     borderWidth: 1,
