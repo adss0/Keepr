@@ -8,8 +8,8 @@ import { GoogleGenAI } from "npm:@google/genai@^3.2.0";
 
 /** A free-tier Gemini model. Change it here if Google retires it. */
 const MODEL = "gemini-3.5-flash-lite";
-const MAX_IMAGE_BASE64_LENGTH = 7_000_000; // About 5 MB of image data.
-const ALLOWED_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
+const MAX_IMAGE_BASE64_LENGTH = 7_000_000; // About 5 MB of image or PDF data.
+const ALLOWED_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "application/pdf"];
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,6 +22,19 @@ const RECEIPT_SCHEMA = {
   properties: {
     is_receipt: { type: "boolean", description: "False if the image isn't a receipt or order confirmation." },
     retailer: { type: "string", description: "Shop or company name." },
+    items: {
+      type: "array",
+      description:
+        "Every product bought, in the order listed, with its own price. Leave out discounts, bags, delivery, service charges and tax lines.",
+      items: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Product name as a shopper would say it, e.g. \"Sony WH-1000XM5 headphones\"." },
+          price_pence: { type: "integer", description: "Price paid for this line, in pence." },
+        },
+        required: ["name"],
+      },
+    },
     product: {
       type: "string",
       description: "The main item bought. If there are several items, the most expensive one.",
@@ -36,7 +49,7 @@ const RECEIPT_SCHEMA = {
   required: ["is_receipt"],
 };
 
-const PROMPT = `You read photos of UK shop receipts and online order confirmations for Keepr, an app that tracks return and warranty deadlines.
+const PROMPT = `You read photos, screenshots and PDFs of UK shop receipts and online order confirmations for Keepr, an app that tracks return and warranty deadlines.
 Extract only what the image shows. Leave out any field that isn't visible or that you would have to guess.
 Card payments marked "Visa Credit", "Mastercard Credit" or "Amex" are credit_card; "Debit", "Contactless debit" or "Visa Debit" are debit_card.
 An emailed order confirmation or delivery note is "online"; a till receipt is "in_store".
@@ -81,8 +94,8 @@ Deno.serve(async (request) => {
   } catch {
     return json({ error: "Send JSON with image and mediaType" }, 400);
   }
-  if (!image || image.length > MAX_IMAGE_BASE64_LENGTH) return json({ error: "The photo is missing or too large" }, 400);
-  if (!ALLOWED_MEDIA_TYPES.includes(mediaType)) return json({ error: "Use a JPEG, PNG, WebP or HEIC photo" }, 400);
+  if (!image || image.length > MAX_IMAGE_BASE64_LENGTH) return json({ error: "The file is missing or larger than 5 MB" }, 400);
+  if (!ALLOWED_MEDIA_TYPES.includes(mediaType)) return json({ error: "Use a photo, screenshot or PDF" }, 400);
 
   const client = new GoogleGenAI({ apiKey });
 
@@ -92,7 +105,7 @@ Deno.serve(async (request) => {
       model: MODEL,
       input: [
         { type: "text", text: PROMPT },
-        { type: "image", data: image, mime_type: mediaType },
+        { type: mediaType === "application/pdf" ? "document" : "image", data: image, mime_type: mediaType },
       ],
       response_format: { type: "text", mime_type: "application/json", schema: RECEIPT_SCHEMA },
     });

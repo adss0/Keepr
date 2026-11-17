@@ -10,7 +10,8 @@ import { photosStoredLocally, type ReceiptPhoto } from "@/data/receipt-photos";
 import type { ReceiptFields } from "@/data/receipts";
 import { todayIso } from "@/lib/deadlines";
 import { type ReceiptInput, type ReceiptInputErrors, validateReceiptInput } from "@/lib/receipt-input";
-import { countChangedFields, scanResultToInput } from "@/lib/scan-result";
+import { formatPrice } from "@/lib/format";
+import { countChangedFields, penceToInput, type ScannedItem, scannedItems, scanResultToInput } from "@/lib/scan-result";
 import type { PaymentMethod, PurchaseChannel } from "@/types/receipt";
 
 const CHANNEL_OPTIONS: { value: PurchaseChannel; label: string }[] = [
@@ -30,17 +31,20 @@ type Props = {
   submitLabel: string;
   /** `photo` is the scanned photo to keep as proof of purchase, if any. */
   onSubmit: (fields: ReceiptFields, photo?: ReceiptPhoto) => void;
+  /** Saves every item from a multi-item scan as its own receipt. Without it, only one item can be picked. */
+  onSubmitMany?: (fieldsList: ReceiptFields[], photo?: ReceiptPhoto) => void;
   /** Show the "Scan a receipt" buttons (for new receipts). */
   allowScan?: boolean;
   /** Open the camera as soon as the form appears (with allowScan). */
   autoScan?: boolean;
 };
 
-export function ReceiptForm({ initial, submitLabel, onSubmit, allowScan = false, autoScan = false }: Props) {
+export function ReceiptForm({ initial, submitLabel, onSubmit, onSubmitMany, allowScan = false, autoScan = false }: Props) {
   const theme = useTheme();
   const [input, setInput] = useState(initial);
   const [errors, setErrors] = useState<ReceiptInputErrors>({});
   const [photo, setPhoto] = useState<ReceiptPhoto>();
+  const [items, setItems] = useState<ScannedItem[]>([]);
 
   function update<K extends keyof ReceiptInput>(key: K, value: ReceiptInput[K]) {
     setInput((current) => ({ ...current, [key]: value }));
@@ -56,6 +60,32 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, allowScan = false,
     onSubmit(result.value, photo);
   }
 
+  function pickItem(item: ScannedItem) {
+    setInput((current) => ({
+      ...current,
+      product: item.name,
+      price: item.pricePence !== undefined ? penceToInput(item.pricePence) : current.price,
+    }));
+    setErrors((current) => ({ ...current, product: undefined, price: undefined }));
+  }
+
+  /** Every scanned item as its own receipt, sharing the shop, date and payment details. */
+  function submitAll() {
+    const today = todayIso();
+    const values: ReceiptFields[] = [];
+    for (const item of items) {
+      const price = item.pricePence !== undefined ? penceToInput(item.pricePence) : input.price;
+      const result = validateReceiptInput({ ...input, product: item.name, price }, today);
+      if (result.errors) {
+        // A shared detail (shop, date) needs fixing, or an item has no price.
+        setErrors(result.errors.price ? { ...result.errors, price: `Enter a price for ${item.name}` } : result.errors);
+        return;
+      }
+      values.push(result.value);
+    }
+    onSubmitMany?.(values, photo);
+  }
+
   return (
     <ScrollView
       style={{ backgroundColor: theme.background }}
@@ -67,6 +97,7 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, allowScan = false,
           autoStart={autoScan}
           onScanned={(result, scannedPhoto) => {
             setPhoto(scannedPhoto);
+            setItems(scannedItems(result));
             const scanned = scanResultToInput(result, input);
             if (!scanned) return 0;
             setInput(scanned);
@@ -92,6 +123,42 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, allowScan = false,
           <Pressable accessibilityRole="button" accessibilityLabel="Don't keep the photo" hitSlop={10} onPress={() => setPhoto(undefined)}>
             <Text style={{ color: theme.accent, fontWeight: "600" }}>Remove</Text>
           </Pressable>
+        </View>
+      )}
+      {items.length > 1 && (
+        <View style={[styles.items, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Text style={[styles.photoTitle, { color: theme.text }]}>{items.length} items on this receipt</Text>
+          <Text style={[styles.photoHint, { color: theme.textMuted }]}>
+            {onSubmitMany ? "Pick the one this receipt is for, or add them all." : "Pick the one this receipt is for."}
+          </Text>
+          <View accessibilityRole="radiogroup" style={styles.itemList}>
+            {items.map((item, index) => {
+              const selected = input.product === item.name;
+              return (
+                <Pressable
+                  key={`${item.name}-${index}`}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  onPress={() => pickItem(item)}
+                  style={[
+                    styles.item,
+                    {
+                      borderColor: selected ? theme.accent : theme.border,
+                      backgroundColor: selected ? theme.accentSoft : "transparent",
+                    },
+                  ]}
+                >
+                  <Text style={[styles.itemName, { color: theme.text }]} numberOfLines={2}>
+                    {item.name}
+                  </Text>
+                  {item.pricePence !== undefined && (
+                    <Text style={[styles.itemPrice, { color: theme.text }]}>{formatPrice(item.pricePence)}</Text>
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+          {onSubmitMany && <Button title={`Add all ${items.length} as separate receipts`} onPress={submitAll} />}
         </View>
       )}
       <Field
@@ -189,5 +256,33 @@ const styles = StyleSheet.create({
   },
   photoHint: {
     fontSize: 13,
+  },
+  items: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 14,
+    padding: 12,
+    gap: 8,
+  },
+  itemList: {
+    gap: 6,
+  },
+  item: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    minHeight: 44,
+  },
+  itemName: {
+    flex: 1,
+    fontSize: 15,
+  },
+  itemPrice: {
+    fontSize: 15,
+    fontWeight: "600",
+    fontVariant: ["tabular-nums"],
   },
 });
