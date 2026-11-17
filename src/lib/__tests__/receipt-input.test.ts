@@ -52,6 +52,15 @@ describe("validateReceiptInput", () => {
     expect(result.value).toMatchObject({ returnWindowDays: 28, warrantyMonths: 12 });
   });
 
+  it("rejects numbers so large their deadlines can't be calculated", () => {
+    const result = validateReceiptInput(
+      { ...valid, price: "99999999", returnWindowDays: "99999999", warrantyMonths: "1201" },
+      TODAY,
+    );
+    expect(Object.keys(result.errors ?? {}).sort()).toEqual(["price", "returnWindowDays", "warrantyMonths"]);
+    expect(validateReceiptInput({ ...valid, returnWindowDays: "3650", warrantyMonths: "1200" }, TODAY).value).toBeDefined();
+  });
+
   it("reports every missing or invalid field", () => {
     const result = validateReceiptInput(
       { ...emptyReceiptInput(TODAY), purchaseDate: "2026-02-30", returnWindowDays: "two" },
