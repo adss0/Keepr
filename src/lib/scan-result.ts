@@ -43,3 +43,24 @@ export function scanResultToInput(result: unknown, current: ReceiptInput): Recei
 export function countChangedFields(before: ReceiptInput, after: ReceiptInput): number {
   return (Object.keys(after) as (keyof ReceiptInput)[]).filter((key) => after[key] !== before[key]).length;
 }
+
+export type ScannedItem = { name: string; pricePence?: number };
+
+/** The separate products on a scanned receipt (empty if the scan didn't list them). */
+export function scannedItems(result: unknown): ScannedItem[] {
+  if (typeof result !== "object" || result === null) return [];
+  const items = (result as { items?: unknown }).items;
+  if (!Array.isArray(items)) return [];
+  return items.flatMap((item): ScannedItem[] => {
+    if (typeof item !== "object" || item === null) return [];
+    const { name, price_pence: price } = item as { name?: unknown; price_pence?: unknown };
+    if (typeof name !== "string" || !name.trim()) return [];
+    const pricePence = typeof price === "number" && Number.isInteger(price) && price >= 0 ? price : undefined;
+    return [{ name: name.trim(), pricePence }];
+  });
+}
+
+/** "7999" pence → "79.99", as typed in the price field. */
+export function penceToInput(pence: number): string {
+  return (pence / 100).toFixed(2);
+}
