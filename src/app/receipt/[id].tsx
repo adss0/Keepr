@@ -1,24 +1,21 @@
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ReceiptPhotoCard } from "@/components/receipt-photo-card";
 import { DeadlinePill } from "@/components/deadline-pill";
 import { Button } from "@/components/form";
 import { useTheme } from "@/constants/theme";
 import { useToast } from "@/components/toast";
+import { useCloud } from "@/data/cloud";
 import { haptics } from "@/data/haptics";
+import { usePhotoUri } from "@/data/receipt-photos";
+import { shareReceiptPdf } from "@/data/receipt-pdf";
 import { useReceipt, useReceiptsStore } from "@/data/receipts";
 import { DEADLINE_EXPLANATIONS, getDeadlines, todayIso } from "@/lib/deadlines";
 import { formatDate, formatPrice } from "@/lib/format";
-import type { PaymentMethod } from "@/types/receipt";
+import { PAYMENT_LABELS } from "@/lib/export";
 import { goBack } from "@/lib/navigation";
-
-const PAYMENT_LABELS: Record<PaymentMethod, string> = {
-  credit_card: "Credit card",
-  debit_card: "Debit card",
-  cash: "Cash",
-  other: "Other",
-};
 
 export default function ReceiptDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -27,6 +24,9 @@ export default function ReceiptDetailScreen() {
   const { showToast } = useToast();
   const theme = useTheme();
   const today = todayIso();
+  const { userId } = useCloud();
+  const photoUri = usePhotoUri(receipt?.photo, userId);
+  const [exporting, setExporting] = useState(false);
 
   if (!receipt) {
     return (
@@ -87,6 +87,20 @@ export default function ReceiptDetailScreen() {
           title="Something wrong? Check your rights"
           variant="primary"
           onPress={() => router.push({ pathname: "/receipt/rights/[id]", params: { id: receipt.id } })}
+        />
+        <Button
+          title="Save as PDF"
+          busy={exporting}
+          onPress={async () => {
+            setExporting(true);
+            try {
+              await shareReceiptPdf(receipt, today, photoUri);
+            } catch (error) {
+              Alert.alert("Couldn't make the PDF", error instanceof Error ? error.message : String(error));
+            } finally {
+              setExporting(false);
+            }
+          }}
         />
         <Button
           title="Edit"
