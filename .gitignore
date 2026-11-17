@@ -42,3 +42,6 @@ yarn-error.*
 .DS_Store
 Thumbs.db
 .idea/
+
+# Supabase CLI cache
+supabase/.temp/
