@@ -84,7 +84,8 @@ Deno.serve(async (request) => {
   if (!image || image.length > MAX_IMAGE_BASE64_LENGTH) return json({ error: "The photo is missing or too large" }, 400);
   if (!ALLOWED_MEDIA_TYPES.includes(mediaType)) return json({ error: "Use a JPEG, PNG, WebP or HEIC photo" }, 400);
 
-  const client = new GoogleGenAI({ apiKey });
+  // Image input in the Interactions API is only on v1beta; the default v1 rejects it with a 400.
+  const client = new GoogleGenAI({ apiKey, apiVersion: "v1beta" });
 
   let outputText: string | undefined;
   try {
