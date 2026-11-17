@@ -62,11 +62,11 @@ Scanning runs in a Supabase **Edge Function** ([`supabase/functions/extract-rece
    ```
 4. Deploy the function:
    ```bash
-   npx supabase functions deploy extract-receipt
+   npx supabase functions deploy extract-receipt --no-verify-jwt
    ```
 5. In Keepr, sign in, tap **Add**, then **Scan a receipt**. Check the details it fills in, then save.
 
-Only signed-in users can use the function, because Supabase checks their sign-in before it runs.
+Only signed-in users can use the function: it asks Supabase Auth to confirm each caller's sign-in first. Keep **Verify JWT with legacy secret** turned off for this function (that's what `--no-verify-jwt` does), because that older check would also let anyone with the app's public key use your Gemini quota.
 
 **About the free tier:**
 - **Daily limits:** it has request limits per minute and per day. If you hit them, Keepr shows "Too many scans right now".
