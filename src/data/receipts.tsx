@@ -4,6 +4,7 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useM
 
 import { usePersistedList } from "@/data/persisted-list";
 import { mergeById } from "@/lib/cloud-rows";
+import { removeUnusedPhotos } from "@/data/receipt-photos";
 import { isOldSample } from "@/lib/old-samples";
 import type { Receipt } from "@/types/receipt";
 
@@ -19,7 +20,10 @@ type ReceiptsContextValue = {
   /** False until saved receipts have been read from the phone. */
   ready: boolean;
   addReceipt: (fields: ReceiptFields) => Receipt;
+  /** Replaces a receipt's details. Its photo is kept unless `fields` sets one. */
   updateReceipt: (id: string, fields: ReceiptFields) => void;
+  /** Attaches (or with undefined, removes) a receipt's photo file name. */
+  setReceiptPhoto: (id: string, photo: string | undefined) => void;
   deleteReceipt: (id: string) => void;
   /** Puts a deleted receipt back, with its original id (for Undo). */
   restoreReceipt: (receipt: Receipt) => void;
@@ -39,7 +43,19 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
   }, [setReceipts]);
 
   const updateReceipt = useCallback((id: string, fields: ReceiptFields) => {
-    setReceipts((current) => current.map((receipt) => (receipt.id === id ? { id, ...fields } : receipt)));
+    setReceipts((current) =>
+      current.map((receipt) => (receipt.id === id ? { id, photo: receipt.photo, ...fields } : receipt)),
+    );
+  }, [setReceipts]);
+
+  const setReceiptPhoto = useCallback((id: string, photo: string | undefined) => {
+    setReceipts((current) =>
+      current.map((receipt) => {
+        if (receipt.id !== id) return receipt;
+        const { photo: _old, ...rest } = receipt;
+        return photo ? { ...rest, photo } : rest;
+      }),
+    );
   }, [setReceipts]);
 
   const deleteReceipt = useCallback((id: string) => {
@@ -66,6 +82,14 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
     [setReceipts],
   );
 
+  // Once per launch, delete photo files of receipts that were deleted (after Undo is no longer possible).
+  useEffect(() => {
+    if (!ready) return;
+    removeUnusedPhotos(new Set(receipts.flatMap((receipt) => (receipt.photo ? [receipt.photo] : []))));
+    // Only on the first load: running on every change would delete a photo while its Undo is still on screen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready]);
+
   const mergeFromCloud = useCallback(
     // Old samples are skipped here too, so a sync can't bring back the ones just cleaned up (the next push deletes them).
     // shortcut: a real purchase with exactly a sample's product, shop and price would also be skipped; drop this filter
@@ -75,8 +99,8 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ receipts, ready, addReceipt, updateReceipt, deleteReceipt, restoreReceipt, mergeFromCloud }),
-    [receipts, ready, addReceipt, updateReceipt, deleteReceipt, restoreReceipt, mergeFromCloud],
+    () => ({ receipts, ready, addReceipt, updateReceipt, setReceiptPhoto, deleteReceipt, restoreReceipt, mergeFromCloud }),
+    [receipts, ready, addReceipt, updateReceipt, setReceiptPhoto, deleteReceipt, restoreReceipt, mergeFromCloud],
   );
 
   return <ReceiptsContext.Provider value={value}>{children}</ReceiptsContext.Provider>;

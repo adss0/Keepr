@@ -1,6 +1,7 @@
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { ReceiptPhotoCard } from "@/components/receipt-photo-card";
 import { DeadlinePill } from "@/components/deadline-pill";
 import { Button } from "@/components/form";
 import { useTheme } from "@/constants/theme";
@@ -65,6 +66,8 @@ export default function ReceiptDetailScreen() {
           </View>
         ))}
       </View>
+
+      <ReceiptPhotoCard receipt={receipt} />
 
       <Text style={[styles.heading, { color: theme.text }]}>Your deadlines</Text>
       {getDeadlines(receipt).map((deadline) => (

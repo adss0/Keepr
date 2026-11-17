@@ -30,6 +30,10 @@ function AppStack() {
         <Stack.Screen name="receipt/new" options={{ title: "Add receipt", presentation: "modal" }} />
         <Stack.Screen name="receipt/edit/[id]" options={{ title: "Edit receipt", presentation: "modal" }} />
         <Stack.Screen name="receipt/rights/[id]" options={{ title: "Your rights" }} />
+        <Stack.Screen
+          name="receipt/photo/[id]"
+          options={{ title: "Receipt photo", headerStyle: { backgroundColor: "#000" }, headerTintColor: "#fff", headerTitleStyle: { color: "#fff" } }}
+        />
         <Stack.Screen name="subscriptions/new" options={{ title: "Add subscription", presentation: "modal" }} />
         <Stack.Screen name="subscriptions/edit/[id]" options={{ title: "Edit subscription", presentation: "modal" }} />
         <Stack.Screen name="account" options={{ title: "Account and sync" }} />

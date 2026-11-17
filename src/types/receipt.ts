@@ -16,4 +16,6 @@ export type Receipt = {
   returnWindowDays?: number;
   /** Manufacturer warranty length in months, if known. */
   warrantyMonths?: number;
+  /** File name of the receipt's photo or PDF, kept as proof of purchase (see data/receipt-photos). */
+  photo?: string;
 };

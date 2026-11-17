@@ -12,6 +12,7 @@ export type ReceiptRow = {
   payment_method: PaymentMethod;
   return_window_days: number | null;
   warranty_months: number | null;
+  photo: string | null;
 };
 
 /** A row in the Supabase `subscriptions` table. */
@@ -35,6 +36,7 @@ export function receiptToRow(receipt: Receipt): ReceiptRow {
     payment_method: receipt.paymentMethod,
     return_window_days: receipt.returnWindowDays ?? null,
     warranty_months: receipt.warrantyMonths ?? null,
+    photo: receipt.photo ?? null,
   };
 }
 
@@ -49,6 +51,8 @@ export function rowToReceipt(row: ReceiptRow): Receipt {
     paymentMethod: row.payment_method,
     ...(row.return_window_days !== null && { returnWindowDays: row.return_window_days }),
     ...(row.warranty_months !== null && { warrantyMonths: row.warranty_months }),
+    // Rows saved before photos existed have no photo column value at all.
+    ...(row.photo != null && { photo: row.photo }),
   };
 }
 

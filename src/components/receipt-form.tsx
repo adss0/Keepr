@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import { Image } from "expo-image";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { DateField } from "@/components/date-field";
 import { Button, Field, Segmented } from "@/components/form";
 import { ScanPanel } from "@/components/scan-panel";
 import { useTheme } from "@/constants/theme";
+import { photosStoredLocally, type ReceiptPhoto } from "@/data/receipt-photos";
 import type { ReceiptFields } from "@/data/receipts";
 import { todayIso } from "@/lib/deadlines";
 import { type ReceiptInput, type ReceiptInputErrors, validateReceiptInput } from "@/lib/receipt-input";
@@ -26,7 +28,8 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string }[] = [
 type Props = {
   initial: ReceiptInput;
   submitLabel: string;
-  onSubmit: (fields: ReceiptFields) => void;
+  /** `photo` is the scanned photo to keep as proof of purchase, if any. */
+  onSubmit: (fields: ReceiptFields, photo?: ReceiptPhoto) => void;
   /** Show the "Scan a receipt" buttons (for new receipts). */
   allowScan?: boolean;
   /** Open the camera as soon as the form appears (with allowScan). */
@@ -37,6 +40,7 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, allowScan = false,
   const theme = useTheme();
   const [input, setInput] = useState(initial);
   const [errors, setErrors] = useState<ReceiptInputErrors>({});
+  const [photo, setPhoto] = useState<ReceiptPhoto>();
 
   function update<K extends keyof ReceiptInput>(key: K, value: ReceiptInput[K]) {
     setInput((current) => ({ ...current, [key]: value }));
@@ -49,7 +53,7 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, allowScan = false,
       setErrors(result.errors);
       return;
     }
-    onSubmit(result.value);
+    onSubmit(result.value, photo);
   }
 
   return (
@@ -61,7 +65,8 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, allowScan = false,
       {allowScan && (
         <ScanPanel
           autoStart={autoScan}
-          onScanned={(result) => {
+          onScanned={(result, scannedPhoto) => {
+            setPhoto(scannedPhoto);
             const scanned = scanResultToInput(result, input);
             if (!scanned) return 0;
             setInput(scanned);
@@ -69,6 +74,25 @@ export function ReceiptForm({ initial, submitLabel, onSubmit, allowScan = false,
             return countChangedFields(input, scanned);
           }}
         />
+      )}
+      {photo && photosStoredLocally && (
+        <View style={[styles.photoRow, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          {photo.mediaType.startsWith("image/") ? (
+            <Image
+              source={{ uri: `data:${photo.mediaType};base64,${photo.base64}` }}
+              style={styles.thumb}
+              contentFit="cover"
+              accessibilityLabel="Receipt photo"
+            />
+          ) : null}
+          <View style={styles.photoText}>
+            <Text style={[styles.photoTitle, { color: theme.text }]}>Photo kept as proof of purchase</Text>
+            <Text style={[styles.photoHint, { color: theme.textMuted }]}>Saved with the receipt.</Text>
+          </View>
+          <Pressable accessibilityRole="button" accessibilityLabel="Don't keep the photo" hitSlop={10} onPress={() => setPhoto(undefined)}>
+            <Text style={{ color: theme.accent, fontWeight: "600" }}>Remove</Text>
+          </Pressable>
+        </View>
       )}
       <Field
         label="What did you buy?"
@@ -141,5 +165,29 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 40,
     gap: 16,
+  },
+  photoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 14,
+    padding: 10,
+  },
+  thumb: {
+    width: 48,
+    height: 64,
+    borderRadius: 8,
+  },
+  photoText: {
+    flex: 1,
+    gap: 2,
+  },
+  photoTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  photoHint: {
+    fontSize: 13,
   },
 });

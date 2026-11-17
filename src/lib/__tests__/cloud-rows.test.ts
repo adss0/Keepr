@@ -38,6 +38,14 @@ describe("row mapping", () => {
     expect(rowToReceipt(row)).toEqual(receipt);
   });
 
+  it("keeps a receipt's photo, and reads rows saved before photos existed", () => {
+    const withPhoto = { ...receipt, photo: `${receipt.id}.jpg` };
+    expect(receiptToRow(withPhoto).photo).toBe(`${receipt.id}.jpg`);
+    expect(rowToReceipt(receiptToRow(withPhoto))).toEqual(withPhoto);
+    const { photo: _photo, ...oldRow } = receiptToRow(receipt);
+    expect(rowToReceipt(oldRow as ReturnType<typeof receiptToRow>)).toEqual(receipt);
+  });
+
   it("round-trips a subscription", () => {
     expect(subscriptionToRow(subscription).trial_ends).toBeNull();
     expect(rowToSubscription(subscriptionToRow(subscription))).toEqual(subscription);
