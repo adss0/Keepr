@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
 
+import Animated, { FadeIn } from "react-native-reanimated";
+
 import { Button } from "@/components/form";
 import { useTheme } from "@/constants/theme";
 import { useCloud } from "@/data/cloud";
@@ -83,7 +85,11 @@ export function ScanPanel({ onScanned, autoStart = false }: Props) {
           <Button title="Choose a photo" onPress={() => scan("library")} />
         </>
       )}
-      {message && <Text style={[styles.text, { color: theme.textMuted }]}>{message}</Text>}
+      {message && (
+        <Animated.Text key={message} entering={FadeIn.duration(200)} style={[styles.text, { color: theme.textMuted }]}>
+          {message}
+        </Animated.Text>
+      )}
     </View>
   );
 }
