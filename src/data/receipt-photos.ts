@@ -89,13 +89,16 @@ async function readUploaded(): Promise<Set<string>> {
   return new Set(stored ? (JSON.parse(stored) as string[]) : []);
 }
 
+/** A photo in the cloud: `folder` is the user id of whoever added the receipt. */
+export type RemotePhoto = { folder: string; name: string };
+
 /** Backs up photos that are on this phone but not in the cloud yet. Failures are retried on the next sync. */
-export async function uploadNewPhotos(userId: string, names: string[]): Promise<void> {
+export async function uploadNewPhotos(photos: RemotePhoto[]): Promise<void> {
   if (!supabase || !photosStoredLocally) return;
   const uploaded = await readUploaded();
   let changed = false;
-  for (const name of names) {
-    const key = `${userId}/${name}`;
+  for (const { folder, name } of photos) {
+    const key = `${folder}/${name}`;
     if (uploaded.has(key)) continue;
     const file = photoFile(name);
     if (!file.exists) continue;
@@ -113,26 +116,27 @@ export async function uploadNewPhotos(userId: string, names: string[]): Promise<
 }
 
 /** Deletes backed-up photos of receipts that were deleted. */
-export async function deleteRemotePhotos(userId: string, names: string[]): Promise<void> {
-  if (!supabase || names.length === 0) return;
-  const { error } = await supabase.storage.from(PHOTO_BUCKET).remove(names.map((name) => `${userId}/${name}`));
+export async function deleteRemotePhotos(photos: RemotePhoto[]): Promise<void> {
+  if (!supabase || photos.length === 0) return;
+  const { error } = await supabase.storage.from(PHOTO_BUCKET).remove(photos.map(({ folder, name }) => `${folder}/${name}`));
   if (error) console.warn("Couldn't delete backed-up photos", error);
 }
 
 /**
  * A URI to show a receipt's photo: the file on the phone, or else the backed-up copy
  * (downloaded to the phone, or a short-lived link on the web). Undefined while loading or if there's none.
+ * `folder` is the user id of whoever added the receipt (undefined when signed out).
  */
-export function usePhotoUri(name: string | undefined, userId: string | undefined): string | undefined {
+export function usePhotoUri(name: string | undefined, folder: string | undefined): string | undefined {
   const [remoteUri, setRemoteUri] = useState<string>();
   const local = name ? localPhotoUri(name) : undefined;
 
   useEffect(() => {
-    if (!name || local || !userId || !supabase) return;
+    if (!name || local || !folder || !supabase) return;
     let cancelled = false;
     const client = supabase;
     (async () => {
-      const key = `${userId}/${name}`;
+      const key = `${folder}/${name}`;
       if (photosStoredLocally) {
         const { data, error } = await client.storage.from(PHOTO_BUCKET).download(key);
         if (error || !data) return;
@@ -148,7 +152,7 @@ export function usePhotoUri(name: string | undefined, userId: string | undefined
     return () => {
       cancelled = true;
     };
-  }, [name, local, userId]);
+  }, [name, local, folder]);
 
   return local ?? remoteUri;
 }

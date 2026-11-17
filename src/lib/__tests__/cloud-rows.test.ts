@@ -1,8 +1,9 @@
 import { describe, expect, it } from "@jest/globals";
 
 import {
-  mergeById,
+  changedSince,
   receiptToRow,
+  reconcile,
   removedIds,
   rowToReceipt,
   rowToSubscription,
@@ -52,15 +53,54 @@ describe("row mapping", () => {
   });
 });
 
-describe("mergeById", () => {
-  it("adds remote-only items and keeps the phone's copy on a clash", () => {
-    const local = [{ id: "a", v: "phone" }, { id: "b", v: "phone" }];
-    const remote = [{ id: "b", v: "cloud" }, { id: "c", v: "cloud" }];
-    expect(mergeById(local, remote)).toEqual([
-      { id: "a", v: "phone" },
-      { id: "b", v: "phone" },
-      { id: "c", v: "cloud" },
+describe("reconcile", () => {
+  type Item = { id: string; v: string; ownerId?: string };
+  const toRow = ({ id, v }: Item) => ({ id, v });
+  const base: Item[] = [
+    { id: "kept", v: "1" },
+    { id: "edited-here", v: "1" },
+    { id: "edited-there", v: "1" },
+    { id: "deleted-there", v: "1" },
+  ];
+
+  it("keeps changes made here, takes changes made elsewhere, and applies remote deletes", () => {
+    const local: Item[] = [
+      { id: "kept", v: "1" },
+      { id: "edited-here", v: "2" },
+      { id: "edited-there", v: "1" },
+      { id: "deleted-there", v: "1" },
+      { id: "new-here", v: "1" },
+    ];
+    const remote: Item[] = [
+      { id: "kept", v: "1" },
+      { id: "edited-here", v: "1" },
+      { id: "edited-there", v: "9", ownerId: "sam" },
+      { id: "new-there", v: "1", ownerId: "sam" },
+    ];
+    expect(reconcile(local, remote, base, toRow)).toEqual([
+      { id: "kept", v: "1" },
+      { id: "edited-here", v: "2" },
+      { id: "edited-there", v: "9", ownerId: "sam" },
+      { id: "new-here", v: "1" },
+      { id: "new-there", v: "1", ownerId: "sam" },
     ]);
+  });
+
+  it("returns the same list when nothing changed, so nothing re-renders or re-syncs", () => {
+    const local: Item[] = [{ id: "kept", v: "1" }];
+    expect(reconcile(local, [{ id: "kept", v: "1" }], [{ id: "kept", v: "1" }], toRow)).toBe(local);
+  });
+
+  it("keeps the phone's copy on a first sync, when there's no base yet", () => {
+    expect(reconcile([{ id: "a", v: "phone" }], [{ id: "a", v: "cloud" }], [], toRow)).toEqual([{ id: "a", v: "phone" }]);
+  });
+});
+
+describe("changedSince", () => {
+  it("finds new and edited items, ignoring fields that aren't saved", () => {
+    const toRow = ({ id, v }: { id: string; v: string; ownerId?: string }) => ({ id, v });
+    const items = [{ id: "a", v: "1", ownerId: "me" }, { id: "b", v: "2" }, { id: "c", v: "1" }];
+    expect(changedSince(items, [{ id: "a", v: "1" }, { id: "b", v: "1" }], toRow).map((i) => i.id)).toEqual(["b", "c"]);
   });
 });
 

@@ -2,7 +2,7 @@ import { randomUUID } from "expo-crypto";
 import { createContext, type ReactNode, useCallback, useContext, useMemo } from "react";
 
 import { usePersistedList } from "@/data/persisted-list";
-import { mergeById } from "@/lib/cloud-rows";
+import { reconcile, subscriptionToRow } from "@/lib/cloud-rows";
 import type { Subscription } from "@/types/subscription";
 
 const STORAGE_KEY = "keepr.subscriptions.v1";
@@ -17,8 +17,8 @@ type SubscriptionsContextValue = {
   deleteSubscription: (id: string) => void;
   /** Puts a deleted subscription back, with its original id (for Undo). */
   restoreSubscription: (subscription: Subscription) => void;
-  /** Adds items saved in the cloud that aren't on this phone yet. */
-  mergeFromCloud: (remote: Subscription[]) => void;
+  /** Brings in the cloud's changes. `base` is what the cloud held at the last sync (see reconcile). */
+  mergeFromCloud: (remote: Subscription[], base: Subscription[]) => void;
 };
 
 const SubscriptionsContext = createContext<SubscriptionsContextValue | null>(null);
@@ -37,7 +37,9 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
 
   const updateSubscription = useCallback(
     (id: string, fields: SubscriptionFields) => {
-      setSubscriptions((current) => current.map((item) => (item.id === id ? { id, ...fields } : item)));
+      setSubscriptions((current) =>
+        current.map((item) => (item.id === id ? { id, ownerId: item.ownerId, ...fields } : item)),
+      );
     },
     [setSubscriptions],
   );
@@ -56,7 +58,8 @@ export function SubscriptionsProvider({ children }: { children: ReactNode }) {
   );
 
   const mergeFromCloud = useCallback(
-    (remote: Subscription[]) => setSubscriptions((current) => mergeById(current, remote)),
+    (remote: Subscription[], base: Subscription[]) =>
+      setSubscriptions((current) => reconcile(current, remote, base, subscriptionToRow)),
     [setSubscriptions],
   );
 

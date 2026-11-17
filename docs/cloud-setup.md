@@ -20,6 +20,7 @@ Supabase's free tier is enough for Keepr.
 1. In your project, open **SQL Editor** and click **New query**.
 2. Copy everything in [`supabase/migrations/20261112000000_receipts_and_subscriptions.sql`](../supabase/migrations/20261112000000_receipts_and_subscriptions.sql), paste it in, and click **Run**.
 3. Do the same with [`supabase/migrations/20261117000000_receipt_photos_and_anonymous_guard.sql`](../supabase/migrations/20261117000000_receipt_photos_and_anonymous_guard.sql).
+4. And with [`supabase/migrations/20261118000000_shared_spaces.sql`](../supabase/migrations/20261118000000_shared_spaces.sql), which adds shared spaces for families and organisations, and turns on live updates (Realtime) for receipts and subscriptions.
 
 This creates the `receipts` and `subscriptions` tables with **row level security**, so each person can only ever read or change their own data. The second file adds a private `receipt-photos` storage bucket for receipt photos (each person can only reach their own folder), and stops the anonymous sessions used for signed-out scanning from reading or writing any data.
 
