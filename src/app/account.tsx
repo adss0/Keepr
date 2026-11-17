@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
@@ -67,6 +68,11 @@ function SignInForm() {
       {message && <Text style={[styles.body, { color: theme.text }]}>{message}</Text>}
       <Button title={busy ? "Please wait…" : "Sign in"} variant="primary" onPress={() => run(() => signIn(email, password))} />
       <Button title="Create an account" onPress={() => run(() => signUp(email, password))} />
+      <Button
+        title="Forgot password?"
+        variant="ghost"
+        onPress={() => router.push({ pathname: "/reset-password", params: { email: email.trim() } })}
+      />
     </View>
   );
 }

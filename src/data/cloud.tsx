@@ -1,8 +1,10 @@
 import type { Session } from "@supabase/supabase-js";
+import * as Linking from "expo-linking";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import { useReceiptsStore } from "@/data/receipts";
 import { useSubscriptions } from "@/data/subscriptions";
+import { recoveryParams } from "@/lib/recovery-link";
 import { supabase } from "@/data/supabase";
 import {
   type ReceiptRow,
@@ -31,6 +33,15 @@ type CloudContextValue = {
   signUp: (email: string, password: string) => Promise<string>;
   signOut: () => Promise<void>;
   syncNow: () => Promise<void>;
+  /** Emails a link that opens Keepr's Reset password screen on this device. */
+  sendPasswordResetEmail: (email: string) => Promise<void>;
+  /**
+   * Signs in from the reset link Keepr was opened with. Returns false if the URL isn't a reset link.
+   * Throws if the link has expired or was already used.
+   */
+  startPasswordRecovery: (url: string) => Promise<boolean>;
+  /** Sets a new password for the signed-in user. */
+  updatePassword: (newPassword: string) => Promise<void>;
 };
 
 const CloudContext = createContext<CloudContextValue | null>(null);
@@ -144,6 +155,33 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     await supabase?.auth.signOut();
   }, []);
 
+  const sendPasswordResetEmail = useCallback(async (email: string) => {
+    if (!supabase) return;
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: Linking.createURL("/reset-password"),
+    });
+    if (resetError) throw resetError;
+  }, []);
+
+  const startPasswordRecovery = useCallback(async (url: string) => {
+    if (!supabase) return false;
+    const params = recoveryParams(url);
+    if (params.error) throw new Error(params.error);
+    if (!params.accessToken || !params.refreshToken) return false;
+    const { error: sessionError } = await supabase.auth.setSession({
+      access_token: params.accessToken,
+      refresh_token: params.refreshToken,
+    });
+    if (sessionError) throw sessionError;
+    return true;
+  }, []);
+
+  const updatePassword = useCallback(async (newPassword: string) => {
+    if (!supabase) return;
+    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+    if (updateError) throw updateError;
+  }, []);
+
   const syncNow = useCallback(async () => {
     setSyncState("syncing");
     try {
@@ -168,8 +206,23 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       signUp,
       signOut,
       syncNow,
+      sendPasswordResetEmail,
+      startPasswordRecovery,
+      updatePassword,
     }),
-    [status, session, lastSyncedAt, error, signIn, signUp, signOut, syncNow],
+    [
+      status,
+      session,
+      lastSyncedAt,
+      error,
+      signIn,
+      signUp,
+      signOut,
+      syncNow,
+      sendPasswordResetEmail,
+      startPasswordRecovery,
+      updatePassword,
+    ],
   );
 
   return <CloudContext.Provider value={value}>{children}</CloudContext.Provider>;

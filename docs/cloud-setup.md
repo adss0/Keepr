@@ -36,15 +36,30 @@ This creates the `receipts` and `subscriptions` tables with **row level security
    `.env` is ignored by git, so it won't be uploaded to GitHub.
 3. Restart the app (`npm start`). **Account and sync** at the bottom of the receipts list now shows a sign-in form.
 
-## 4. Sign in
+## 4. Allow Keepr's addresses for sign-in links
+
+Supabase only sends people back to addresses on its allow list. This is needed for the confirmation link and for **Forgot password?** links.
+
+1. Open **Authentication → URL Configuration**.
+2. Set **Site URL** to `http://localhost:8081`, then click **Save changes**.
+3. Under **Redirect URLs**, click **Add URL** and add these three:
+   - `http://localhost:8081/**` (the web app)
+   - `exp://**` (Expo Go on your phone)
+   - `keepr://**` (the installed app)
+
+   Then click **Save URLs**.
+
+## 5. Sign in
 
 1. In Keepr, open **Account and sync** and tap **Create an account**.
 2. Supabase emails you a confirmation link. Tap it, then come back and **Sign in**.
 3. Your receipts and subscriptions upload straight away, and every change after that is saved within a second.
 
+**Forgot your password?** Tap **Forgot password?** under the sign-in form. Keepr emails you a link. Open it on the same phone (or in the same browser), and Keepr opens on a screen to choose a new password.
+
 To turn off email confirmation while testing, open **Authentication → Sign In / Providers → Email** in Supabase and switch off **Confirm email**.
 
-## 5. Turn on AI receipt scanning
+## 6. Turn on AI receipt scanning
 
 Scanning runs in a Supabase **Edge Function** ([`supabase/functions/extract-receipt`](../supabase/functions/extract-receipt/index.ts)). The app sends the photo to the function, and the function asks **Google Gemini** (`gemini-3.5-flash-lite`, on Gemini's free tier) to read it. Your Gemini API key is stored as a secret on Supabase, so it is never inside the app.
 

@@ -29,6 +29,7 @@ export default function RootLayout() {
               <Stack.Screen name="subscriptions" options={{ title: "Subscriptions" }} />
               <Stack.Screen name="subscriptions/new" options={{ title: "Add subscription", presentation: "modal" }} />
               <Stack.Screen name="account" options={{ title: "Account and sync" }} />
+            <Stack.Screen name="reset-password" options={{ title: "Reset password" }} />
               <Stack.Screen
                 name="subscriptions/edit/[id]"
                 options={{ title: "Edit subscription", presentation: "modal" }}
