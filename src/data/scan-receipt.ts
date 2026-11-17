@@ -28,6 +28,12 @@ export async function pickReceiptPhoto(source: "camera" | "library"): Promise<Re
 /** Sends the photo to the extract-receipt function, which reads it with Google Gemini. Returns its raw JSON. */
 export async function extractReceipt(photo: ReceiptPhoto): Promise<unknown> {
   if (!supabase) throw new Error("Receipt scanning isn't set up yet.");
+  // Signed-out users get an anonymous Supabase session, so the function can still tell real app users from bots.
+  const { data: current } = await supabase.auth.getSession();
+  if (!current.session) {
+    const { error: anonError } = await supabase.auth.signInAnonymously();
+    if (anonError) throw new Error("Couldn't start scanning. Sign in, or try again later.");
+  }
   const { data, error } = await supabase.functions.invoke("extract-receipt", {
     body: { image: photo.base64, mediaType: photo.mediaType },
   });
