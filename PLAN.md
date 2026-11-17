@@ -133,6 +133,7 @@ All features are free for now.
 
 - Scanning is one tap from home: the Scan button opens Add receipt with the camera already open (on phones; browsers need a second tap), and the form says how many details were filled in.
 - Signed-out users can scan too: the app opens a hidden anonymous Supabase session just for the scan function (needs **Allow anonymous sign-ins** in Supabase). It never counts as signed in and never syncs.
+- Motion is kept small and purposeful: buttons and receipt cards shrink slightly while pressed, toasts slide up, and scan results fade in. Reduce Motion swaps the press shrink for a dim. Screens keep the native transitions.
 
 - Deleting a receipt or subscription happens straight away with an Undo message, instead of an "Are you sure?" box.
 - Dates are picked with the native date picker on phones and the browser's date input on the web, with Today/Yesterday shortcuts for purchase dates.

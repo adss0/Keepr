@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, type TextInputProps, View } from "react-native";
 
+import { PressScale } from "@/components/press-scale";
 import { useTheme } from "@/constants/theme";
 import { haptics } from "@/data/haptics";
 
@@ -114,19 +115,16 @@ export function Button({ title, onPress, variant = "secondary", icon, busy = fal
   }[variant];
 
   return (
-    <Pressable
+    <PressScale
       accessibilityRole="button"
       accessibilityState={{ busy, disabled: busy }}
       disabled={busy}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.button,
-        { backgroundColor: colours.bg, borderColor: colours.border, opacity: pressed ? 0.7 : 1 },
-      ]}
+      style={[styles.button, { backgroundColor: colours.bg, borderColor: colours.border }]}
     >
       {busy ? <ActivityIndicator color={colours.text} /> : icon}
       <Text style={[styles.buttonText, { color: colours.text }]}>{title}</Text>
-    </Pressable>
+    </PressScale>
   );
 }
 

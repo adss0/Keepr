@@ -1,7 +1,8 @@
 import { Link } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { DeadlinePill, toneFor } from "@/components/deadline-pill";
+import { PressScale } from "@/components/press-scale";
 import { useTheme } from "@/constants/theme";
 import { daysBetween, getNextDeadline } from "@/lib/deadlines";
 import { formatDate, formatPrice } from "@/lib/format";
@@ -22,13 +23,10 @@ export function ReceiptCard({ receipt, today }: Props) {
 
   return (
     <Link href={{ pathname: "/receipt/[id]", params: { id: receipt.id } }} asChild>
-      <Pressable
+      <PressScale
         accessibilityRole="button"
         accessibilityLabel={`${receipt.product} from ${receipt.retailer}`}
-        style={({ pressed }) => [
-          styles.card,
-          { backgroundColor: theme.card, borderColor: tone.border, opacity: pressed ? 0.7 : 1 },
-        ]}
+        style={[styles.card, { backgroundColor: theme.card, borderColor: tone.border }]}
       >
         <View style={styles.row}>
           <Text style={[styles.product, { color: theme.text }]} numberOfLines={1}>
@@ -42,7 +40,7 @@ export function ReceiptCard({ receipt, today }: Props) {
         <View style={styles.pill}>
           <DeadlinePill deadline={deadline} today={today} />
         </View>
-      </Pressable>
+      </PressScale>
     </Link>
   );
 }
