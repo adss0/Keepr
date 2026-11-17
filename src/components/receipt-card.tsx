@@ -26,7 +26,8 @@ export function ReceiptCard({ receipt, today }: Props) {
       <PressScale
         accessibilityRole="button"
         accessibilityLabel={`${receipt.product} from ${receipt.retailer}`}
-        style={[styles.card, { backgroundColor: theme.card, borderColor: tone.border }]}
+        // Link asChild rejects style arrays on its child.
+        style={StyleSheet.flatten([styles.card, { backgroundColor: theme.card, borderColor: tone.border }])}
       >
         <View style={styles.row}>
           <Text style={[styles.product, { color: theme.text }]} numberOfLines={1}>
