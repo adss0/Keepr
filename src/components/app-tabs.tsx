@@ -20,6 +20,10 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Label>Subscriptions</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={ICONS.subscriptions.ios} md={ICONS.subscriptions.android} />
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="insights">
+        <NativeTabs.Trigger.Label>Insights</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: "chart.bar", selected: "chart.bar.fill" }} md={ICONS.insights.android} />
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="settings">
         <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: "gearshape", selected: "gearshape.fill" }} md={ICONS.settings.android} />

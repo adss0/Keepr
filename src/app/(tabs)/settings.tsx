@@ -12,9 +12,12 @@ import { useCloud } from "@/data/cloud";
 import { useReceipts } from "@/data/receipts";
 import { useReminders } from "@/data/reminders";
 import { useSettings } from "@/data/settings";
-import { shareCsv } from "@/data/share-csv";
+import { shareCsv, shareXlsx } from "@/data/share-csv";
+import { useSubscriptions } from "@/data/subscriptions";
 import { todayIso } from "@/lib/deadlines";
 import { receiptsToCsv } from "@/lib/export";
+import { spendingWorkbook } from "@/lib/spending-workbook";
+import { buildXlsx } from "@/lib/xlsx";
 import { STATUS_TEXT } from "@/lib/cloud-status";
 
 function Section({ title, footer, children }: { title: string; footer?: string; children: ReactNode }) {
@@ -54,12 +57,20 @@ export default function SettingsScreen() {
   const cloud = useCloud();
   const reminders = useReminders();
   const receipts = useReceipts();
+  const { subscriptions } = useSubscriptions();
   const r = settings.reminders;
 
   function exportCsv() {
     const today = todayIso();
     shareCsv(receiptsToCsv(receipts, today), `keepr-receipts-${today}.csv`).catch((error: unknown) =>
       Alert.alert("Couldn't export receipts", error instanceof Error ? error.message : String(error)),
+    );
+  }
+
+  function exportExcel() {
+    const today = todayIso();
+    shareXlsx(buildXlsx(spendingWorkbook(receipts, subscriptions, today)), `keepr-spending-${today}.xlsx`).catch(
+      (error: unknown) => Alert.alert("Couldn't export spending", error instanceof Error ? error.message : String(error)),
     );
   }
 
@@ -166,6 +177,8 @@ export default function SettingsScreen() {
         </Section>
 
         <Section title="Your data">
+          <LinkRow icon="insights" title="Spending breakdown (Excel)" onPress={exportExcel} />
+          <View style={[styles.divided, { borderTopColor: theme.border }]} />
           <LinkRow icon="share" title="Export receipts (CSV)" onPress={exportCsv} />
         </Section>
 

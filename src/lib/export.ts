@@ -1,7 +1,7 @@
 import { getNextDeadline } from "@/lib/deadlines";
 import type { PaymentMethod, Receipt } from "@/types/receipt";
 
-const PAYMENT_LABELS: Record<PaymentMethod, string> = {
+export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   credit_card: "Credit card",
   debit_card: "Debit card",
   cash: "Cash",

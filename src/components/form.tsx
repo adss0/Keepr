@@ -62,7 +62,7 @@ export function Segmented<T extends string>({ label, value, options, onChange }:
   const theme = useTheme();
   return (
     <View style={styles.field}>
-      <Text style={[styles.label, { color: theme.text }]}>{label}</Text>
+      {label ? <Text style={[styles.label, { color: theme.text }]}>{label}</Text> : null}
       <View style={styles.segments} accessibilityRole="radiogroup">
         {options.map((option) => {
           const selected = option.value === value;
