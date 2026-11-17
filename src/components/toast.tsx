@@ -1,6 +1,8 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import Animated, { Easing, FadeInDown, FadeOut } from "react-native-reanimated";
+
 import { useTheme } from "@/constants/theme";
 
 /** How long a message stays on screen. Messages with an action (like Undo) stay a little longer. */
@@ -42,7 +44,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       {toast && (
         <View pointerEvents="box-none" style={styles.overlay}>
-          <View
+          <Animated.View
+            key={toast.id}
+            entering={FadeInDown.duration(220).easing(Easing.bezier(0.23, 1, 0.32, 1))}
+            exiting={FadeOut.duration(150)}
             accessibilityRole="alert"
             accessibilityLiveRegion="polite"
             style={[styles.toast, { backgroundColor: theme.text }]}
@@ -60,7 +65,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 <Text style={[styles.action, { color: theme.background }]}>{toast.action.label}</Text>
               </Pressable>
             )}
-          </View>
+          </Animated.View>
         </View>
       )}
     </ToastContext.Provider>

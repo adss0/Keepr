@@ -79,9 +79,10 @@ Scanning runs in a Supabase **Edge Function** ([`supabase/functions/extract-rece
    ```bash
    npx supabase functions deploy extract-receipt --no-verify-jwt
    ```
-5. In Keepr, sign in, tap **Add**, then **Scan a receipt**. Check the details it fills in, then save.
+5. To let people scan without an account, open **Authentication → Sign In / Providers** in Supabase and turn on **Allow anonymous sign-ins**. Keepr then gives signed-out users a hidden anonymous session just for scanning. It never syncs their receipts. Leave it off if you only want signed-in users to scan.
+6. In Keepr, tap **Add**, then **Scan a receipt**. Check the details it fills in, then save.
 
-Only signed-in users can use the function: it asks Supabase Auth to confirm each caller's sign-in first. Keep **Verify JWT with legacy secret** turned off for this function (that's what `--no-verify-jwt` does), because that older check would also let anyone with the app's public key use your Gemini quota.
+Only Keepr app sessions can use the function (signed-in or anonymous): it asks Supabase Auth to confirm each caller's session first. Supabase limits anonymous sign-ins to 30 an hour per IP address by default (**Authentication → Rate Limits**). Keep **Verify JWT with legacy secret** turned off for this function (that's what `--no-verify-jwt` does), because that older check would also let anyone with the app's public key use your Gemini quota.
 
 **About the free tier:**
 - **Daily limits:** it has request limits per minute and per day. If you hit them, Keepr shows "Too many scans right now".

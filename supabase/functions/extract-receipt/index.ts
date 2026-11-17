@@ -1,7 +1,7 @@
 // Supabase Edge Function: reads a photo of a receipt with Google Gemini and returns its details as JSON.
 // The Gemini API key stays here on the server (as the GEMINI_API_KEY secret), never in the app.
-// Only signed-in Keepr users can call it: the function asks Supabase Auth to confirm the caller's sign-in
-// token first. Deploy it with "Verify JWT with legacy secret" turned OFF (--no-verify-jwt), because that
+// Only Keepr app users can call it: the function asks Supabase Auth to confirm the caller's sign-in
+// token first. Signed-out users get an anonymous Supabase session from the app, so they can scan too. Deploy it with "Verify JWT with legacy secret" turned OFF (--no-verify-jwt), because that
 // older check also lets anyone with the app's public key through.
 
 import { GoogleGenAI } from "npm:@google/genai@^3.2.0";

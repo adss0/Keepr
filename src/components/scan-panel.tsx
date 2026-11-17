@@ -1,6 +1,7 @@
-import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
+
+import Animated, { FadeIn } from "react-native-reanimated";
 
 import { Button } from "@/components/form";
 import { useTheme } from "@/constants/theme";
@@ -22,7 +23,7 @@ export function ScanPanel({ onScanned, autoStart = false }: Props) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
   const autoStarted = useRef(false);
-  const canScan = status !== "not_set_up" && status !== "signed_out";
+  const canScan = status !== "not_set_up";
 
   // Browsers only open the camera from a tap, so on the web the user taps Scan themselves.
   useEffect(() => {
@@ -41,17 +42,6 @@ export function ScanPanel({ onScanned, autoStart = false }: Props) {
           one-time setup first: a free Supabase project and a free Gemini API key (see docs/cloud-setup.md). Until then,
           fill in the details below by hand.
         </Text>
-      </View>
-    );
-  }
-
-  if (status === "signed_out") {
-    return (
-      <View style={[styles.panel, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <Text style={[styles.text, { color: theme.textMuted }]}>
-          Sign in to scan receipts with your camera and have the details filled in for you.
-        </Text>
-        <Button title="Sign in" onPress={() => router.push("/account")} />
       </View>
     );
   }
@@ -95,7 +85,11 @@ export function ScanPanel({ onScanned, autoStart = false }: Props) {
           <Button title="Choose a photo" onPress={() => scan("library")} />
         </>
       )}
-      {message && <Text style={[styles.text, { color: theme.textMuted }]}>{message}</Text>}
+      {message && (
+        <Animated.Text key={message} entering={FadeIn.duration(200)} style={[styles.text, { color: theme.textMuted }]}>
+          {message}
+        </Animated.Text>
+      )}
     </View>
   );
 }

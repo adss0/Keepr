@@ -66,8 +66,10 @@ export function CloudProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data } = supabase.auth.onAuthStateChange((_event, newSession) => setSession(newSession));
+    // An anonymous session only exists so signed-out users can scan; it never syncs or counts as signed in.
+    const keepRealSession = (newSession: Session | null) => setSession(newSession?.user.is_anonymous ? null : newSession);
+    supabase.auth.getSession().then(({ data }) => keepRealSession(data.session));
+    const { data } = supabase.auth.onAuthStateChange((_event, newSession) => keepRealSession(newSession));
     return () => data.subscription.unsubscribe();
   }, []);
 
