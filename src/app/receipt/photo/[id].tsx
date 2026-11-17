@@ -15,7 +15,7 @@ export default function ReceiptPhotoScreen() {
   const receipt = useReceipt(id);
   const { userId } = useCloud();
   const theme = useTheme();
-  const uri = usePhotoUri(receipt?.photo, userId);
+  const uri = usePhotoUri(receipt?.photo, receipt?.ownerId ?? userId);
 
   async function share() {
     if (!uri || !receipt?.photo) return;

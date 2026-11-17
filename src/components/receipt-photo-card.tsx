@@ -19,7 +19,7 @@ export function ReceiptPhotoCard({ receipt }: { receipt: Receipt }) {
   const theme = useTheme();
   const { userId } = useCloud();
   const { setReceiptPhoto } = useReceiptsStore();
-  const uri = usePhotoUri(receipt.photo, userId);
+  const uri = usePhotoUri(receipt.photo, receipt.ownerId ?? userId);
   const [busy, setBusy] = useState(false);
 
   async function addPhoto(source: "camera" | "library") {

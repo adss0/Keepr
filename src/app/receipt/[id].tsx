@@ -25,7 +25,7 @@ export default function ReceiptDetailScreen() {
   const theme = useTheme();
   const today = todayIso();
   const { userId } = useCloud();
-  const photoUri = usePhotoUri(receipt?.photo, userId);
+  const photoUri = usePhotoUri(receipt?.photo, receipt?.ownerId ?? userId);
   const [exporting, setExporting] = useState(false);
 
   if (!receipt) {

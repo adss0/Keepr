@@ -1,6 +1,8 @@
 import type { Session } from "@supabase/supabase-js";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Linking from "expo-linking";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { AppState } from "react-native";
 
 import { useReceiptsStore } from "@/data/receipts";
 import { useSubscriptions } from "@/data/subscriptions";
@@ -9,6 +11,7 @@ import { deleteRemotePhotos, uploadNewPhotos } from "@/data/receipt-photos";
 import { supabase } from "@/data/supabase";
 import {
   type ReceiptRow,
+  changedSince,
   receiptToRow,
   removedIds,
   rowToReceipt,
@@ -53,6 +56,38 @@ function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+/** After a change arrives from someone else, wait this long for more before pulling. */
+const REMOTE_PULL_DELAY_MS = 800;
+const SYNC_BASE_KEY = "keepr.syncBase.v1";
+
+type SyncBase = { userId: string; receipts: Receipt[]; subscriptions: Subscription[] };
+
+async function loadSyncBase(userId: string): Promise<SyncBase> {
+  const stored = await AsyncStorage.getItem(`${SYNC_BASE_KEY}:${userId}`).catch(() => null);
+  const parsed = stored ? (JSON.parse(stored) as Partial<SyncBase>) : {};
+  return { userId, receipts: parsed.receipts ?? [], subscriptions: parsed.subscriptions ?? [] };
+}
+
+async function saveSyncBase(syncBase: SyncBase): Promise<void> {
+  await AsyncStorage.setItem(`${SYNC_BASE_KEY}:${syncBase.userId}`, JSON.stringify(syncBase)).catch((error: unknown) =>
+    console.warn("Couldn't save sync state", error),
+  );
+}
+
+/**
+ * Upserts rows, dropping columns the database doesn't have yet (PostgREST error PGRST204), so a phone on a newer
+ * app version keeps syncing before the matching migration has run. Up to 3 missing columns.
+ */
+async function upsertRows<R extends Record<string, unknown>>(table: "receipts" | "subscriptions", rows: R[]) {
+  let current: Record<string, unknown>[] = rows;
+  for (let attempt = 0; ; attempt++) {
+    const result = await supabase!.from(table).upsert(current);
+    const missing = result.error?.code === "PGRST204" ? /'([^']+)' column/.exec(result.error.message)?.[1] : undefined;
+    if (!missing || attempt === 3) return result;
+    current = current.map(({ [missing]: _dropped, ...row }) => row);
+  }
+}
+
 /** Signs in with Supabase and keeps receipts and subscriptions in step with the cloud. */
 export function CloudProvider({ children }: { children: ReactNode }) {
   const { receipts, ready: receiptsReady, mergeFromCloud: mergeReceipts } = useReceiptsStore();
@@ -64,9 +99,10 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   const [lastSyncedAt, setLastSyncedAt] = useState<Date>();
   /** The user the cloud was last pulled for, and how many pulls so far. Changes are only pushed after a pull. */
   const [pulled, setPulled] = useState<{ userId: string; count: number }>();
-  /** What the cloud held after the last push, to work out what was deleted on the phone. */
-  const pushQueue = useRef<Promise<void>>(Promise.resolve());
-  const lastPushed = useRef<{ receipts: Receipt[]; subscriptions: Subscription[] }>({ receipts: [], subscriptions: [] });
+  /** Pulls and pushes run one at a time: overlapping ones could undo each other (e.g. bring back a delete). */
+  const queue = useRef<Promise<void>>(Promise.resolve());
+  /** What the cloud held at the last sync on this phone, saved per user. reconcile and pushes compare against it. */
+  const base = useRef<SyncBase>({ userId: "", receipts: [], subscriptions: [] });
 
   useEffect(() => {
     if (!supabase) return;
@@ -77,42 +113,44 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     return () => data.subscription.unsubscribe();
   }, []);
 
-  const pull = useCallback(async () => {
-    if (!supabase) return;
-    const [receiptRows, subscriptionRows] = await Promise.all([
-      supabase.from("receipts").select("*"),
-      supabase.from("subscriptions").select("*"),
-    ]);
-    if (receiptRows.error) throw receiptRows.error;
-    if (subscriptionRows.error) throw subscriptionRows.error;
-    const remoteReceipts = (receiptRows.data as ReceiptRow[]).map(rowToReceipt);
-    const remoteSubscriptions = (subscriptionRows.data as SubscriptionRow[]).map(rowToSubscription);
-    lastPushed.current = { receipts: remoteReceipts, subscriptions: remoteSubscriptions };
-    mergeReceipts(remoteReceipts);
-    mergeSubscriptions(remoteSubscriptions);
-  }, [mergeReceipts, mergeSubscriptions]);
+  const pull = useCallback(
+    async (userId: string) => {
+      if (!supabase) return;
+      if (base.current.userId !== userId) base.current = await loadSyncBase(userId);
+      const [receiptRows, subscriptionRows] = await Promise.all([
+        supabase.from("receipts").select("*"),
+        supabase.from("subscriptions").select("*"),
+      ]);
+      if (receiptRows.error) throw receiptRows.error;
+      if (subscriptionRows.error) throw subscriptionRows.error;
+      const remoteReceipts = (receiptRows.data as ReceiptRow[]).map(rowToReceipt);
+      const remoteSubscriptions = (subscriptionRows.data as SubscriptionRow[]).map(rowToSubscription);
+      mergeReceipts(remoteReceipts, base.current.receipts);
+      mergeSubscriptions(remoteSubscriptions, base.current.subscriptions);
+      base.current = { userId, receipts: remoteReceipts, subscriptions: remoteSubscriptions };
+      await saveSyncBase(base.current);
+      setLastSyncedAt(new Date());
+    },
+    [mergeReceipts, mergeSubscriptions],
+  );
 
   const push = useCallback(async (localReceipts: Receipt[], localSubscriptions: Subscription[], userId: string) => {
-    if (!supabase) return;
-    setSyncState("syncing");
-    const deletedReceipts = removedIds(lastPushed.current.receipts, localReceipts);
-    const deletedSubscriptions = removedIds(lastPushed.current.subscriptions, localSubscriptions);
-
-    const client = supabase;
-    async function upsertReceipts() {
-      const rows = localReceipts.map(receiptToRow);
-      const result = await client.from("receipts").upsert(rows);
-      // shortcut: databases without the photos migration have no "photo" column (PostgREST error PGRST204), so retry
-      // without it and keep syncing everything else. Remove once every project has run 20261117000000.
-      if (result.error?.code === "PGRST204" && result.error.message.includes("photo")) {
-        return client.from("receipts").upsert(rows.map(({ photo: _photo, ...row }) => row));
-      }
-      return result;
+    if (!supabase || base.current.userId !== userId) return;
+    const before = base.current;
+    // Only what changed since the last sync, so one person's push never overwrites another's newer edit.
+    const changedReceipts = changedSince(localReceipts, before.receipts, receiptToRow);
+    const changedSubscriptions = changedSince(localSubscriptions, before.subscriptions, subscriptionToRow);
+    const deletedReceipts = removedIds(before.receipts, localReceipts);
+    const deletedSubscriptions = removedIds(before.subscriptions, localSubscriptions);
+    if (changedReceipts.length + changedSubscriptions.length + deletedReceipts.length + deletedSubscriptions.length === 0) {
+      setSyncState("synced");
+      return;
     }
 
+    setSyncState("syncing");
     const results = await Promise.all([
-      localReceipts.length > 0 ? upsertReceipts() : null,
-      localSubscriptions.length > 0 ? supabase.from("subscriptions").upsert(localSubscriptions.map(subscriptionToRow)) : null,
+      changedReceipts.length > 0 ? upsertRows("receipts", changedReceipts.map(receiptToRow)) : null,
+      changedSubscriptions.length > 0 ? upsertRows("subscriptions", changedSubscriptions.map(subscriptionToRow)) : null,
       deletedReceipts.length > 0 ? supabase.from("receipts").delete().in("id", deletedReceipts) : null,
       deletedSubscriptions.length > 0 ? supabase.from("subscriptions").delete().in("id", deletedSubscriptions) : null,
     ]);
@@ -120,51 +158,81 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     if (failed?.error) throw failed.error;
 
     // Photos follow the rows: back up new ones, and remove those of deleted receipts. Failures don't block the sync.
-    const deletedPhotos = lastPushed.current.receipts
-      .filter((receipt) => receipt.photo && deletedReceipts.includes(receipt.id))
-      .map((receipt) => receipt.photo!);
+    // A shared receipt's photo lives in the folder of whoever added it.
+    const photoOf = (receipt: Receipt) => ({ folder: receipt.ownerId ?? userId, name: receipt.photo! });
     await Promise.all([
-      uploadNewPhotos(userId, localReceipts.flatMap((receipt) => (receipt.photo ? [receipt.photo] : []))),
-      deleteRemotePhotos(userId, deletedPhotos),
+      uploadNewPhotos(localReceipts.filter((receipt) => receipt.photo).map(photoOf)),
+      deleteRemotePhotos(before.receipts.filter((r) => r.photo && deletedReceipts.includes(r.id)).map(photoOf)),
     ]).catch((photoError: unknown) => console.warn("Couldn't sync receipt photos", photoError));
 
-    lastPushed.current = { receipts: localReceipts, subscriptions: localSubscriptions };
+    // The cloud now matches the phone (anything others added since arrives with the next pull).
+    base.current = { userId, receipts: localReceipts, subscriptions: localSubscriptions };
+    await saveSyncBase(base.current);
     setLastSyncedAt(new Date());
     setSyncState("synced");
     setError(undefined);
   }, []);
 
+  /** Adds work to the sync queue, reporting any error on the Account screen. */
+  const enqueue = useCallback((work: () => Promise<void>) => {
+    queue.current = queue.current.then(work).catch((syncError: unknown) => {
+      setSyncState("error");
+      setError(messageOf(syncError));
+    });
+    return queue.current;
+  }, []);
+
+  /** Pulls the cloud's latest, then lets the push effect send anything changed here. */
+  const pullNow = useCallback(
+    (userId: string) =>
+      enqueue(async () => {
+        await pull(userId);
+        setPulled((current) => ({ userId, count: (current?.userId === userId ? current.count : 0) + 1 }));
+      }),
+    [enqueue, pull],
+  );
+
   // When someone signs in (or the app opens signed in), fetch what's in the cloud first.
   useEffect(() => {
-    if (!supabase) return;
-    if (!session) {
-      lastPushed.current = { receipts: [], subscriptions: [] };
-      return;
-    }
+    if (!supabase || !session || !receiptsReady || !subscriptionsReady) return;
+    pullNow(session.user.id);
+  }, [session, receiptsReady, subscriptionsReady, pullNow]);
+
+  // Shared spaces: pull when someone else changes something (Realtime), and whenever the app comes back to the front.
+  useEffect(() => {
+    if (!supabase || !session || pulled?.userId !== session.user.id) return;
+    const client = supabase;
     const userId = session.user.id;
-    if (!receiptsReady || !subscriptionsReady) return;
-    pull()
-      .then(() => setPulled((current) => ({ userId, count: (current?.userId === userId ? current.count : 0) + 1 })))
-      .catch((pullError: unknown) => {
-        setSyncState("error");
-        setError(messageOf(pullError));
-      });
-  }, [session, receiptsReady, subscriptionsReady, pull]);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // Changes often arrive in bursts (and include echoes of our own pushes), so wait a moment and pull once.
+    const schedulePull = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => pullNow(userId), REMOTE_PULL_DELAY_MS);
+    };
+    const channel = client
+      .channel(`keepr-sync-${userId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "receipts" }, schedulePull)
+      .on("postgres_changes", { event: "*", schema: "public", table: "subscriptions" }, schedulePull)
+      .subscribe();
+    const appState = AppState.addEventListener("change", (state) => {
+      if (state === "active") schedulePull();
+    });
+    return () => {
+      clearTimeout(timer);
+      appState.remove();
+      client.removeChannel(channel);
+    };
+    // Depends on the pulled user, not the pull count, so it re-subscribes per user rather than on every pull.
+  }, [session, pulled?.userId, pullNow]);
 
   // After each pull, and after every later change, save to the cloud.
   useEffect(() => {
     if (!session || pulled?.userId !== session.user.id) return;
     const timer = setTimeout(() => {
-      // One push at a time: if two overlapped, an older upsert could land after a newer delete and bring it back.
-      pushQueue.current = pushQueue.current.then(() =>
-        push(receipts, subscriptions, session.user.id).catch((pushError: unknown) => {
-          setSyncState("error");
-          setError(messageOf(pushError));
-        }),
-      );
+      enqueue(() => push(receipts, subscriptions, session.user.id));
     }, PUSH_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [session, pulled, receipts, subscriptions, push]);
+  }, [session, pulled, receipts, subscriptions, push, enqueue]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     if (!supabase) return;
@@ -213,16 +281,10 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const syncNow = useCallback(async () => {
+    if (!session) return;
     setSyncState("syncing");
-    try {
-      await pull();
-      const userId = session?.user.id;
-      if (userId) setPulled((current) => ({ userId, count: (current?.count ?? 0) + 1 }));
-    } catch (syncError) {
-      setSyncState("error");
-      setError(messageOf(syncError));
-    }
-  }, [pull, session]);
+    await pullNow(session.user.id);
+  }, [pullNow, session]);
 
   const status: CloudStatus = !supabase ? "not_set_up" : !session ? "signed_out" : syncState;
 

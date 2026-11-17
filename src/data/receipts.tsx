@@ -3,7 +3,7 @@ import { randomUUID } from "expo-crypto";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo } from "react";
 
 import { usePersistedList } from "@/data/persisted-list";
-import { mergeById } from "@/lib/cloud-rows";
+import { receiptToRow, reconcile } from "@/lib/cloud-rows";
 import { removeUnusedPhotos } from "@/data/receipt-photos";
 import { isOldSample } from "@/lib/old-samples";
 import type { Receipt } from "@/types/receipt";
@@ -27,8 +27,8 @@ type ReceiptsContextValue = {
   deleteReceipt: (id: string) => void;
   /** Puts a deleted receipt back, with its original id (for Undo). */
   restoreReceipt: (receipt: Receipt) => void;
-  /** Adds items saved in the cloud that aren't on this phone yet. */
-  mergeFromCloud: (remote: Receipt[]) => void;
+  /** Brings in the cloud's changes. `base` is what the cloud held at the last sync (see reconcile). */
+  mergeFromCloud: (remote: Receipt[], base: Receipt[]) => void;
 };
 
 const ReceiptsContext = createContext<ReceiptsContextValue | null>(null);
@@ -44,7 +44,9 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
 
   const updateReceipt = useCallback((id: string, fields: ReceiptFields) => {
     setReceipts((current) =>
-      current.map((receipt) => (receipt.id === id ? { id, photo: receipt.photo, ...fields } : receipt)),
+      current.map((receipt) =>
+        receipt.id === id ? { id, photo: receipt.photo, ownerId: receipt.ownerId, ...fields } : receipt,
+      ),
     );
   }, [setReceipts]);
 
@@ -94,7 +96,10 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
     // Old samples are skipped here too, so a sync can't bring back the ones just cleaned up (the next push deletes them).
     // shortcut: a real purchase with exactly a sample's product, shop and price would also be skipped; drop this filter
     // once every phone has run the clean-up.
-    (remote: Receipt[]) => setReceipts((current) => mergeById(current, remote.filter((receipt) => !isOldSample(receipt)))),
+    (remote: Receipt[], base: Receipt[]) =>
+      setReceipts((current) =>
+        reconcile(current, remote.filter((receipt) => !isOldSample(receipt)), base, receiptToRow),
+      ),
     [setReceipts],
   );
 
