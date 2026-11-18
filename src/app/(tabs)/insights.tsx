@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Button, Segmented } from "@/components/form";
 import { Icon } from "@/components/icon";
 import { ScreenHeader } from "@/components/screen-header";
-import { useTheme } from "@/constants/theme";
+import { Fonts, useTheme } from "@/constants/theme";
 import { useReceipts } from "@/data/receipts";
 import { useSubscriptions } from "@/data/subscriptions";
 import { todayIso } from "@/lib/deadlines";
@@ -235,9 +235,9 @@ const styles = StyleSheet.create({
   },
   heroValue: {
     fontSize: 38,
-    fontWeight: "800",
     letterSpacing: -1,
     fontVariant: ["tabular-nums"],
+    fontFamily: Fonts.display,
   },
   heroDetail: {
     fontSize: 14,
@@ -273,8 +273,8 @@ const styles = StyleSheet.create({
   },
   selectedValue: {
     fontSize: 24,
-    fontWeight: "800",
     fontVariant: ["tabular-nums"],
+    fontFamily: Fonts.display,
   },
   selectedLabel: {
     fontSize: 14,
@@ -348,8 +348,8 @@ const styles = StyleSheet.create({
   },
   subsValue: {
     fontSize: 20,
-    fontWeight: "800",
     fontVariant: ["tabular-nums"],
+    fontFamily: Fonts.display,
   },
   subsLabel: {
     fontSize: 13,

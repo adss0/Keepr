@@ -5,7 +5,7 @@ import { DateField } from "@/components/date-field";
 import { Button, Segmented } from "@/components/form";
 import { Icon } from "@/components/icon";
 import { useToast } from "@/components/toast";
-import { useTheme } from "@/constants/theme";
+import { Fonts, useTheme } from "@/constants/theme";
 import { useCloud } from "@/data/cloud";
 import { shareReceiptsPdf } from "@/data/receipt-pdf";
 import { useReceipts } from "@/data/receipts";
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     fontSize: 16,
-    fontWeight: "700",
+    fontFamily: Fonts.mono,
   },
   hint: {
     fontSize: 13,

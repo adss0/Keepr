@@ -40,6 +40,18 @@ const dark: typeof light = {
 
 export type Theme = typeof light;
 
+/**
+ * Keepr's own type: Fraunces (a soft serif) for titles and big figures, IBM Plex Mono for prices and dates, like a
+ * till receipt. Body text stays in the phone's system font. Loaded in the root layout; set no fontWeight with these,
+ * as each name is already one weight.
+ */
+export const Fonts = {
+  display: "Fraunces_600SemiBold",
+  displayBold: "Fraunces_700Bold",
+  mono: "IBMPlexMono_500Medium",
+  monoBold: "IBMPlexMono_600SemiBold",
+} as const;
+
 export type Appearance = "system" | "light" | "dark";
 
 /** The user's appearance choice from Settings. Provided by SettingsProvider. */

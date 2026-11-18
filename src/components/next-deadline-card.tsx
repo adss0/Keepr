@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
 import { PressScale } from "@/components/press-scale";
-import { useTheme } from "@/constants/theme";
+import { Fonts, useTheme } from "@/constants/theme";
 import { daysBetween, getNextDeadline } from "@/lib/deadlines";
 import { formatFullDate } from "@/lib/format";
 import type { Receipt } from "@/types/receipt";
@@ -68,8 +68,8 @@ const styles = StyleSheet.create({
   },
   product: {
     fontSize: 20,
-    fontWeight: "800",
     letterSpacing: -0.3,
+    fontFamily: Fonts.display,
   },
   detail: {
     fontSize: 14,
@@ -83,9 +83,9 @@ const styles = StyleSheet.create({
   },
   count: {
     fontSize: 40,
-    fontWeight: "800",
     letterSpacing: -1.5,
     fontVariant: ["tabular-nums"],
+    fontFamily: Fonts.display,
   },
   countToday: {
     fontSize: 24,

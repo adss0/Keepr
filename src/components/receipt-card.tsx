@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { DeadlinePill, toneFor } from "@/components/deadline-pill";
 import { PressScale } from "@/components/press-scale";
-import { useTheme } from "@/constants/theme";
+import { Fonts, useTheme } from "@/constants/theme";
 import { useReceiptActions } from "@/components/swipeable-receipt";
 import { useSpaces } from "@/data/spaces";
 import { daysBetween, getNextDeadline } from "@/lib/deadlines";
@@ -88,8 +88,8 @@ const styles = StyleSheet.create({
   },
   price: {
     fontSize: 16,
-    fontWeight: "600",
     fontVariant: ["tabular-nums"],
+    fontFamily: Fonts.mono,
   },
   meta: {
     fontSize: 13,

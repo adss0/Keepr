@@ -23,7 +23,7 @@ import { ReceiptTile } from "@/components/receipt-tile";
 import { RemindersBanner } from "@/components/reminders-banner";
 import { ScreenHeader } from "@/components/screen-header";
 import { SwipeableReceipt } from "@/components/swipeable-receipt";
-import { useTheme } from "@/constants/theme";
+import { Fonts, useTheme } from "@/constants/theme";
 import { usePullToSync } from "@/data/cloud";
 import { useReceiptsStore } from "@/data/receipts";
 import { useReminders } from "@/data/reminders";
@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "800",
+    fontFamily: Fonts.display,
   },
   sectionTotal: {
     fontSize: 13,
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 22,
-    fontWeight: "700",
+    fontFamily: Fonts.display,
   },
   emptyBody: {
     fontSize: 15,
