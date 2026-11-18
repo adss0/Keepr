@@ -179,5 +179,8 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: "600",
+    // Long labels wrap centred instead of hugging the left edge.
+    textAlign: "center",
+    flexShrink: 1,
   },
 });

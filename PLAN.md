@@ -34,8 +34,9 @@
 - ✅ Receipt-paper look, a Next deadline card, and fixes from a full test of every screen
 - ✅ Shared spaces for families and organisations: invites, roles, shared receipts and subscriptions, live sync
 - ✅ Mark receipts as returned, claimed or archived (no more reminders, kept as history; returned ones don't count as spending), and swipe a receipt row to archive or delete it
+- ✅ Usual return windows of common UK shops fill themselves in (Argos, John Lewis, M&S, Next, Amazon, IKEA and more), with a reminder to check the receipt
 - ✅ Attach a receipt photo when adding by hand, choose camera or library when replacing it, and a one-time opening animation with a matching splash
-- ⏭️ **Next:** email auto-capture, known retailer return policies, receiving receipts from the share sheet (needs a development build)
+- ⏭️ **Next:** email auto-capture, receiving receipts from the share sheet (needs a development build)
 
 ---
 
