@@ -16,6 +16,7 @@ import {
 import { ExampleReceipt } from "@/components/example-receipt";
 import { Button } from "@/components/form";
 import { Icon, type IconName } from "@/components/icon";
+import { Intro } from "@/components/intro";
 import { NextDeadlineCard } from "@/components/next-deadline-card";
 import { ReceiptCard } from "@/components/receipt-card";
 import { ReceiptTile } from "@/components/receipt-tile";
@@ -82,18 +83,20 @@ export default function ReceiptsScreen() {
   }).length;
 
   const header = (
-    <ScreenHeader
-      title="Receipts"
-      subtitle={
-        receipts.length === 0
-          ? "You keep your receipts. Keepr keeps your rights."
-          : `${dueThisWeek === 1 ? "1 deadline" : `${dueThisWeek} deadlines`} in the next 7 days`
-      }
-      actions={[
-        { icon: "add", label: "Add receipt by hand", onPress: () => router.push("/receipt/new") },
-        { icon: "camera", label: "Scan a receipt", onPress: scanReceipt, primary: true },
-      ]}
-    />
+    <Intro id="home-header">
+      <ScreenHeader
+        title="Receipts"
+        subtitle={
+          receipts.length === 0
+            ? "You keep your receipts. Keepr keeps your rights."
+            : `${dueThisWeek === 1 ? "1 deadline" : `${dueThisWeek} deadlines`} in the next 7 days`
+        }
+        actions={[
+          { icon: "add", label: "Add receipt by hand", onPress: () => router.push("/receipt/new") },
+          { icon: "camera", label: "Scan a receipt", onPress: scanReceipt, primary: true },
+        ]}
+      />
+    </Intro>
   );
 
   if (!ready) {
@@ -111,7 +114,7 @@ export default function ReceiptsScreen() {
     return (
       <View style={[styles.screen, { backgroundColor: theme.background }]}>
         {header}
-        <View style={styles.centered}>
+        <Intro id="home-body" rise delay={90} style={styles.centered}>
           <ExampleReceipt today={today} />
           <Text style={[styles.emptyTitle, { color: theme.text }]}>Keep your first receipt</Text>
           <Text style={[styles.emptyBody, { color: theme.textMuted }]}>
@@ -122,7 +125,7 @@ export default function ReceiptsScreen() {
             <Button title="Scan a receipt" variant="primary" icon={<Icon name="camera" size={18} color={theme.onAccent} />} onPress={scanReceipt} />
             <Button title="Add one by hand" onPress={() => router.push("/receipt/new")} />
           </View>
-        </View>
+        </Intro>
       </View>
     );
   }
@@ -234,36 +237,38 @@ export default function ReceiptsScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       {header}
-      {view === "timeline" ? (
-        <SectionList
-          {...listProps}
-          sections={sections}
-          stickySectionHeadersEnabled={false}
-          renderItem={({ item }) => <ReceiptCard receipt={item} today={today} />}
-          renderSectionHeader={({ section }) => (
-            <View style={styles.sectionHeader}>
-              <Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.text }]}>
-                {section.title}
-              </Text>
-              <Text style={[styles.sectionTotal, { color: theme.textMuted }]}>
-                {formatPrice(section.totalPence)} · {section.data.length === 1 ? "1 receipt" : `${section.data.length} receipts`}
-              </Text>
-            </View>
-          )}
-        />
-      ) : (
-        <FlatList
-          {...listProps}
-          // Changing the column count needs a fresh list.
-          key={view}
-          data={visibleReceipts}
-          numColumns={view === "grid" ? 2 : 1}
-          columnWrapperStyle={view === "grid" ? styles.gridRow : undefined}
-          renderItem={({ item }) =>
-            view === "grid" ? <ReceiptTile receipt={item} today={today} /> : <ReceiptCard receipt={item} today={today} />
-          }
-        />
-      )}
+      <Intro id="home-body" rise delay={90} style={styles.screen}>
+        {view === "timeline" ? (
+          <SectionList
+            {...listProps}
+            sections={sections}
+            stickySectionHeadersEnabled={false}
+            renderItem={({ item }) => <ReceiptCard receipt={item} today={today} />}
+            renderSectionHeader={({ section }) => (
+              <View style={styles.sectionHeader}>
+                <Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.text }]}>
+                  {section.title}
+                </Text>
+                <Text style={[styles.sectionTotal, { color: theme.textMuted }]}>
+                  {formatPrice(section.totalPence)} · {section.data.length === 1 ? "1 receipt" : `${section.data.length} receipts`}
+                </Text>
+              </View>
+            )}
+          />
+        ) : (
+          <FlatList
+            {...listProps}
+            // Changing the column count needs a fresh list.
+            key={view}
+            data={visibleReceipts}
+            numColumns={view === "grid" ? 2 : 1}
+            columnWrapperStyle={view === "grid" ? styles.gridRow : undefined}
+            renderItem={({ item }) =>
+              view === "grid" ? <ReceiptTile receipt={item} today={today} /> : <ReceiptCard receipt={item} today={today} />
+            }
+          />
+        )}
+      </Intro>
     </View>
   );
 }

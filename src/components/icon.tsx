@@ -22,6 +22,7 @@ export const ICONS = {
   viewGrid: { ios: "square.grid.2x2", android: "grid_view", web: "grid_view" },
   viewTimeline: { ios: "clock", android: "timeline", web: "timeline" },
   sort: { ios: "arrow.up.arrow.down", android: "swap_vert", web: "swap_vert" },
+  photo: { ios: "photo.on.rectangle", android: "photo_library", web: "photo_library" },
 } as const;
 
 export type IconName = keyof typeof ICONS;
