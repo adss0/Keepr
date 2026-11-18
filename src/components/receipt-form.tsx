@@ -51,6 +51,8 @@ type Props = {
   allowScan?: boolean;
   /** Open the camera as soon as the form appears (with allowScan). */
   autoScan?: boolean;
+  /** A receipt shared from another app, scanned as the form opens. */
+  sharedPhoto?: ReceiptPhoto;
   /** The shared space it's in ("" or undefined for personal). */
   initialSpaceId?: string;
   /** False for someone else's shared receipt, which can't become your personal one. */
@@ -64,13 +66,15 @@ export function ReceiptForm({
   onSubmitMany,
   allowScan = false,
   autoScan = false,
+  sharedPhoto,
   initialSpaceId,
   allowPersonal = true,
 }: Props) {
   const theme = useTheme();
   const [input, setInput] = useState(initial);
   const [errors, setErrors] = useState<ReceiptInputErrors>({});
-  const [photo, setPhoto] = useState<ReceiptPhoto>();
+  // A shared receipt is kept as proof of purchase even if scanning it fails.
+  const [photo, setPhoto] = useState<ReceiptPhoto | undefined>(sharedPhoto);
   const keepsPhotos = canKeepPhotos(useCloud().userId);
   const { showToast } = useToast();
 
@@ -167,6 +171,7 @@ export function ReceiptForm({
       {allowScan && (
         <ScanPanel
           autoStart={autoScan}
+          sharedPhoto={sharedPhoto}
           onScanned={(result, scannedPhoto) => {
             setPhoto(scannedPhoto);
             setItems(scannedItems(result));

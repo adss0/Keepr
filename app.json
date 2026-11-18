@@ -38,7 +38,25 @@
           "imageWidth": 76
         }
       ],
-      "expo-sharing",
+      [
+        "expo-sharing",
+        {
+          "ios": {
+            "enabled": true,
+            "activationRule": {
+              "supportsImageWithMaxCount": 1,
+              "supportsFileWithMaxCount": 1
+            }
+          },
+          "android": {
+            "enabled": true,
+            "singleShareMimeTypes": [
+              "image/*",
+              "application/pdf"
+            ]
+          }
+        }
+      ],
       [
         "expo-image-picker",
         {

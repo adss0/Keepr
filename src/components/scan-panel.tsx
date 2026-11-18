@@ -14,10 +14,12 @@ type Props = {
   onScanned: (result: unknown, photo: ReceiptPhoto) => number;
   /** Open the camera straight away, for the home screen's Scan button. Ignored on the web. */
   autoStart?: boolean;
+  /** A receipt shared into Keepr from another app, scanned straight away. */
+  sharedPhoto?: ReceiptPhoto;
 };
 
 /** "Scan a receipt" buttons at the top of the add form, or what's needed before scanning can work. */
-export function ScanPanel({ onScanned, autoStart = false }: Props) {
+export function ScanPanel({ onScanned, autoStart = false, sharedPhoto }: Props) {
   const theme = useTheme();
   const { status } = useCloud();
   const [busy, setBusy] = useState(false);
@@ -31,6 +33,13 @@ export function ScanPanel({ onScanned, autoStart = false }: Props) {
     autoStarted.current = true;
     const timer = setTimeout(() => scan("camera"), 300);
     return () => clearTimeout(timer);
+  });
+
+  const sharedRead = useRef(false);
+  useEffect(() => {
+    if (!sharedPhoto || !canScan || sharedRead.current) return;
+    sharedRead.current = true;
+    read(sharedPhoto);
   });
 
   if (status === "not_set_up") {
@@ -50,7 +59,16 @@ export function ScanPanel({ onScanned, autoStart = false }: Props) {
     setMessage(undefined);
     try {
       const photo = source === "document" ? await pickReceiptDocument() : await pickReceiptPhoto(source);
-      if (!photo) return;
+      if (photo) await read(photo);
+    } catch (error) {
+      haptics.error();
+      setMessage(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  async function read(photo: ReceiptPhoto) {
+    setMessage(undefined);
+    try {
       setBusy(true);
       const result = await extractReceipt(photo);
       if ((result as { is_receipt?: boolean } | null)?.is_receipt === false) {

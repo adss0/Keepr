@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
 
 import { ReceiptForm } from "@/components/receipt-form";
 import { useToast } from "@/components/toast";
@@ -6,6 +7,7 @@ import { haptics } from "@/data/haptics";
 import { useCloud } from "@/data/cloud";
 import { keepPhoto as storePhoto, type ReceiptPhoto } from "@/data/receipt-photos";
 import { useReceiptsStore } from "@/data/receipts";
+import { takeSharedReceipt } from "@/data/shared-receipt";
 import { useSettings } from "@/data/settings";
 import { todayIso } from "@/lib/deadlines";
 import { goBack } from "@/lib/navigation";
@@ -17,6 +19,8 @@ export default function NewReceiptScreen() {
   const { scan } = useLocalSearchParams<{ scan?: string }>();
   const { settings } = useSettings();
   const { userId } = useCloud();
+  // Taken once, so going back and opening Add receipt again doesn't rescan it.
+  const [sharedPhoto] = useState(() => (scan === "shared" ? takeSharedReceipt() : undefined));
 
   function keepPhoto(receiptId: string, photo: ReceiptPhoto) {
     storePhoto(receiptId, photo, userId)
@@ -40,6 +44,7 @@ export default function NewReceiptScreen() {
       submitLabel="Save receipt"
       allowScan
       autoScan={scan === "camera"}
+      sharedPhoto={sharedPhoto}
       onSubmitMany={(fieldsList, photo) => {
         for (const fields of fieldsList) {
           const receipt = addReceipt(fields);

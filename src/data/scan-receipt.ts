@@ -30,7 +30,7 @@ export async function pickReceiptPhoto(source: "camera" | "library"): Promise<Re
 }
 
 /** The scan function accepts up to about 5 MB. */
-const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024;
+export const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024;
 
 /** Lets the user pick a PDF or screenshot of a receipt or order confirmation. Undefined if they cancel. */
 export async function pickReceiptDocument(): Promise<ReceiptPhoto | undefined> {

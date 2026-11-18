@@ -35,12 +35,13 @@
 - ✅ Shared spaces for families and organisations: invites, roles, shared receipts and subscriptions, live sync
 - ✅ Mark receipts as returned, claimed or archived (no more reminders, kept as history; returned ones don't count as spending), and swipe a receipt row to archive or delete it
 - ✅ Usual return windows of common UK shops fill themselves in (Argos, John Lewis, M&S, Next, Amazon, IKEA and more), with a reminder to check the receipt
+- ✅ Share into Keepr: share a photo, screenshot or PDF from any app and it opens in Add receipt and is scanned (needs a development build, not Expo Go)
 - ✅ Search inside receipts: scanning keeps every word printed on the receipt, and search looks through them
 - ✅ Opening animation: a receipt prints out of a till slot and is stamped "Kept", then the home screen rises in. Keepr's own type: Fraunces for titles and big figures, IBM Plex Mono for prices and deadlines
 - ✅ Export screen: pick the dates (this month, 3 months, this year, last year, all, or your own), whether to include finished receipts, photos and subscriptions, then save a PDF of all those receipts, a CSV or an Excel breakdown
 - ✅ Receipt photos on the web: signed-in users upload straight to the cloud
 - ✅ Attach a receipt photo when adding by hand, choose camera or library when replacing it, and a one-time opening animation with a matching splash
-- ⏭️ **Next:** email auto-capture, receiving receipts from the share sheet (needs a development build)
+- ⏭️ **Next:** email auto-capture
 
 ---
 

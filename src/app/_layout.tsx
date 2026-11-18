@@ -60,6 +60,7 @@ function AppStack() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false, title: "Keepr" }} />
         <Stack.Screen name="receipt/[id]" options={{ title: "Receipt" }} />
         <Stack.Screen name="receipt/new" options={modal("Add receipt")} />
+        <Stack.Screen name="receipt/shared" options={{ title: "Shared receipt" }} />
         <Stack.Screen name="receipt/edit/[id]" options={modal("Edit receipt")} />
         <Stack.Screen name="receipt/rights/[id]" options={{ title: "Your rights" }} />
         <Stack.Screen
