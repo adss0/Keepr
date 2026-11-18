@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 
 import { emptyReceiptInput } from "@/lib/receipt-input";
-import { countChangedFields, scannedItems, scanResultToInput } from "@/lib/scan-result";
+import { countChangedFields, MAX_PRINTED_TEXT, scannedItems, scannedText, scanResultToInput } from "@/lib/scan-result";
 
 const blank = emptyReceiptInput("2026-11-12");
 
@@ -85,5 +85,18 @@ describe("scannedItems", () => {
     ).toEqual([{ name: "Kettle", pricePence: 3499 }, { name: "Toaster", pricePence: undefined }]);
     expect(scannedItems({ is_receipt: true })).toEqual([]);
     expect(scannedItems(null)).toEqual([]);
+  });
+});
+
+describe("scannedText", () => {
+  it("tidies the printed words and caps their length", () => {
+    expect(scannedText({ printed_text: "  ARGOS \n KETTLE\t£24.99 " })).toBe("ARGOS KETTLE £24.99");
+    expect(scannedText({ printed_text: "x".repeat(5000) })).toHaveLength(MAX_PRINTED_TEXT);
+  });
+
+  it("is undefined when the scan has no text", () => {
+    expect(scannedText({})).toBeUndefined();
+    expect(scannedText({ printed_text: "   " })).toBeUndefined();
+    expect(scannedText(null)).toBeUndefined();
   });
 });

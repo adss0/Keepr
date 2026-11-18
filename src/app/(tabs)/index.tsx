@@ -192,7 +192,7 @@ export default function ReceiptsScreen() {
               <TextInput
                 value={query}
                 onChangeText={setQuery}
-                placeholder="Search by product or shop"
+                placeholder="Search products, shops or any word on a receipt"
                 placeholderTextColor={theme.textMuted}
                 accessibilityLabel="Search receipts"
                 autoCorrect={false}

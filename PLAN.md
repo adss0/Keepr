@@ -35,6 +35,7 @@
 - ✅ Shared spaces for families and organisations: invites, roles, shared receipts and subscriptions, live sync
 - ✅ Mark receipts as returned, claimed or archived (no more reminders, kept as history; returned ones don't count as spending), and swipe a receipt row to archive or delete it
 - ✅ Usual return windows of common UK shops fill themselves in (Argos, John Lewis, M&S, Next, Amazon, IKEA and more), with a reminder to check the receipt
+- ✅ Search inside receipts: scanning keeps every word printed on the receipt, and search looks through them
 - ✅ Opening animation: a receipt prints out of a till slot and is stamped "Kept", then the home screen rises in. Keepr's own type: Fraunces for titles and big figures, IBM Plex Mono for prices and deadlines
 - ✅ Export screen: pick the dates (this month, 3 months, this year, last year, all, or your own), whether to include finished receipts, photos and subscriptions, then save a PDF of all those receipts, a CSV or an Excel breakdown
 - ✅ Receipt photos on the web: signed-in users upload straight to the cloud
@@ -172,5 +173,5 @@ All features are free for now.
 - Before launch: move Gemini scanning to a paid plan (or another provider) so receipt photos aren't used for training.
 
 - Harden sign-in storage: keep the Supabase session encrypted (expo-secure-store) instead of AsyncStorage.
-- Apply migrations `20261117000000_receipt_photos_and_anonymous_guard.sql` `20261118000000_shared_spaces.sql` and `20261119000000_receipt_status.sql` to the Supabase project, and redeploy `extract-receipt` for item lists and PDF scanning. Until then the app falls back gracefully (unknown columns are dropped when syncing, no item list, PDFs refused, sharing shows that it needs the update).
+- Apply migrations `20261117000000_receipt_photos_and_anonymous_guard.sql` `20261118000000_shared_spaces.sql` and `20261119000000_receipt_status.sql`, `20261120000000_receipt_printed_text.sql` to the Supabase project, and redeploy `extract-receipt` for item lists and PDF scanning. Until then the app falls back gracefully (unknown columns are dropped when syncing, no item list, PDFs refused, sharing shows that it needs the update).
 - Shared spaces later: transfer ownership, change a member's role after joining, and per-space reminder settings.

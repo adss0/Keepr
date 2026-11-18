@@ -48,7 +48,15 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
     setReceipts((current) =>
       current.map((receipt) =>
         receipt.id === id
-          ? { id, photo: receipt.photo, ownerId: receipt.ownerId, ...(receipt.closed && { closed: receipt.closed }), ...fields }
+          ? {
+              id,
+              photo: receipt.photo,
+              ownerId: receipt.ownerId,
+              ...(receipt.closed && { closed: receipt.closed }),
+              // Editing by hand keeps the words read from the original scan.
+              ...(receipt.printedText && { printedText: receipt.printedText }),
+              ...fields,
+            }
           : receipt,
       ),
     );
