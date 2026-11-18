@@ -3,7 +3,8 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ReceiptForm } from "@/components/receipt-form";
 import { useToast } from "@/components/toast";
 import { haptics } from "@/data/haptics";
-import { type ReceiptPhoto, savePhoto } from "@/data/receipt-photos";
+import { useCloud } from "@/data/cloud";
+import { keepPhoto as storePhoto, type ReceiptPhoto } from "@/data/receipt-photos";
 import { useReceiptsStore } from "@/data/receipts";
 import { useSettings } from "@/data/settings";
 import { todayIso } from "@/lib/deadlines";
@@ -15,15 +16,18 @@ export default function NewReceiptScreen() {
   const { showToast } = useToast();
   const { scan } = useLocalSearchParams<{ scan?: string }>();
   const { settings } = useSettings();
+  const { userId } = useCloud();
 
   function keepPhoto(receiptId: string, photo: ReceiptPhoto) {
-    try {
-      const name = savePhoto(receiptId, photo);
-      if (name) setReceiptPhoto(receiptId, name);
-    } catch (error) {
-      // The receipt itself is saved; only the photo is missing, and it can be added from the receipt screen.
-      console.warn("Couldn't save the receipt photo", error);
-    }
+    storePhoto(receiptId, photo, userId)
+      .then((name) => {
+        if (name) setReceiptPhoto(receiptId, name);
+      })
+      .catch((error: unknown) => {
+        // The receipt itself is saved; only the photo is missing, and it can be added from the receipt screen.
+        console.warn("Couldn't save the receipt photo", error);
+        showToast({ message: "Receipt saved, but its photo couldn't be kept. Add it again from the receipt." });
+      });
   }
 
   return (
