@@ -85,15 +85,15 @@ export default function InsightsScreen() {
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       {header}
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={[styles.hero, { backgroundColor: theme.accent }]}>
-          <Text style={[styles.heroLabel, { color: theme.onAccent }]}>{monthLabel(thisMonth.month)}</Text>
-          <Text style={[styles.heroValue, { color: theme.onAccent }]}>{formatPrice(thisMonth.pence + subsMonthly)}</Text>
-          <Text style={[styles.heroDetail, { color: theme.onAccent }]}>
+        <View style={[styles.hero, { backgroundColor: theme.primary }]}>
+          <Text style={[styles.heroLabel, { color: theme.onPrimary }]}>{monthLabel(thisMonth.month)}</Text>
+          <Text style={[styles.heroValue, { color: theme.onPrimary }]}>{formatPrice(thisMonth.pence + subsMonthly)}</Text>
+          <Text style={[styles.heroDetail, { color: theme.onPrimary }]}>
             {formatPrice(thisMonth.pence)} on {thisMonth.count === 1 ? "1 purchase" : `${thisMonth.count} purchases`}
             {subsMonthly > 0 ? ` + ${formatPrice(subsMonthly)} subscriptions` : ""}
           </Text>
           {change !== undefined && (
-            <Text style={[styles.heroChange, { color: theme.onAccent }]}>
+            <Text style={[styles.heroChange, { color: theme.onPrimary }]}>
               {change === 0 ? "Same as" : `${Math.abs(change)}% ${change > 0 ? "more than" : "less than"}`} last month
             </Text>
           )}

@@ -123,7 +123,7 @@ export default function ReceiptsScreen() {
     return (
       <View style={[styles.screen, { backgroundColor: theme.background }]}>
         {header}
-        <Intro id="home-body" rise delay={90} style={styles.centered}>
+        <Intro id="home-body" rise delay={40} style={styles.centered}>
           <ExampleReceipt today={today} />
           <Text style={[styles.emptyTitle, { color: theme.text }]}>Keep your first receipt</Text>
           <Text style={[styles.emptyBody, { color: theme.textMuted }]}>
@@ -131,7 +131,7 @@ export default function ReceiptsScreen() {
             pass.
           </Text>
           <View style={styles.emptyButtons}>
-            <Button title="Scan a receipt" variant="primary" icon={<Icon name="camera" size={18} color={theme.onAccent} />} onPress={scanReceipt} />
+            <Button title="Scan a receipt" variant="primary" icon={<Icon name="camera" size={18} color={theme.onPrimary} />} onPress={scanReceipt} />
             <Button title="Add one by hand" onPress={() => router.push("/receipt/new")} />
           </View>
         </Intro>
@@ -263,7 +263,7 @@ export default function ReceiptsScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       {header}
-      <Intro id="home-body" rise delay={90} style={styles.screen}>
+      <Intro id="home-body" rise delay={40} style={styles.screen}>
         {view === "timeline" ? (
           <SectionList
             {...listProps}

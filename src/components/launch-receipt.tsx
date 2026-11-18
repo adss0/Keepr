@@ -39,8 +39,8 @@ export function useLaunchDone(): boolean {
 const PAPER_WIDTH = 216;
 const PAPER_HEIGHT = 244;
 const TEETH = Math.ceil(PAPER_WIDTH / 12);
-/** Paper feeding out of a till: quick start, long gentle stop. */
-const EASE_FEED = Easing.bezier(0.22, 1, 0.36, 1);
+/** A thermal printer advances paper a line at a time, so the feed moves in steps rather than gliding. */
+const FEED_STEPS = Easing.steps(14, true);
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
 const LINES = ["RETURNS", "REFUNDS", "WARRANTY"];
 
@@ -65,21 +65,22 @@ export function LaunchReceipt() {
     }
     const finish = () => setVisible(false);
     const land = () => haptics.selection();
-    feed.set(withDelay(120, withTiming(1, { duration: 640, easing: EASE_FEED })));
+    feed.set(withDelay(80, withTiming(1, { duration: 560, easing: FEED_STEPS })));
+    // The stamp comes down hard: no fade, just a quick press from slightly bigger.
     stamp.set(
       withDelay(
         700,
-        withTiming(1, { duration: 200, easing: EASE_OUT }, (done) => {
+        withTiming(1, { duration: 90, easing: EASE_OUT }, (done) => {
           if (done) scheduleOnRN(land);
         }),
       ),
     );
-    // The app starts its own entrance as the receipt clears away.
-    const timer = setTimeout(markLaunchDone, 1080);
+    // Then the receipt is torn off upwards and the app is there.
+    const timer = setTimeout(markLaunchDone, 980);
     exit.set(
       withDelay(
-        1080,
-        withTiming(1, { duration: 280, easing: EASE_OUT }, (done) => {
+        980,
+        withTiming(1, { duration: 200, easing: EASE_OUT }, (done) => {
           if (done) scheduleOnRN(finish);
         }),
       ),
@@ -87,20 +88,23 @@ export function LaunchReceipt() {
     return () => clearTimeout(timer);
   }, [visible, reduced, feed, stamp, exit]);
 
-  const overlayStyle = useAnimatedStyle(() => ({ opacity: 1 - exit.get() }));
+  const overlayStyle = useAnimatedStyle(() => ({
+    opacity: 1 - exit.get(),
+    transform: [{ translateY: -exit.get() * 40 }],
+  }));
   const paperStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: (feed.get() - 1) * PAPER_HEIGHT + exit.get() * 18 }],
+    transform: [{ translateY: (feed.get() - 1) * PAPER_HEIGHT }],
   }));
   const stampStyle = useAnimatedStyle(() => ({
-    opacity: stamp.get(),
-    transform: [{ rotate: "-9deg" }, { scale: 1.25 - stamp.get() * 0.25 }],
+    opacity: stamp.get() > 0 ? 1 : 0,
+    transform: [{ rotate: "-9deg" }, { scale: 1.12 - stamp.get() * 0.12 }],
   }));
 
   if (!visible || reduced) return null;
 
   function skip() {
     markLaunchDone();
-    exit.set(withTiming(1, { duration: 160 }, (done) => {
+    exit.set(withTiming(1, { duration: 120 }, (done) => {
       if (done) scheduleOnRN(setVisible, false);
     }));
   }
@@ -124,7 +128,7 @@ export function LaunchReceipt() {
               <View key={line} style={styles.line}>
                 <Text style={[styles.mono, { color: theme.text }]}>{line}</Text>
                 <View style={[styles.leader, { borderColor: theme.border }]} />
-                <Text style={[styles.mono, { color: theme.accent }]}>KEPT</Text>
+                <Text style={[styles.mono, { color: theme.text }]}>OK</Text>
               </View>
             ))}
             <View style={[styles.rule, { borderColor: theme.border }]} />

@@ -155,14 +155,14 @@ export default function CalendarScreen() {
                     <View
                       style={[
                         styles.dayCircle,
-                        isSelected && { backgroundColor: theme.accent },
+                        isSelected && { backgroundColor: theme.primary },
                         !isSelected && isToday && { borderColor: theme.accent, borderWidth: 1.5 },
                       ]}
                     >
                       <Text
                         style={[
                           styles.dayNumber,
-                          { color: isSelected ? theme.onAccent : inMonth ? theme.text : theme.textMuted },
+                          { color: isSelected ? theme.onPrimary : inMonth ? theme.text : theme.textMuted },
                           !inMonth && styles.otherMonth,
                           isToday && styles.today,
                         ]}
