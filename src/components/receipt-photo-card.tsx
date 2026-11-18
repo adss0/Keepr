@@ -93,7 +93,18 @@ export function ReceiptPhotoCard({ receipt }: { receipt: Receipt }) {
       <View style={styles.footer}>
         <Text style={[styles.hint, { color: theme.textMuted }]}>Proof of purchase{userId ? " · backed up" : ""}</Text>
         {photosStoredLocally && (
-          <Button title="Replace" variant="ghost" busy={busy} onPress={() => addPhoto("camera")} />
+          <Button
+            title="Replace"
+            variant="ghost"
+            busy={busy}
+            onPress={() =>
+              Alert.alert("Replace the photo", undefined, [
+                { text: "Take photo", onPress: () => addPhoto("camera") },
+                { text: "Choose photo", onPress: () => addPhoto("library") },
+                { text: "Cancel", style: "cancel" },
+              ])
+            }
+          />
         )}
       </View>
     </View>

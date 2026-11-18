@@ -1,4 +1,5 @@
 import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { Pressable, Text } from "react-native";
 import { StatusBar } from "expo-status-bar";
 
@@ -11,6 +12,9 @@ import { RemindersProvider } from "@/data/reminders";
 import { SettingsProvider } from "@/data/settings";
 import { SpacesProvider } from "@/data/spaces";
 import { SubscriptionsProvider } from "@/data/subscriptions";
+
+// iOS fades the splash out instead of cutting to the first screen.
+SplashScreen.setOptions({ fade: true, duration: 300 });
 
 function AppStack() {
   const theme = useTheme();

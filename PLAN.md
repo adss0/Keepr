@@ -33,6 +33,7 @@
 - ✅ Save a receipt as a PDF with its deadlines and photo
 - ✅ Receipt-paper look, a Next deadline card, and fixes from a full test of every screen
 - ✅ Shared spaces for families and organisations: invites, roles, shared receipts and subscriptions, live sync
+- ✅ Attach a receipt photo when adding by hand, choose camera or library when replacing it, and a one-time opening animation with a matching splash
 - ⏭️ **Next:** email auto-capture, known retailer return policies, receiving receipts from the share sheet (needs a development build)
 
 ---

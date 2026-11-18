@@ -1,14 +1,16 @@
 import { type ComponentRef, useRef, useState } from "react";
 import { Image } from "expo-image";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { DateField } from "@/components/date-field";
 import { Button, Field, Segmented } from "@/components/form";
+import { Icon } from "@/components/icon";
 import { ScanPanel } from "@/components/scan-panel";
 import { SpacePicker } from "@/components/space-picker";
 import { useTheme } from "@/constants/theme";
 import { photosStoredLocally, type ReceiptPhoto } from "@/data/receipt-photos";
 import { haptics } from "@/data/haptics";
+import { pickReceiptPhoto } from "@/data/scan-receipt";
 import type { ReceiptFields } from "@/data/receipts";
 import { todayIso } from "@/lib/deadlines";
 import { type ReceiptInput, type ReceiptInputErrors, validateReceiptInput } from "@/lib/receipt-input";
@@ -59,6 +61,19 @@ export function ReceiptForm({
   const [input, setInput] = useState(initial);
   const [errors, setErrors] = useState<ReceiptInputErrors>({});
   const [photo, setPhoto] = useState<ReceiptPhoto>();
+
+  /** Keeps a photo as proof of purchase without reading it, for receipts added by hand. */
+  async function attachPhoto(source: "camera" | "library") {
+    try {
+      const picked = await pickReceiptPhoto(source);
+      if (picked) {
+        setPhoto(picked);
+        haptics.success();
+      }
+    } catch (error) {
+      Alert.alert("Couldn't add the photo", error instanceof Error ? error.message : String(error));
+    }
+  }
   const [items, setItems] = useState<ScannedItem[]>([]);
   const [spaceId, setSpaceId] = useState(initialSpaceId ?? "");
   const withSpace = (fields: ReceiptFields): ReceiptFields => (spaceId ? { ...fields, spaceId } : fields);
@@ -148,6 +163,35 @@ export function ReceiptForm({
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel="Don't keep the photo" hitSlop={10} onPress={() => setPhoto(undefined)}>
             <Text style={{ color: theme.accent, fontWeight: "600" }}>Remove</Text>
+          </Pressable>
+        </View>
+      )}
+      {!photo && photosStoredLocally && (
+        <View style={[styles.photoRow, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <View style={[styles.photoIcon, { backgroundColor: theme.accentSoft }]}>
+            <Icon name="camera" size={18} color={theme.accent} />
+          </View>
+          <View style={styles.photoText}>
+            <Text style={[styles.photoTitle, { color: theme.text }]}>Add a photo of the receipt</Text>
+            <Text style={[styles.photoHint, { color: theme.textMuted }]}>Proof of purchase for returns and claims.</Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Take a photo of the receipt"
+            hitSlop={8}
+            onPress={() => attachPhoto("camera")}
+            style={styles.photoAction}
+          >
+            <Icon name="camera" size={20} color={theme.accent} />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Choose a photo of the receipt"
+            hitSlop={8}
+            onPress={() => attachPhoto("library")}
+            style={styles.photoAction}
+          >
+            <Icon name="photo" size={20} color={theme.accent} />
           </Pressable>
         </View>
       )}
@@ -267,6 +311,19 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 14,
     padding: 10,
+  },
+  photoIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  photoAction: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
   },
   thumb: {
     width: 48,
