@@ -1,11 +1,16 @@
+import { Fraunces_600SemiBold, Fraunces_700Bold } from "@expo-google-fonts/fraunces";
+import { IBMPlexMono_500Medium, IBMPlexMono_600SemiBold } from "@expo-google-fonts/ibm-plex-mono";
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
 import { Platform, Pressable, Text } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 
+import { LaunchReceipt } from "@/components/launch-receipt";
 import { ToastProvider } from "@/components/toast";
-import { useColorMode, useTheme } from "@/constants/theme";
+import { Fonts, useColorMode, useTheme } from "@/constants/theme";
 import { goBack } from "@/lib/navigation";
 import { CloudProvider } from "@/data/cloud";
 import { ReceiptsProvider } from "@/data/receipts";
@@ -14,7 +19,8 @@ import { SettingsProvider } from "@/data/settings";
 import { SpacesProvider } from "@/data/spaces";
 import { SubscriptionsProvider } from "@/data/subscriptions";
 
-// iOS fades the splash out instead of cutting to the first screen.
+// The splash stays up until Keepr's fonts are ready, then fades (iOS) into the opening receipt.
+SplashScreen.preventAutoHideAsync().catch(() => undefined);
 SplashScreen.setOptions({ fade: true, duration: 300 });
 
 function AppStack() {
@@ -46,7 +52,7 @@ function AppStack() {
         screenOptions={{
           headerStyle: { backgroundColor: theme.background },
           headerTintColor: theme.accent,
-          headerTitleStyle: { color: theme.text },
+          headerTitleStyle: { color: theme.text, fontFamily: Fonts.display },
           headerShadowVisible: false,
           contentStyle: { backgroundColor: theme.background },
         }}
@@ -68,11 +74,27 @@ function AppStack() {
         <Stack.Screen name="spaces/[id]" options={{ title: "Space" }} />
         <Stack.Screen name="reset-password" options={{ title: "Reset password" }} />
       </Stack>
+      <LaunchReceipt />
     </>
   );
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontsError] = useFonts({
+    Fraunces_600SemiBold,
+    Fraunces_700Bold,
+    IBMPlexMono_500Medium,
+    IBMPlexMono_600SemiBold,
+  });
+  const fontsReady = fontsLoaded || !!fontsError;
+
+  useEffect(() => {
+    if (fontsReady) SplashScreen.hideAsync().catch(() => undefined);
+  }, [fontsReady]);
+
+  // If the fonts fail to load the app still opens, in the system font.
+  if (!fontsReady) return null;
+
   return (
     // Swipeable rows need gestures handled from the root.
     <GestureHandlerRootView style={{ flex: 1 }}>

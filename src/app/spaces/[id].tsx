@@ -4,7 +4,7 @@ import { Alert, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View }
 
 import { Button, Field, Segmented } from "@/components/form";
 import { useToast } from "@/components/toast";
-import { useTheme } from "@/constants/theme";
+import { Fonts, useTheme } from "@/constants/theme";
 import { useCloud } from "@/data/cloud";
 import { haptics } from "@/data/haptics";
 import { useReceipts } from "@/data/receipts";
@@ -290,8 +290,8 @@ const styles = StyleSheet.create({
   },
   heroName: {
     fontSize: 28,
-    fontWeight: "800",
     letterSpacing: -0.5,
+    fontFamily: Fonts.display,
   },
   heroMeta: {
     fontSize: 14,
@@ -322,10 +322,10 @@ const styles = StyleSheet.create({
   },
   code: {
     fontSize: 32,
-    fontWeight: "800",
+
     letterSpacing: 4,
     fontVariant: ["tabular-nums"],
-    fontFamily: Platform.select({ ios: "Menlo", android: "monospace", default: "monospace" }),
+    fontFamily: Fonts.monoBold,
   },
   member: {
     flexDirection: "row",
