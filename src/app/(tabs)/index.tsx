@@ -22,6 +22,7 @@ import { ReceiptCard } from "@/components/receipt-card";
 import { ReceiptTile } from "@/components/receipt-tile";
 import { RemindersBanner } from "@/components/reminders-banner";
 import { ScreenHeader } from "@/components/screen-header";
+import { SwipeableReceipt } from "@/components/swipeable-receipt";
 import { useTheme } from "@/constants/theme";
 import { usePullToSync } from "@/data/cloud";
 import { useReceiptsStore } from "@/data/receipts";
@@ -58,6 +59,8 @@ export default function ReceiptsScreen() {
   const { spaces } = useSpaces();
   /** "all", "mine" (personal only) or a space id. */
   const [filter, setFilter] = useState("all");
+  /** Whether finished-with receipts (returned, claimed or archived) are listed too. */
+  const [showDone, setShowDone] = useState(false);
   // A space you've left (or that was deleted) can't stay selected.
   const activeFilter = filter === "all" || filter === "mine" || spaces.some((space) => space.id === filter) ? filter : "all";
 
@@ -70,7 +73,13 @@ export default function ReceiptsScreen() {
         : receipts.filter((receipt) => (activeFilter === "mine" ? !receipt.spaceId : receipt.spaceId === activeFilter)),
     [receipts, activeFilter],
   );
-  const visibleReceipts = useMemo(() => searchReceipts(filteredReceipts, query), [filteredReceipts, query]);
+  const doneCount = filteredReceipts.filter((receipt) => receipt.closed).length;
+  // Searching looks through everything, finished receipts included.
+  const listedReceipts = useMemo(
+    () => (showDone || query.trim() ? filteredReceipts : filteredReceipts.filter((receipt) => !receipt.closed)),
+    [filteredReceipts, showDone, query],
+  );
+  const visibleReceipts = useMemo(() => searchReceipts(listedReceipts, query), [listedReceipts, query]);
   const filters = [
     { id: "all", label: "All" },
     { id: "mine", label: "Just mine" },
@@ -229,9 +238,26 @@ export default function ReceiptsScreen() {
     ),
     ListEmptyComponent: (
       <Text style={[styles.noResults, { color: theme.textMuted }]}>
-        {query.trim() ? `No receipts match “${query.trim()}”.` : "No receipts here yet."}
+        {query.trim()
+          ? `No receipts match “${query.trim()}”.`
+          : doneCount > 0
+            ? "All done. Nothing to keep an eye on."
+            : "No receipts here yet."}
       </Text>
     ),
+    ListFooterComponent:
+      doneCount > 0 && !query.trim() ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setShowDone((shown) => !shown)}
+          style={[styles.doneToggle, { borderColor: theme.border }]}
+        >
+          <Icon name="archive" size={16} color={theme.textMuted} />
+          <Text style={[styles.doneToggleText, { color: theme.textMuted }]}>
+            {showDone ? "Hide finished receipts" : `Show ${doneCount} finished ${doneCount === 1 ? "receipt" : "receipts"}`}
+          </Text>
+        </Pressable>
+      ) : undefined,
   };
 
   return (
@@ -243,7 +269,11 @@ export default function ReceiptsScreen() {
             {...listProps}
             sections={sections}
             stickySectionHeadersEnabled={false}
-            renderItem={({ item }) => <ReceiptCard receipt={item} today={today} />}
+            renderItem={({ item }) => (
+              <SwipeableReceipt receipt={item}>
+                <ReceiptCard receipt={item} today={today} />
+              </SwipeableReceipt>
+            )}
             renderSectionHeader={({ section }) => (
               <View style={styles.sectionHeader}>
                 <Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.text }]}>
@@ -264,7 +294,13 @@ export default function ReceiptsScreen() {
             numColumns={view === "grid" ? 2 : 1}
             columnWrapperStyle={view === "grid" ? styles.gridRow : undefined}
             renderItem={({ item }) =>
-              view === "grid" ? <ReceiptTile receipt={item} today={today} /> : <ReceiptCard receipt={item} today={today} />
+              view === "grid" ? (
+                <ReceiptTile receipt={item} today={today} />
+              ) : (
+                <SwipeableReceipt receipt={item}>
+                  <ReceiptCard receipt={item} today={today} />
+                </SwipeableReceipt>
+              )
             }
           />
         )}
@@ -288,6 +324,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 24,
     gap: 8,
+  },
+  doneToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 16,
+    paddingVertical: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  doneToggleText: {
+    fontSize: 14,
+    fontWeight: "600",
   },
   listHeader: {
     gap: 12,

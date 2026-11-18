@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { DeadlinePill, toneFor } from "@/components/deadline-pill";
 import { PressScale } from "@/components/press-scale";
 import { useTheme } from "@/constants/theme";
+import { useReceiptActions } from "@/components/swipeable-receipt";
 import { useSpaces } from "@/data/spaces";
 import { daysBetween, getNextDeadline } from "@/lib/deadlines";
 import { formatDate, formatPrice } from "@/lib/format";
@@ -22,14 +23,21 @@ export function ReceiptCard({ receipt, today }: Props) {
   const currentYear = Number(today.slice(0, 4));
   const channel = receipt.channel === "online" ? "online" : "in store";
   const space = useSpaces().spaceName(receipt.spaceId);
+  const actions = useReceiptActions(receipt);
 
   return (
     <Link href={{ pathname: "/receipt/[id]", params: { id: receipt.id } }} asChild>
       <PressScale
         accessibilityRole="button"
         accessibilityLabel={`${receipt.product} from ${receipt.retailer}`}
+        accessibilityActions={actions.accessibilityActions}
+        onAccessibilityAction={(event) => actions.onAccessibilityAction(event.nativeEvent.actionName)}
         // Link asChild rejects style arrays on its child.
-        style={StyleSheet.flatten([styles.card, { backgroundColor: theme.card, borderColor: tone.border }])}
+        style={StyleSheet.flatten([
+          styles.card,
+          { backgroundColor: theme.card, borderColor: tone.border },
+          receipt.closed && styles.closed,
+        ])}
       >
         <View style={styles.row}>
           <Text style={[styles.product, { color: theme.text }]} numberOfLines={1}>
@@ -47,7 +55,7 @@ export function ReceiptCard({ receipt, today }: Props) {
         )}
         <View style={[styles.tear, { borderColor: theme.border }]} />
         <View style={styles.pill}>
-          <DeadlinePill deadline={deadline} today={today} />
+          <DeadlinePill deadline={deadline} today={today} closed={receipt.closed} />
         </View>
       </PressScale>
     </Link>
@@ -92,5 +100,8 @@ const styles = StyleSheet.create({
   },
   pill: {
     marginTop: 8,
+  },
+  closed: {
+    opacity: 0.7,
   },
 });

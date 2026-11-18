@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { Pressable, Text } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 
 import { ToastProvider } from "@/components/toast";
@@ -64,20 +65,23 @@ function AppStack() {
 
 export default function RootLayout() {
   return (
-    <SettingsProvider>
-      <ReceiptsProvider>
-        <SubscriptionsProvider>
-          <CloudProvider>
-            <SpacesProvider>
-              <RemindersProvider>
-                <ToastProvider>
-                  <AppStack />
-                </ToastProvider>
-              </RemindersProvider>
-            </SpacesProvider>
-          </CloudProvider>
-        </SubscriptionsProvider>
-      </ReceiptsProvider>
-    </SettingsProvider>
+    // Swipeable rows need gestures handled from the root.
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SettingsProvider>
+        <ReceiptsProvider>
+          <SubscriptionsProvider>
+            <CloudProvider>
+              <SpacesProvider>
+                <RemindersProvider>
+                  <ToastProvider>
+                    <AppStack />
+                  </ToastProvider>
+                </RemindersProvider>
+              </SpacesProvider>
+            </CloudProvider>
+          </SubscriptionsProvider>
+        </ReceiptsProvider>
+      </SettingsProvider>
+    </GestureHandlerRootView>
   );
 }

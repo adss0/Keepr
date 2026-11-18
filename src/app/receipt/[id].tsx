@@ -17,11 +17,19 @@ import { DEADLINE_EXPLANATIONS, getDeadlines, todayIso } from "@/lib/deadlines";
 import { formatDate, formatPrice } from "@/lib/format";
 import { PAYMENT_LABELS } from "@/lib/export";
 import { goBack } from "@/lib/navigation";
+import { CLOSED_LABELS } from "@/lib/receipt-status";
+import type { ClosedReason } from "@/types/receipt";
+
+const CLOSE_OPTIONS: { reason: ClosedReason; label: string }[] = [
+  { reason: "returned", label: "Returned" },
+  { reason: "claimed", label: "Claimed" },
+  { reason: "archived", label: "Archive" },
+];
 
 export default function ReceiptDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const receipt = useReceipt(id);
-  const { deleteReceipt, restoreReceipt } = useReceiptsStore();
+  const { closeReceipt, deleteReceipt, restoreReceipt } = useReceiptsStore();
   const { showToast } = useToast();
   const theme = useTheme();
   const today = todayIso();
@@ -77,8 +85,48 @@ export default function ReceiptDetailScreen() {
 
       <ReceiptPhotoCard receipt={receipt} />
 
-      <Text style={[styles.heading, { color: theme.text }]}>Your deadlines</Text>
-      {getDeadlines(receipt).map((deadline) => (
+      {receipt.closed ? (
+        <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <DeadlinePill deadline={undefined} today={today} closed={receipt.closed} />
+          <Text style={[styles.explanation, { color: theme.textMuted }]}>
+            Finished with, so Keepr won&apos;t remind you about it. It stays here as a record.
+          </Text>
+          <Button
+            title="Make active again"
+            onPress={() => {
+              closeReceipt(receipt.id, undefined);
+              haptics.success();
+            }}
+          />
+        </View>
+      ) : (
+        <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Text style={[styles.cardTitle, { color: theme.text }]}>Finished with it?</Text>
+          <Text style={[styles.explanation, { color: theme.textMuted }]}>
+            Mark it and Keepr stops reminding you. Returned items don&apos;t count towards your spending.
+          </Text>
+          <View style={styles.statusButtons}>
+            {CLOSE_OPTIONS.map((option) => (
+              <View key={option.reason} style={styles.statusButton}>
+                <Button
+                  title={option.label}
+                  onPress={() => {
+                    closeReceipt(receipt.id, { reason: option.reason, on: today });
+                    haptics.success();
+                    showToast({
+                      message: `${CLOSED_LABELS[option.reason]}: ${receipt.product}`,
+                      action: { label: "Undo", onPress: () => closeReceipt(receipt.id, undefined) },
+                    });
+                  }}
+                />
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {!receipt.closed && <Text style={[styles.heading, { color: theme.text }]}>Your deadlines</Text>}
+      {!receipt.closed && getDeadlines(receipt).map((deadline) => (
         <View
           key={deadline.kind}
           style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}
@@ -134,6 +182,17 @@ export default function ReceiptDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  statusButtons: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  statusButton: {
+    flex: 1,
+  },
   content: {
     padding: 16,
     paddingBottom: 32,

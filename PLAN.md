@@ -33,6 +33,7 @@
 - ✅ Save a receipt as a PDF with its deadlines and photo
 - ✅ Receipt-paper look, a Next deadline card, and fixes from a full test of every screen
 - ✅ Shared spaces for families and organisations: invites, roles, shared receipts and subscriptions, live sync
+- ✅ Mark receipts as returned, claimed or archived (no more reminders, kept as history; returned ones don't count as spending), and swipe a receipt row to archive or delete it
 - ✅ Attach a receipt photo when adding by hand, choose camera or library when replacing it, and a one-time opening animation with a matching splash
 - ⏭️ **Next:** email auto-capture, known retailer return policies, receiving receipts from the share sheet (needs a development build)
 
@@ -167,5 +168,5 @@ All features are free for now.
 - Before launch: move Gemini scanning to a paid plan (or another provider) so receipt photos aren't used for training.
 
 - Harden sign-in storage: keep the Supabase session encrypted (expo-secure-store) instead of AsyncStorage.
-- Apply migrations `20261117000000_receipt_photos_and_anonymous_guard.sql` and `20261118000000_shared_spaces.sql` to the Supabase project, and redeploy `extract-receipt` for item lists and PDF scanning. Until then the app falls back gracefully (unknown columns are dropped when syncing, no item list, PDFs refused, sharing shows that it needs the update).
+- Apply migrations `20261117000000_receipt_photos_and_anonymous_guard.sql` `20261118000000_shared_spaces.sql` and `20261119000000_receipt_status.sql` to the Supabase project, and redeploy `extract-receipt` for item lists and PDF scanning. Until then the app falls back gracefully (unknown columns are dropped when syncing, no item list, PDFs refused, sharing shows that it needs the update).
 - Shared spaces later: transfer ownership, change a member's role after joining, and per-space reminder settings.
