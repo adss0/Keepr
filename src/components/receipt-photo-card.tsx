@@ -1,15 +1,16 @@
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Platform, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/form";
 import { Icon } from "@/components/icon";
 import { PressScale } from "@/components/press-scale";
+import { useToast } from "@/components/toast";
 import { useTheme } from "@/constants/theme";
 import { useCloud } from "@/data/cloud";
 import { haptics } from "@/data/haptics";
-import { isPdf, photosStoredLocally, savePhoto, usePhotoUri } from "@/data/receipt-photos";
+import { canKeepPhotos, isPdf, keepPhoto, usePhotoUri } from "@/data/receipt-photos";
 import { useReceiptsStore } from "@/data/receipts";
 import { pickReceiptPhoto } from "@/data/scan-receipt";
 import type { Receipt } from "@/types/receipt";
@@ -19,28 +20,41 @@ export function ReceiptPhotoCard({ receipt }: { receipt: Receipt }) {
   const theme = useTheme();
   const { userId } = useCloud();
   const { setReceiptPhoto } = useReceiptsStore();
-  const uri = usePhotoUri(receipt.photo, receipt.ownerId ?? userId);
+  const folder = receipt.ownerId ?? userId;
+  const uri = usePhotoUri(receipt.photo, folder);
+  const canAdd = canKeepPhotos(userId);
   const [busy, setBusy] = useState(false);
+  const { showToast } = useToast();
 
   async function addPhoto(source: "camera" | "library") {
     try {
       const photo = await pickReceiptPhoto(source);
       if (!photo) return;
       setBusy(true);
-      const name = savePhoto(receipt.id, photo);
+      const name = await keepPhoto(receipt.id, photo, folder, receipt.photo);
       if (name) {
         setReceiptPhoto(receipt.id, name);
         haptics.success();
       }
     } catch (error) {
-      Alert.alert("Couldn't add the photo", error instanceof Error ? error.message : String(error));
+      // A toast rather than an alert, which does nothing in browsers.
+      showToast({ message: error instanceof Error ? error.message : "Couldn't add the photo." });
     } finally {
       setBusy(false);
     }
   }
 
   if (!receipt.photo) {
-    if (!photosStoredLocally) return null;
+    if (!canAdd) {
+      // On the web, photos live in the cloud, so they need an account.
+      return Platform.OS === "web" ? (
+        <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Text style={[styles.hint, { color: theme.textMuted }]}>
+            Sign in to keep a photo of the receipt here as proof of purchase.
+          </Text>
+        </View>
+      ) : null;
+    }
     return (
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
         <View style={styles.emptyRow}>
@@ -92,17 +106,20 @@ export function ReceiptPhotoCard({ receipt }: { receipt: Receipt }) {
       </PressScale>
       <View style={styles.footer}>
         <Text style={[styles.hint, { color: theme.textMuted }]}>Proof of purchase{userId ? " · backed up" : ""}</Text>
-        {photosStoredLocally && (
+        {canAdd && (
           <Button
             title="Replace"
             variant="ghost"
             busy={busy}
             onPress={() =>
-              Alert.alert("Replace the photo", undefined, [
-                { text: "Take photo", onPress: () => addPhoto("camera") },
-                { text: "Choose photo", onPress: () => addPhoto("library") },
-                { text: "Cancel", style: "cancel" },
-              ])
+              // Browsers offer the camera from their own file picker, and have no multi-button alerts.
+              Platform.OS === "web"
+                ? addPhoto("library")
+                : Alert.alert("Replace the photo", undefined, [
+                    { text: "Take photo", onPress: () => addPhoto("camera") },
+                    { text: "Choose photo", onPress: () => addPhoto("library") },
+                    { text: "Cancel", style: "cancel" },
+                  ])
             }
           />
         )}

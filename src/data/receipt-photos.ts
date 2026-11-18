@@ -21,8 +21,37 @@ const EXTENSIONS: Record<string, string> = {
   "application/pdf": "pdf",
 };
 
-/** Photos are kept as files on the phone. Browsers have no app folder, so the web only shows backed-up photos. */
+/** Photos are kept as files on the phone. Browsers have no app folder, so the web keeps them only in the cloud. */
 export const photosStoredLocally = Platform.OS !== "web";
+
+/** Whether photos can be kept here: always on a phone; on the web only when signed in, as they go straight to the cloud. */
+export function canKeepPhotos(userId: string | undefined): boolean {
+  return photosStoredLocally || (!!supabase && !!userId);
+}
+
+/**
+ * Keeps a receipt's photo and returns its name to save on the receipt: a file on the phone (backed up on the next
+ * sync), or on the web an upload straight to `folder` in the cloud. Undefined when it can't be kept here.
+ * `previous` is the photo it replaces, removed from the cloud on the web.
+ */
+export async function keepPhoto(
+  receiptId: string,
+  photo: ReceiptPhoto,
+  folder: string | undefined,
+  previous?: string,
+): Promise<string | undefined> {
+  if (photosStoredLocally) return savePhoto(receiptId, photo);
+  if (!supabase || !folder) return undefined;
+  // A new name each time, so browsers show the new photo rather than a cached copy of the old one.
+  const name = `${receiptId}-${Date.now().toString(36)}.${EXTENSIONS[photo.mediaType] ?? "jpg"}`;
+  const bytes = Uint8Array.from(atob(photo.base64), (char) => char.charCodeAt(0));
+  const { error } = await supabase.storage
+    .from(PHOTO_BUCKET)
+    .upload(`${folder}/${name}`, bytes, { contentType: photo.mediaType, upsert: true });
+  if (error) throw new Error(`Couldn't upload the photo: ${error.message}`);
+  if (previous) await deleteRemotePhotos([{ folder, name: previous }]);
+  return name;
+}
 
 export function isPdf(name: string | undefined): boolean {
   return name?.toLowerCase().endsWith(".pdf") ?? false;
