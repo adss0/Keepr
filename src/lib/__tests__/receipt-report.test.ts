@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 
-import { receiptReportHtml } from "@/lib/receipt-report";
+import { receiptReportHtml, receiptsReportHtml } from "@/lib/receipt-report";
 import type { Receipt } from "@/types/receipt";
 
 const receipt: Receipt = {
@@ -29,5 +29,18 @@ describe("receiptReportHtml", () => {
     expect(html).toContain("14 days left"); // 30-day reject ends 1 Dec
     expect(html).toContain('src="data:image/jpeg;base64,AAAA"');
     expect(receiptReportHtml(receipt, "2026-11-17")).not.toContain("<img");
+  });
+});
+
+describe("receiptsReportHtml", () => {
+  it("lists every receipt with the total, then a page each, with photos where given", () => {
+    const second: Receipt = { ...receipt, id: "r2", product: "Toaster", pricePence: 1501, closed: { reason: "returned", on: "2026-11-05" } };
+    const html = receiptsReportHtml([receipt, second], "2026-11-17", "This month", { r2: "https://example.test/p.jpg" });
+    expect(html).toContain("2 receipts");
+    expect(html).toContain("£50.00"); // 34.99 + 15.01
+    expect(html).toContain("Returned");
+    expect(html.match(/class="receipt"/g)).toHaveLength(2);
+    expect(html.match(/<img/g)).toHaveLength(1);
+    expect(html).not.toContain("<script>");
   });
 });
