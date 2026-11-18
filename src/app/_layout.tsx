@@ -63,6 +63,7 @@ function AppStack() {
         <Stack.Screen name="subscriptions/new" options={modal("Add subscription")} />
         <Stack.Screen name="subscriptions/edit/[id]" options={modal("Edit subscription")} />
         <Stack.Screen name="account" options={{ title: "Account and sync" }} />
+        <Stack.Screen name="export" options={modal("Export")} />
         <Stack.Screen name="spaces/index" options={{ title: "Shared spaces" }} />
         <Stack.Screen name="spaces/[id]" options={{ title: "Space" }} />
         <Stack.Screen name="reset-password" options={{ title: "Reset password" }} />
