@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { Pressable, Text } from "react-native";
+import { Platform, Pressable, Text } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 
@@ -24,8 +24,16 @@ function AppStack() {
   const modal = (title: string) => ({
     title,
     presentation: "modal" as const,
+    // Centred like an iOS sheet, so the title doesn't run into Cancel on Android and the web.
+    headerTitleAlign: "center" as const,
     headerLeft: () => (
-      <Pressable accessibilityRole="button" hitSlop={10} onPress={() => goBack()}>
+      <Pressable
+        accessibilityRole="button"
+        hitSlop={10}
+        onPress={() => goBack()}
+        // iOS already insets header buttons; the web doesn't.
+        style={{ marginLeft: Platform.OS === "web" ? 16 : 0 }}
+      >
         <Text style={{ color: theme.accent, fontSize: 17 }}>Cancel</Text>
       </Pressable>
     ),

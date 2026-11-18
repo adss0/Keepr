@@ -84,10 +84,10 @@ export function ScanPanel({ onScanned, autoStart = false }: Props) {
           <Button title="Scan a receipt" variant="primary" onPress={() => scan("camera")} />
           <View style={styles.row}>
             <View style={styles.half}>
-              <Button title="Choose a photo" onPress={() => scan("library")} />
+              <Button title="From photos" onPress={() => scan("library")} />
             </View>
             <View style={styles.half}>
-              <Button title="PDF or screenshot" onPress={() => scan("document")} />
+              <Button title="From files" onPress={() => scan("document")} />
             </View>
           </View>
         </>

@@ -15,6 +15,7 @@ import type { ReceiptFields } from "@/data/receipts";
 import { todayIso } from "@/lib/deadlines";
 import { type ReceiptInput, type ReceiptInputErrors, validateReceiptInput } from "@/lib/receipt-input";
 import { formatPrice } from "@/lib/format";
+import { usualReturnDays } from "@/lib/return-policies";
 import { countChangedFields, penceToInput, type ScannedItem, scannedItems, scanResultToInput } from "@/lib/scan-result";
 import type { PaymentMethod, PurchaseChannel } from "@/types/receipt";
 
@@ -86,6 +87,18 @@ export function ReceiptForm({
     scroll.current?.scrollTo({ y: 0, animated: true });
   }
 
+  /** The return window Keepr filled in from the shop's usual policy, while the user hasn't changed it. */
+  const [usualDays, setUsualDays] = useState<string>();
+
+  /** Sets the shop, and fills in its usual return window unless the user typed their own. */
+  function updateShop(text: string) {
+    const ours = input.returnWindowDays.trim() === "" || input.returnWindowDays === usualDays;
+    const usual = usualReturnDays(text)?.toString();
+    setInput({ ...input, retailer: text, ...(ours && { returnWindowDays: usual ?? "" }) });
+    setErrors((current) => ({ ...current, retailer: undefined, ...(ours && { returnWindowDays: undefined }) }));
+    if (ours) setUsualDays(usual);
+  }
+
   function update<K extends keyof ReceiptInput>(key: K, value: ReceiptInput[K]) {
     setInput((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: undefined }));
@@ -139,8 +152,11 @@ export function ReceiptForm({
           onScanned={(result, scannedPhoto) => {
             setPhoto(scannedPhoto);
             setItems(scannedItems(result));
-            const scanned = scanResultToInput(result, input);
-            if (!scanned) return 0;
+            const read = scanResultToInput(result, input);
+            if (!read) return 0;
+            const usual = read.returnWindowDays.trim() ? undefined : usualReturnDays(read.retailer)?.toString();
+            const scanned = usual ? { ...read, returnWindowDays: usual } : read;
+            setUsualDays(usual);
             setInput(scanned);
             setErrors({});
             return countChangedFields(input, scanned);
@@ -242,7 +258,7 @@ export function ReceiptForm({
         label="Shop"
         placeholder="e.g. Currys"
         value={input.retailer}
-        onChangeText={(text) => update("retailer", text)}
+        onChangeText={updateShop}
         error={errors.retailer}
       />
       <Field
@@ -278,7 +294,11 @@ export function ReceiptForm({
       <Field
         label="Shop return window (days)"
         placeholder="e.g. 28"
-        hint="Optional. Check the receipt or the shop's returns policy."
+        hint={
+          usualDays && input.returnWindowDays === usualDays
+            ? `Filled in from ${input.retailer.trim()}'s usual policy. Check your receipt: some items differ.`
+            : "Optional. Check the receipt or the shop's returns policy."
+        }
         keyboardType="number-pad"
         value={input.returnWindowDays}
         onChangeText={(text) => update("returnWindowDays", text)}
