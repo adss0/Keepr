@@ -25,6 +25,7 @@ export function calendarEvents(
   const inRange = (date: string) => date >= from && date <= to;
 
   for (const receipt of receipts) {
+    if (receipt.closed) continue;
     for (const deadline of getDeadlines(receipt)) {
       if (!inRange(deadline.date)) continue;
       events.push({

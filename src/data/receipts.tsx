@@ -24,6 +24,8 @@ type ReceiptsContextValue = {
   updateReceipt: (id: string, fields: ReceiptFields) => void;
   /** Attaches (or with undefined, removes) a receipt's photo file name. */
   setReceiptPhoto: (id: string, photo: string | undefined) => void;
+  /** Marks a receipt as finished with, or with undefined, makes it active again. */
+  closeReceipt: (id: string, closed: Receipt["closed"]) => void;
   deleteReceipt: (id: string) => void;
   /** Puts a deleted receipt back, with its original id (for Undo). */
   restoreReceipt: (receipt: Receipt) => void;
@@ -45,7 +47,9 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
   const updateReceipt = useCallback((id: string, fields: ReceiptFields) => {
     setReceipts((current) =>
       current.map((receipt) =>
-        receipt.id === id ? { id, photo: receipt.photo, ownerId: receipt.ownerId, ...fields } : receipt,
+        receipt.id === id
+          ? { id, photo: receipt.photo, ownerId: receipt.ownerId, ...(receipt.closed && { closed: receipt.closed }), ...fields }
+          : receipt,
       ),
     );
   }, [setReceipts]);
@@ -56,6 +60,16 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
         if (receipt.id !== id) return receipt;
         const { photo: _old, ...rest } = receipt;
         return photo ? { ...rest, photo } : rest;
+      }),
+    );
+  }, [setReceipts]);
+
+  const closeReceipt = useCallback((id: string, closed: Receipt["closed"]) => {
+    setReceipts((current) =>
+      current.map((receipt) => {
+        if (receipt.id !== id) return receipt;
+        const { closed: _old, ...rest } = receipt;
+        return closed ? { ...rest, closed } : rest;
       }),
     );
   }, [setReceipts]);
@@ -104,8 +118,18 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ receipts, ready, addReceipt, updateReceipt, setReceiptPhoto, deleteReceipt, restoreReceipt, mergeFromCloud }),
-    [receipts, ready, addReceipt, updateReceipt, setReceiptPhoto, deleteReceipt, restoreReceipt, mergeFromCloud],
+    () => ({
+      receipts,
+      ready,
+      addReceipt,
+      updateReceipt,
+      setReceiptPhoto,
+      closeReceipt,
+      deleteReceipt,
+      restoreReceipt,
+      mergeFromCloud,
+    }),
+    [receipts, ready, addReceipt, updateReceipt, setReceiptPhoto, closeReceipt, deleteReceipt, restoreReceipt, mergeFromCloud],
   );
 
   return <ReceiptsContext.Provider value={value}>{children}</ReceiptsContext.Provider>;

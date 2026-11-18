@@ -100,10 +100,11 @@ export function getDeadlines(receipt: Receipt): Deadline[] {
   return deadlines.sort((a, b) => a.date.localeCompare(b.date));
 }
 
-/** The soonest deadline that hasn't passed yet, or undefined if all have. */
+/** The soonest deadline that hasn't passed yet, or undefined if all have or the receipt is finished with. */
 export function getNextDeadline(
   receipt: Receipt,
   today: string = todayIso(),
 ): Deadline | undefined {
+  if (receipt.closed) return undefined;
   return getDeadlines(receipt).find((deadline) => deadline.date >= today);
 }

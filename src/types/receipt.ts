@@ -2,6 +2,9 @@ export type PurchaseChannel = "in_store" | "online";
 
 export type PaymentMethod = "credit_card" | "debit_card" | "cash" | "other";
 
+/** Why a receipt is finished with: taken back for a refund, claimed on warranty, or just put away. */
+export type ClosedReason = "returned" | "claimed" | "archived";
+
 export type Receipt = {
   id: string;
   retailer: string;
@@ -22,4 +25,6 @@ export type Receipt = {
   spaceId?: string;
   /** Who added it, from the cloud. Used for shared items' names and photo folders. */
   ownerId?: string;
+  /** Set once it's finished with: no more deadlines or reminders, but it stays in the history. `on` is YYYY-MM-DD. */
+  closed?: { reason: ClosedReason; on: string };
 };

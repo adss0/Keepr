@@ -23,6 +23,8 @@ export const ICONS = {
   viewTimeline: { ios: "clock", android: "timeline", web: "timeline" },
   sort: { ios: "arrow.up.arrow.down", android: "swap_vert", web: "swap_vert" },
   photo: { ios: "photo.on.rectangle", android: "photo_library", web: "photo_library" },
+  archive: { ios: "archivebox", android: "archive", web: "archive" },
+  trash: { ios: "trash", android: "delete", web: "delete" },
 } as const;
 
 export type IconName = keyof typeof ICONS;

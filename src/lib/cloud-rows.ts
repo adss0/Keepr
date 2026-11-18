@@ -1,4 +1,4 @@
-import type { PaymentMethod, PurchaseChannel, Receipt } from "@/types/receipt";
+import type { ClosedReason, PaymentMethod, PurchaseChannel, Receipt } from "@/types/receipt";
 import type { BillingCycle, Subscription } from "@/types/subscription";
 
 /** A row in the Supabase `receipts` table (see supabase/migrations). */
@@ -14,6 +14,8 @@ export type ReceiptRow = {
   warranty_months: number | null;
   photo: string | null;
   space_id: string | null;
+  closed_reason: ClosedReason | null;
+  closed_on: string | null;
   /** Set by the database; not sent when saving. */
   user_id?: string;
   updated_at?: string;
@@ -45,6 +47,8 @@ export function receiptToRow(receipt: Receipt): ReceiptRow {
     warranty_months: receipt.warrantyMonths ?? null,
     photo: receipt.photo ?? null,
     space_id: receipt.spaceId ?? null,
+    closed_reason: receipt.closed?.reason ?? null,
+    closed_on: receipt.closed?.on ?? null,
   };
 }
 
@@ -61,6 +65,7 @@ export function rowToReceipt(row: ReceiptRow): Receipt {
     ...(row.warranty_months !== null && { warrantyMonths: row.warranty_months }),
     // Rows saved before photos existed have no photo column value at all.
     ...(row.photo != null && { photo: row.photo }),
+    ...(row.closed_reason != null && row.closed_on != null && { closed: { reason: row.closed_reason, on: row.closed_on } }),
     ...cloudFields(row),
   };
 }

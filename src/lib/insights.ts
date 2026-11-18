@@ -20,10 +20,15 @@ export function lastMonths(today: string, count: number): string[] {
   });
 }
 
+/** Returned items were refunded, so they don't count as spending. */
+function kept(receipts: Receipt[]): Receipt[] {
+  return receipts.filter((receipt) => receipt.closed?.reason !== "returned");
+}
+
 /** Spending per month for the given months (from receipts' purchase dates). */
 export function spendByMonth(receipts: Receipt[], months: string[]): MonthSpend[] {
   const totals = new Map(months.map((month) => [month, { month, pence: 0, count: 0 }]));
-  for (const receipt of receipts) {
+  for (const receipt of kept(receipts)) {
     const entry = totals.get(receipt.purchaseDate.slice(0, 7));
     if (!entry) continue;
     entry.pence += receipt.pricePence;
@@ -35,7 +40,7 @@ export function spendByMonth(receipts: Receipt[], months: string[]): MonthSpend[
 /** Spending per shop, biggest first. Shop names are grouped ignoring case and extra spaces. */
 export function spendByShop(receipts: Receipt[], from?: string): ShopSpend[] {
   const totals = new Map<string, ShopSpend>();
-  for (const receipt of receipts) {
+  for (const receipt of kept(receipts)) {
     if (from && receipt.purchaseDate < from) continue;
     const name = receipt.retailer.trim().replace(/\s+/g, " ");
     const key = name.toLowerCase();

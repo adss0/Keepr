@@ -3,6 +3,8 @@ import { StyleSheet, Text, View } from "react-native";
 import { type Theme, useTheme } from "@/constants/theme";
 import { type Deadline, daysBetween } from "@/lib/deadlines";
 import { formatDate } from "@/lib/format";
+import { closedText } from "@/lib/receipt-status";
+import type { Receipt } from "@/types/receipt";
 
 /** Deadlines this close (in days) are shown as urgent or coming up soon. */
 export const URGENT_DAYS = 3;
@@ -30,16 +32,20 @@ function describeDaysLeft(days: number): string {
 type Props = {
   deadline: Deadline | undefined;
   today: string;
+  /** A finished-with receipt shows how it ended instead of a deadline. */
+  closed?: Receipt["closed"];
 };
 
-export function DeadlinePill({ deadline, today }: Props) {
+export function DeadlinePill({ deadline, today, closed }: Props) {
   const theme = useTheme();
   const daysLeft = deadline ? daysBetween(today, deadline.date) : undefined;
   const tone = toneFor(theme, daysLeft);
   const currentYear = Number(today.slice(0, 4));
 
   let text: string;
-  if (!deadline || daysLeft === undefined) {
+  if (closed) {
+    text = closedText(closed, currentYear);
+  } else if (!deadline || daysLeft === undefined) {
     text = "No active deadlines";
   } else if (daysLeft < 0) {
     text = `${deadline.label}: ended ${formatDate(deadline.date, currentYear)}`;

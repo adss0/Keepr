@@ -42,7 +42,7 @@ export function ReceiptTile({ receipt, today }: { receipt: Receipt; today: strin
             <Text style={[styles.shop, { color: theme.textMuted }]} numberOfLines={1}>
               {receipt.retailer}
             </Text>
-            <DeadlinePill deadline={deadline} today={today} />
+            <DeadlinePill deadline={deadline} today={today} closed={receipt.closed} />
           </View>
         </PressScale>
       </Link>

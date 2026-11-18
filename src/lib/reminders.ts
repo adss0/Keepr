@@ -52,6 +52,7 @@ export function planReminders(
   const atReminderTime = (isoDate: string) => atHour(isoDate, options.hour);
 
   for (const receipt of receipts) {
+    if (receipt.closed) continue;
     for (const deadline of getDeadlines(receipt)) {
       for (const daysBefore of offsets) {
         const date = atReminderTime(addDays(deadline.date, -daysBefore));
