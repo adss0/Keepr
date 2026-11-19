@@ -60,6 +60,18 @@ export function scannedItems(result: unknown): ScannedItem[] {
   });
 }
 
+/** Kept text is capped so a long PDF can't bloat every sync. */
+export const MAX_PRINTED_TEXT = 2000;
+
+/** The words printed on a scanned receipt, tidied for search, or undefined if the scan didn't return them. */
+export function scannedText(result: unknown): string | undefined {
+  if (typeof result !== "object" || result === null) return undefined;
+  const text = (result as { printed_text?: unknown }).printed_text;
+  if (typeof text !== "string") return undefined;
+  const tidy = text.replace(/\s+/g, " ").trim().slice(0, MAX_PRINTED_TEXT);
+  return tidy || undefined;
+}
+
 /** "7999" pence → "79.99", as typed in the price field. */
 export function penceToInput(pence: number): string {
   return (pence / 100).toFixed(2);

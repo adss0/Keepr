@@ -18,7 +18,14 @@ import { todayIso } from "@/lib/deadlines";
 import { type ReceiptInput, type ReceiptInputErrors, validateReceiptInput } from "@/lib/receipt-input";
 import { formatPrice } from "@/lib/format";
 import { usualReturnDays } from "@/lib/return-policies";
-import { countChangedFields, penceToInput, type ScannedItem, scannedItems, scanResultToInput } from "@/lib/scan-result";
+import {
+  countChangedFields,
+  penceToInput,
+  type ScannedItem,
+  scannedItems,
+  scannedText,
+  scanResultToInput,
+} from "@/lib/scan-result";
 import type { PaymentMethod, PurchaseChannel } from "@/types/receipt";
 
 const CHANNEL_OPTIONS: { value: PurchaseChannel; label: string }[] = [
@@ -82,7 +89,13 @@ export function ReceiptForm({
   }
   const [items, setItems] = useState<ScannedItem[]>([]);
   const [spaceId, setSpaceId] = useState(initialSpaceId ?? "");
-  const withSpace = (fields: ReceiptFields): ReceiptFields => (spaceId ? { ...fields, spaceId } : fields);
+  /** The receipt's printed words from the last scan, saved with it so search can find them. */
+  const [printedText, setPrintedText] = useState<string>();
+  const withSpace = (fields: ReceiptFields): ReceiptFields => ({
+    ...fields,
+    ...(spaceId && { spaceId }),
+    ...(printedText && { printedText }),
+  });
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
 
   /** Errors sit next to their fields near the top, so bring them into view. */
@@ -157,6 +170,7 @@ export function ReceiptForm({
           onScanned={(result, scannedPhoto) => {
             setPhoto(scannedPhoto);
             setItems(scannedItems(result));
+            setPrintedText(scannedText(result));
             const read = scanResultToInput(result, input);
             if (!read) return 0;
             const usual = read.returnWindowDays.trim() ? undefined : usualReturnDays(read.retailer)?.toString();

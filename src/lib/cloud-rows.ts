@@ -16,6 +16,7 @@ export type ReceiptRow = {
   space_id: string | null;
   closed_reason: ClosedReason | null;
   closed_on: string | null;
+  printed_text: string | null;
   /** Set by the database; not sent when saving. */
   user_id?: string;
   updated_at?: string;
@@ -49,6 +50,7 @@ export function receiptToRow(receipt: Receipt): ReceiptRow {
     space_id: receipt.spaceId ?? null,
     closed_reason: receipt.closed?.reason ?? null,
     closed_on: receipt.closed?.on ?? null,
+    printed_text: receipt.printedText ?? null,
   };
 }
 
@@ -65,6 +67,7 @@ export function rowToReceipt(row: ReceiptRow): Receipt {
     ...(row.warranty_months !== null && { warrantyMonths: row.warranty_months }),
     // Rows saved before photos existed have no photo column value at all.
     ...(row.photo != null && { photo: row.photo }),
+    ...(row.printed_text != null && { printedText: row.printed_text }),
     ...(row.closed_reason != null && row.closed_on != null && { closed: { reason: row.closed_reason, on: row.closed_on } }),
     ...cloudFields(row),
   };

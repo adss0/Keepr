@@ -45,6 +45,11 @@ const RECEIPT_SCHEMA = {
     payment_method: { type: "string", enum: ["credit_card", "debit_card", "cash", "other"] },
     return_window_days: { type: "integer", description: "Only if the receipt states a returns period." },
     warranty_months: { type: "integer", description: "Only if the receipt states a warranty or guarantee." },
+    printed_text: {
+      type: "string",
+      description:
+        "Every word printed on the receipt in reading order, separated by single spaces, so it can be searched later. At most 1500 characters; leave out card numbers and long codes.",
+    },
   },
   required: ["is_receipt"],
 };
