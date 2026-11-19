@@ -12,6 +12,7 @@
 - ✅ Build plan moved into `PLAN.md`
 - ✅ CI on every PR and merge, and `main` protected by a ruleset
 - ✅ Strict CI: lint fails on warnings, stricter TypeScript checks, Expo package versions checked, Supabase functions type-checked, with time limits so runs stay short
+- ✅ Fixes from testing sign-in and sharing: Account has a back button when opened from a link (the way back from Google); your name comes from Google or is asked for after signing in, and changes everywhere at once; a scan on a weak connection no longer replaces your sign-in with a guest one; shared receipts say who added them; Shared spaces button on the Receipts screen; a space's receipts can be narrowed to a date range
 - ✅ Receipts list screen with sample data, showing each receipt’s next deadline
 - ✅ Guide for running Keepr on a phone (Expo Go, Android APK, iPhone TestFlight)
 - ✅ Unit tests (Jest) for deadlines and formatting, run in CI

@@ -2,6 +2,7 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Alert, Platform, Pressable, ScrollView, Share, StyleSheet, Switch, Text, View } from "react-native";
 
+import { DateField } from "@/components/date-field";
 import { Button, Field, Segmented } from "@/components/form";
 import { Icon } from "@/components/icon";
 import { ReceiptCard } from "@/components/receipt-card";
@@ -14,6 +15,7 @@ import { useSpaceActivity } from "@/data/space-activity";
 import { canManage, type Space, type SpaceMember, useSpaces } from "@/data/spaces";
 import { useSubscriptions } from "@/data/subscriptions";
 import { todayIso } from "@/lib/deadlines";
+import { type ExportPeriod, PERIOD_OPTIONS, periodRange, receiptsInRange } from "@/lib/export-range";
 import { errorMessage, formatPrice } from "@/lib/format";
 import { activityDetail, activityText, timeAgo } from "@/lib/space-activity";
 import { formatInviteCode, KIND_LABELS, ROLE_LABELS } from "@/lib/spaces";
@@ -166,9 +168,12 @@ function ReceiptsTab({ space }: { space: Space }) {
   const receipts = useReceipts();
   const { subscriptions } = useSubscriptions();
   const today = todayIso();
-  const shared = receipts
-    .filter((receipt) => receipt.spaceId === space.id)
-    .sort((a, b) => b.purchaseDate.localeCompare(a.purchaseDate));
+  const [period, setPeriod] = useState<ExportPeriod>("all");
+  const [from, setFrom] = useState(`${today.slice(0, 7)}-01`);
+  const [to, setTo] = useState(today);
+  const inSpace = receipts.filter((receipt) => receipt.spaceId === space.id);
+  // Newest first, within the chosen dates.
+  const shared = receiptsInRange(inSpace, periodRange(period, today, { from, to }), true).reverse();
   const total = shared.reduce((sum, receipt) => sum + receipt.pricePence, 0);
   const sharedSubscriptions = subscriptions.filter((subscription) => subscription.spaceId === space.id).length;
 
@@ -186,10 +191,19 @@ function ReceiptsTab({ space }: { space: Space }) {
           ? ` · ${sharedSubscriptions} shared ${sharedSubscriptions === 1 ? "subscription" : "subscriptions"}`
           : ""}
       </Text>
-      {shared.length === 0 ? (
+      {inSpace.length > 0 && <Segmented label="Bought" value={period} options={PERIOD_OPTIONS} onChange={setPeriod} />}
+      {inSpace.length > 0 && period === "custom" && (
+        <View style={styles.list}>
+          <DateField label="From" value={from} onChange={setFrom} maximumDate={today} />
+          <DateField label="To" value={to} onChange={setTo} maximumDate={today} />
+        </View>
+      )}
+      {inSpace.length === 0 ? (
         <Text style={[styles.body, { color: theme.textMuted }]}>
           No shared receipts yet. Add one here, or pick this space under &quot;Who&apos;s it for?&quot; when you add a receipt.
         </Text>
+      ) : shared.length === 0 ? (
+        <Text style={[styles.body, { color: theme.textMuted }]}>No receipts bought in these dates.</Text>
       ) : (
         shared.map((receipt) => <ReceiptCard key={receipt.id} receipt={receipt} today={today} />)
       )}

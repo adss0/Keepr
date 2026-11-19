@@ -33,6 +33,10 @@ export type CloudStatus = "not_set_up" | "signed_out" | "syncing" | "synced" | "
 type CloudContextValue = {
   status: CloudStatus;
   email: string | undefined;
+  /** The name others see in shared spaces: the one the user chose, else their Google name. */
+  displayName: string | undefined;
+  /** Saves the name others see. */
+  setDisplayName: (name: string) => Promise<void>;
   /** The signed-in user's id, for their backed-up photos. */
   userId: string | undefined;
   lastSyncedAt: Date | undefined;
@@ -309,6 +313,12 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     if (updateError) throw updateError;
   }, []);
 
+  const setDisplayName = useCallback(async (name: string) => {
+    if (!supabase) return;
+    const { error: updateError } = await supabase.auth.updateUser({ data: { display_name: name.trim() } });
+    if (updateError) throw updateError;
+  }, []);
+
   const syncNow = useCallback(async () => {
     if (!session) return;
     setSyncState("syncing");
@@ -316,11 +326,17 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   }, [pullNow, session]);
 
   const status: CloudStatus = !supabase ? "not_set_up" : !session ? "signed_out" : syncState;
+  const metadata = session?.user.user_metadata;
+  const displayName = [metadata?.display_name, metadata?.full_name, metadata?.name]
+    .find((name): name is string => typeof name === "string" && name.trim() !== "")
+    ?.trim();
 
   const value = useMemo(
     () => ({
       status,
       email: session?.user.email,
+      displayName,
+      setDisplayName,
       userId: session?.user.id,
       lastSyncedAt,
       error,
@@ -337,6 +353,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     [
       status,
       session,
+      displayName,
+      setDisplayName,
       lastSyncedAt,
       error,
       signIn,

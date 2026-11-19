@@ -38,6 +38,8 @@ type SpacesContextValue = {
   createInvite: (spaceId: string, role: "member" | "admin") => Promise<string>;
   renameSpace: (spaceId: string, name: string) => Promise<void>;
   setMyName: (spaceId: string, name: string) => Promise<void>;
+  /** Saves the name others see, on the account and in every space. */
+  setMyNameEverywhere: (name: string) => Promise<void>;
   removeMember: (spaceId: string, userId: string) => Promise<void>;
   /** Owner only: make another member an admin or a member. */
   setRole: (spaceId: string, userId: string, role: "admin" | "member") => Promise<void>;
@@ -116,7 +118,7 @@ export const canManage = (space: Space | undefined) => !!space && MANAGERS.inclu
 /** The signed-in user's shared spaces, and everything to create, join and manage them. */
 export function SpacesProvider({ children }: { children: ReactNode }) {
   const cloud = useCloud();
-  const { userId, email, syncNow } = cloud;
+  const { userId, email, displayName, setDisplayName, syncNow } = cloud;
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [status, setStatus] = useState<SpacesStatus>("loading");
   const [error, setError] = useState<string>();
@@ -159,7 +161,7 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<SpacesContextValue>(() => {
     const client = supabase!;
-    const myName = nameFromEmail(email);
+    const myName = displayName ?? nameFromEmail(email);
     const byId = new Map((userId ? spaces : []).map((space) => [space.id, space]));
     // Signed out is worked out here rather than stored, so it's right the moment someone signs out.
     const visibleSpaces = userId ? spaces : [];
@@ -178,6 +180,17 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
         run(() =>
           client.from("space_members").update({ display_name: name.trim() }).eq("space_id", spaceId).eq("user_id", userId!),
         ).then(() => undefined),
+      setMyNameEverywhere: async (name) => {
+        if (!name.trim()) throw new Error("Enter your name");
+        await setDisplayName(name);
+        if (!userId || spaces.length === 0) return;
+        const { error: nameError } = await client
+          .from("space_members")
+          .update({ display_name: name.trim() })
+          .eq("user_id", userId);
+        if (nameError) throw new Error(nameError.message);
+        await refresh();
+      },
       removeMember: (spaceId, memberId) =>
         run(() => client.from("space_members").delete().eq("space_id", spaceId).eq("user_id", memberId)).then(() => undefined),
       setRole: (spaceId, memberId, role) =>
@@ -202,7 +215,7 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
         return byId.get(spaceId ?? "")?.members.find((member) => member.userId === memberId)?.displayName || "Someone";
       },
     };
-  }, [status, error, spaces, refresh, run, email, userId]);
+  }, [status, error, spaces, refresh, run, email, displayName, setDisplayName, userId]);
 
   return <SpacesContext.Provider value={value}>{children}</SpacesContext.Provider>;
 }

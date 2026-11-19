@@ -20,6 +20,10 @@ import { SettingsProvider } from "@/data/settings";
 import { SpacesProvider } from "@/data/spaces";
 import { SubscriptionsProvider } from "@/data/subscriptions";
 
+// A screen opened straight from a link (such as Account, on the way back from Google) gets the tabs underneath,
+// so it has a back button.
+export const unstable_settings = { anchor: "(tabs)" };
+
 // The splash stays up until Keepr's fonts are ready, then fades (iOS) into the opening receipt.
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 SplashScreen.setOptions({ fade: true, duration: 300 });

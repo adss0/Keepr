@@ -5,7 +5,9 @@ import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { Button, Field } from "@/components/form";
 import { useTheme } from "@/constants/theme";
+import { useToast } from "@/components/toast";
 import { useCloud } from "@/data/cloud";
+import { useSpaces } from "@/data/spaces";
 import { STATUS_TEXT } from "@/lib/cloud-status";
 import { errorMessage } from "@/lib/format";
 
@@ -112,6 +114,57 @@ function SignInForm() {
   );
 }
 
+/** The name others see in shared spaces. Asks for one when the account has none yet (email sign-ups). */
+function NameCard() {
+  const theme = useTheme();
+  const { displayName } = useCloud();
+  const { setMyNameEverywhere } = useSpaces();
+  const { showToast } = useToast();
+  const [name, setName] = useState(displayName ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+  const asking = !displayName;
+
+  return (
+    <View
+      style={[
+        styles.card,
+        styles.form,
+        { backgroundColor: asking ? theme.accentSoft : theme.card, borderColor: asking ? theme.accent : theme.border },
+      ]}
+    >
+      <Text style={[styles.status, { color: theme.text }]}>{asking ? "What should we call you?" : "Your name"}</Text>
+      <Field
+        label="Name"
+        hint="People in your shared spaces see this next to what you add."
+        placeholder="For example, Sam"
+        autoComplete="name"
+        value={name}
+        onChangeText={setName}
+        maxLength={60}
+        error={error}
+      />
+      <Button
+        title="Save name"
+        variant={asking ? "primary" : undefined}
+        busy={busy}
+        onPress={async () => {
+          setBusy(true);
+          setError(undefined);
+          try {
+            await setMyNameEverywhere(name);
+            showToast({ message: "Name saved" });
+          } catch (saveError) {
+            setError(errorMessage(saveError));
+          } finally {
+            setBusy(false);
+          }
+        }}
+      />
+    </View>
+  );
+}
+
 export default function AccountScreen() {
   const theme = useTheme();
   const cloud = useCloud();
@@ -158,6 +211,8 @@ export default function AccountScreen() {
       )}
 
       {cloud.status === "signed_out" && <SignInForm />}
+
+      {cloud.email && <NameCard key={cloud.displayName ?? ""} />}
 
       {cloud.email && (
         <View style={styles.form}>

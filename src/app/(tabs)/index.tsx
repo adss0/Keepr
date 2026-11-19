@@ -101,6 +101,7 @@ export default function ReceiptsScreen() {
             : `${dueThisWeek === 1 ? "1 deadline" : `${dueThisWeek} deadlines`} in the next 7 days`
         }
         actions={[
+          { icon: "people", label: "Shared spaces", onPress: () => router.push("/spaces") },
           { icon: "add", label: "Add receipt by hand", onPress: () => router.push("/receipt/new") },
           { icon: "camera", label: "Scan a receipt", onPress: scanReceipt, primary: true },
         ]}

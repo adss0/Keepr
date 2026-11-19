@@ -56,7 +56,8 @@ export default function ReceiptDetailScreen() {
   const sharedIn = spaces.spaceName(receipt.spaceId);
   if (sharedIn) {
     details.push(["Shared in", sharedIn]);
-    const addedBy = spaces.memberName(receipt.spaceId, receipt.ownerId);
+    // No owner yet means it was added on this phone and hasn't synced.
+    const addedBy = spaces.memberName(receipt.spaceId, receipt.ownerId ?? userId);
     if (addedBy) details.push(["Added by", addedBy]);
   }
   if (receipt.returnWindowDays !== undefined) {

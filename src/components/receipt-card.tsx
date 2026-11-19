@@ -5,6 +5,7 @@ import { DeadlinePill, toneFor } from "@/components/deadline-pill";
 import { PressScale } from "@/components/press-scale";
 import { Fonts, useTheme } from "@/constants/theme";
 import { useReceiptActions } from "@/components/swipeable-receipt";
+import { useCloud } from "@/data/cloud";
 import { useSpaces } from "@/data/spaces";
 import { daysBetween, getNextDeadline } from "@/lib/deadlines";
 import { formatDate, formatPrice } from "@/lib/format";
@@ -22,7 +23,12 @@ export function ReceiptCard({ receipt, today }: Props) {
   const tone = toneFor(theme, daysLeft);
   const currentYear = Number(today.slice(0, 4));
   const channel = receipt.channel === "online" ? "online" : "in store";
-  const space = useSpaces().spaceName(receipt.spaceId);
+  const spaces = useSpaces();
+  const { userId } = useCloud();
+  const space = spaces.spaceName(receipt.spaceId);
+  // Only names someone else: your own shared receipts just say which space.
+  const addedBy =
+    receipt.ownerId && receipt.ownerId !== userId ? spaces.memberName(receipt.spaceId, receipt.ownerId) : undefined;
   const actions = useReceiptActions(receipt);
 
   return (
@@ -51,6 +57,7 @@ export function ReceiptCard({ receipt, today }: Props) {
         {space && (
           <Text style={[styles.space, { color: theme.accent }]} numberOfLines={1}>
             Shared · {space}
+            {addedBy ? ` · added by ${addedBy}` : ""}
           </Text>
         )}
         <View style={[styles.tear, { borderColor: theme.border }]} />
