@@ -114,6 +114,7 @@ export async function shareReceiptsPdf(
   period: string,
   withPhotos: boolean,
   folderFor: (receipt: Receipt) => string | undefined,
+  withDeadlines = false,
 ): Promise<void> {
   const photos: Record<string, string> = {};
   if (withPhotos) {
@@ -122,7 +123,7 @@ export async function shareReceiptsPdf(
       if (source) photos[receipt.id] = source;
     }
   }
-  const html = receiptsReportHtml(receipts, today, period, photos);
+  const html = receiptsReportHtml(receipts, today, period, photos, withDeadlines);
   if (Platform.OS === "web") {
     await printOnWeb(html);
     return;

@@ -22,13 +22,18 @@ describe("receiptReportHtml", () => {
     expect(html).toContain("Argos &amp; Co");
   });
 
-  it("lists each deadline with its status, and the photo when given", () => {
-    const html = receiptReportHtml(receipt, "2026-11-17", "data:image/jpeg;base64,AAAA");
+  it("lists each deadline with its status only when asked, and the photo when given", () => {
+    const html = receiptReportHtml(receipt, "2026-11-17", { photo: "data:image/jpeg;base64,AAAA", withDeadlines: true });
     expect(html).toContain("Cancel for any reason");
     expect(html).toContain("Passed"); // 14-day cancellation ended 15 Nov
     expect(html).toContain("14 days left"); // 30-day reject ends 1 Dec
     expect(html).toContain('src="data:image/jpeg;base64,AAAA"');
-    expect(receiptReportHtml(receipt, "2026-11-17")).not.toContain("<img");
+    const plain = receiptReportHtml(receipt, "2026-11-17");
+    expect(plain).not.toContain("<img");
+    expect(plain).not.toContain("Cancel for any reason");
+    // No footer, and no page margins, so browsers don't print the address on the page.
+    expect(plain).not.toContain("Made with Keepr");
+    expect(plain).toContain("@page { size: A4; margin: 0; }");
   });
 });
 
@@ -39,7 +44,8 @@ describe("receiptsReportHtml", () => {
     expect(html).toContain("2 receipts");
     expect(html).toContain("£50.00"); // 34.99 + 15.01
     expect(html).toContain("Returned");
-    expect(html.match(/class="receipt"/g)).toHaveLength(2);
+    // The summary, then a page each.
+    expect(html.match(/class="sheet"/g)).toHaveLength(3);
     expect(html.match(/<img/g)).toHaveLength(1);
     expect(html).not.toContain("<script>");
   });
@@ -53,7 +59,7 @@ describe("receiptPhotosHtml", () => {
     expect(one).not.toContain('class="caption"');
     const two = receiptPhotosHtml([receipt, other], "2026-11-17", { [receipt.id]: "data:image/jpeg;base64,AAAA" });
     expect(two).toContain('class="caption"');
-    expect(two).toContain('class="page next"');
+    expect(two.match(/class="sheet"/g)).toHaveLength(2);
     // No photo: the receipt's details instead.
     expect(two).toContain("Toaster");
     expect(two.match(/<img/g)).toHaveLength(1);

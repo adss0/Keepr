@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 
 import { DateField } from "@/components/date-field";
@@ -32,6 +32,8 @@ export default function ExportScreen() {
   const [to, setTo] = useState(today);
   const [includeFinished, setIncludeFinished] = useState(true);
   const [withPhotos, setWithPhotos] = useState(true);
+  const [withDeadlines, setWithDeadlines] = useState(false);
+  const [csvDeadlines, setCsvDeadlines] = useState(false);
   const [withSubscriptions, setWithSubscriptions] = useState(true);
   const [busy, setBusy] = useState<"pdf" | "csv" | "excel">();
 
@@ -73,17 +75,10 @@ export default function ExportScreen() {
           value={includeFinished}
           onChange={setIncludeFinished}
         />
-        <Toggle label="Add receipt photos to the PDF" value={withPhotos} onChange={setWithPhotos} divided />
-        <Toggle
-          label="Add subscriptions to the Excel file"
-          value={withSubscriptions}
-          onChange={setWithSubscriptions}
-          divided
-        />
       </View>
 
-      <View style={[styles.summary, { backgroundColor: theme.accentSoft }]}>
-        <Icon name="receipts" size={20} color={theme.accent} />
+      <View style={[styles.summary, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <Icon name="receipts" size={20} color={theme.textMuted} />
         <View style={styles.summaryText}>
           <Text style={[styles.summaryTitle, { color: theme.text }]}>
             {chosen.length === 1 ? "1 receipt" : `${chosen.length} receipts`} · {formatPrice(total)}
@@ -97,37 +92,69 @@ export default function ExportScreen() {
           No receipts in these dates. Pick a longer period.
         </Text>
       ) : (
-        <View style={styles.buttons}>
-          <Button
-            title="PDF of these receipts"
-            variant="primary"
-            busy={busy === "pdf"}
-            onPress={() =>
-              run("pdf", () =>
-                shareReceiptsPdf(chosen, today, label, withPhotos, (receipt) => receipt.ownerId ?? userId),
-              )
-            }
-          />
-          <Button
-            title="Spreadsheet (CSV)"
-            busy={busy === "csv"}
-            onPress={() => run("csv", () => shareCsv(receiptsToCsv(chosen, today), `keepr-receipts-${suffix}.csv`))}
-          />
-          <Button
-            title="Spending breakdown (Excel)"
-            busy={busy === "excel"}
-            onPress={() =>
-              run("excel", () =>
-                shareXlsx(
-                  buildXlsx(spendingWorkbook(chosen, withSubscriptions ? subscriptions : [], today)),
-                  `keepr-spending-${suffix}.xlsx`,
-                ),
-              )
-            }
-          />
-        </View>
+        <>
+          {/* Each format with only the choices that apply to it, then its button. */}
+          <Format title="PDF" hint="A summary with the total, then a page for each receipt.">
+            <Toggle label="Receipt photos" value={withPhotos} onChange={setWithPhotos} />
+            <Toggle
+              label="Deadlines"
+              hint="Return, refund and warranty dates, with what each one means."
+              value={withDeadlines}
+              onChange={setWithDeadlines}
+              divided
+            />
+            <Button
+              title="Save PDF"
+              variant="primary"
+              busy={busy === "pdf"}
+              onPress={() =>
+                run("pdf", () =>
+                  shareReceiptsPdf(chosen, today, label, withPhotos, (receipt) => receipt.ownerId ?? userId, withDeadlines),
+                )
+              }
+            />
+          </Format>
+
+          <Format title="Spreadsheet (CSV)" hint="One row per receipt, for Excel, Numbers or Google Sheets.">
+            <Toggle label="Next deadline" value={csvDeadlines} onChange={setCsvDeadlines} />
+            <Button
+              title="Save CSV"
+              busy={busy === "csv"}
+              onPress={() =>
+                run("csv", () => shareCsv(receiptsToCsv(chosen, today, csvDeadlines), `keepr-receipts-${suffix}.csv`))
+              }
+            />
+          </Format>
+
+          <Format title="Spending breakdown (Excel)" hint="A summary, totals by month and by shop, and every receipt.">
+            <Toggle label="Subscriptions" value={withSubscriptions} onChange={setWithSubscriptions} />
+            <Button
+              title="Save Excel file"
+              busy={busy === "excel"}
+              onPress={() =>
+                run("excel", () =>
+                  shareXlsx(
+                    buildXlsx(spendingWorkbook(chosen, withSubscriptions ? subscriptions : [], today)),
+                    `keepr-spending-${suffix}.xlsx`,
+                  ),
+                )
+              }
+            />
+          </Format>
+        </>
       )}
     </ScrollView>
+  );
+}
+
+function Format({ title, hint, children }: { title: string; hint: string; children: ReactNode }) {
+  const theme = useTheme();
+  return (
+    <View style={[styles.card, styles.format, { backgroundColor: theme.card, borderColor: theme.border }]}>
+      <Text style={[styles.formatTitle, { color: theme.text }]}>{title}</Text>
+      <Text style={[styles.hint, { color: theme.textMuted }]}>{hint}</Text>
+      <View style={styles.formatBody}>{children}</View>
+    </View>
   );
 }
 
@@ -170,6 +197,18 @@ const styles = StyleSheet.create({
   dates: {
     gap: 12,
   },
+  format: {
+    paddingTop: 14,
+    paddingBottom: 14,
+    gap: 2,
+  },
+  formatBody: {
+    gap: 8,
+  },
+  formatTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+  },
   card: {
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 16,
@@ -186,6 +225,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   summary: {
+    borderWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
@@ -206,8 +246,5 @@ const styles = StyleSheet.create({
   },
   center: {
     textAlign: "center",
-  },
-  buttons: {
-    gap: 10,
   },
 });

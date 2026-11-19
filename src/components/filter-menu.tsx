@@ -1,5 +1,5 @@
-import { type ReactNode, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { type ComponentRef, type ReactNode, useRef, useState } from "react";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Button } from "@/components/form";
@@ -21,6 +21,10 @@ type Props<T extends string> = {
   extra?: ReactNode;
 };
 
+/** Wide screens (the website on a computer) get a dropdown under the chip; phones get a sheet from the bottom. */
+const DROPDOWN_MIN_WIDTH = 600;
+const DROPDOWN_WIDTH = 280;
+
 /** A chip showing its current choice; tapping it lists every option, and choosing one applies it straight away. */
 export function FilterMenu<T extends string>({
   title,
@@ -36,13 +40,30 @@ export function FilterMenu<T extends string>({
   const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
   const showExtra = value === stayOpenFor && extra;
+  const window = useWindowDimensions();
+  const dropdown = window.width >= DROPDOWN_MIN_WIDTH;
+  const chip = useRef<ComponentRef<typeof Pressable>>(null);
+  /** Where the dropdown goes: just under the chip, kept inside the window. */
+  const [anchor, setAnchor] = useState({ top: 0, left: 0 });
+
+  function show() {
+    if (!dropdown || !chip.current) {
+      setOpen(true);
+      return;
+    }
+    chip.current.measureInWindow((x, y, _width, height) => {
+      setAnchor({ top: y + height + 6, left: Math.max(12, Math.min(x, window.width - DROPDOWN_WIDTH - 12)) });
+      setOpen(true);
+    });
+  }
 
   return (
     <>
       <Pressable
+        ref={chip}
         accessibilityRole="button"
         accessibilityLabel={`${title}: ${chipLabel}`}
-        onPress={() => setOpen(true)}
+        onPress={show}
         style={[
           styles.chip,
           { backgroundColor: active ? theme.text : theme.card, borderColor: active ? theme.text : theme.border },
@@ -55,13 +76,28 @@ export function FilterMenu<T extends string>({
       </Pressable>
 
       <Modal transparent visible={open} animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable accessibilityLabel="Close" style={styles.backdrop} onPress={() => setOpen(false)} />
-        <View style={[styles.sheetWrap, { paddingBottom: insets.bottom + 12 }]} pointerEvents="box-none">
-          <View style={[styles.sheet, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <Pressable
+          accessibilityLabel="Close"
+          style={[styles.backdrop, dropdown && styles.clearBackdrop]}
+          onPress={() => setOpen(false)}
+        />
+        <View
+          style={dropdown ? [styles.dropdown, anchor] : [styles.sheetWrap, { paddingBottom: insets.bottom + 12 }]}
+          pointerEvents="box-none"
+        >
+          <View
+            style={[
+              styles.sheet,
+              // The dropdown scrolls rather than running past the bottom of the window.
+              dropdown && [styles.dropdownSheet, { maxHeight: window.height - anchor.top - 12 }],
+              { backgroundColor: theme.card, borderColor: theme.border },
+            ]}
+          >
             <Text accessibilityRole="header" style={[styles.title, { color: theme.textMuted }]}>
               {title}
             </Text>
-            <ScrollView style={styles.options} accessibilityRole="radiogroup">
+            <ScrollView style={styles.options}>
+              <View accessibilityRole="radiogroup">
               {options.map((option) => {
                 const selected = option.value === value;
                 return (
@@ -83,13 +119,14 @@ export function FilterMenu<T extends string>({
                   </Pressable>
                 );
               })}
-            </ScrollView>
-            {showExtra && (
-              <View style={styles.extra}>
-                {extra}
-                <Button title="Done" variant="primary" onPress={() => setOpen(false)} />
               </View>
-            )}
+              {showExtra && (
+                <View style={styles.extra}>
+                  {extra}
+                  <Button title="Done" variant="primary" onPress={() => setOpen(false)} />
+                </View>
+              )}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -117,6 +154,21 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.4)",
   },
+  clearBackdrop: {
+    backgroundColor: "transparent",
+  },
+  dropdown: {
+    position: "absolute",
+    width: DROPDOWN_WIDTH,
+  },
+  dropdownSheet: {
+    borderRadius: 14,
+    paddingVertical: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+  },
   sheetWrap: {
     flex: 1,
     justifyContent: "flex-end",
@@ -142,6 +194,7 @@ const styles = StyleSheet.create({
   },
   options: {
     flexGrow: 0,
+    flexShrink: 1,
   },
   option: {
     flexDirection: "row",

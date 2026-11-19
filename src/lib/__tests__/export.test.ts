@@ -45,4 +45,10 @@ describe("receiptsToCsv", () => {
   it("ends with a line break", () => {
     expect(lines.at(-1)).toBe("");
   });
+
+  it("leaves out the deadline columns when asked", () => {
+    const plain = receiptsToCsv(receipts, "2026-11-11", false).split("\r\n");
+    expect(plain[0]).toBe("Product,Shop,Price (GBP),Date bought,Bought,Paid by,Return window (days),Warranty (months)");
+    expect(plain[2]).toBe('"TV 55"", 4K",Currys,499.00,2026-11-01,Online,Credit card,,12');
+  });
 });
