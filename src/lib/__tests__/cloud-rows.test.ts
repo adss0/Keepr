@@ -8,6 +8,7 @@ import {
   rowToReceipt,
   rowToSubscription,
   subscriptionToRow,
+  withCloudCopies,
 } from "@/lib/cloud-rows";
 import type { Receipt } from "@/types/receipt";
 import type { Subscription } from "@/types/subscription";
@@ -107,5 +108,23 @@ describe("changedSince", () => {
 describe("removedIds", () => {
   it("finds items that were deleted", () => {
     expect(removedIds([{ id: "a" }, { id: "b" }, { id: "c" }], [{ id: "b" }])).toEqual(["a", "c"]);
+  });
+});
+
+describe("withCloudCopies", () => {
+  it("puts refused items back as the cloud has them, and leaves the rest", () => {
+    const local = [
+      { id: "a", note: "changed here" },
+      { id: "b", note: "mine" },
+    ];
+    const cloud = [
+      { id: "a", note: "as Sam added it" },
+      { id: "b", note: "old" },
+    ];
+    expect(withCloudCopies(local, cloud, new Set(["a"]))).toEqual([
+      { id: "a", note: "as Sam added it" },
+      { id: "b", note: "mine" },
+    ]);
+    expect(withCloudCopies(local, cloud, new Set())).toBe(local);
   });
 });

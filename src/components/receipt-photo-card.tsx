@@ -13,6 +13,7 @@ import { haptics } from "@/data/haptics";
 import { canKeepPhotos, isPdf, keepPhoto, usePhotoUri } from "@/data/receipt-photos";
 import { useReceiptsStore } from "@/data/receipts";
 import { pickReceiptPhoto } from "@/data/scan-receipt";
+import { evidenceSource } from "@/lib/evidence";
 import { useSpaces } from "@/data/spaces";
 import type { Receipt } from "@/types/receipt";
 
@@ -36,7 +37,7 @@ export function ReceiptPhotoCard({ receipt }: { receipt: Receipt }) {
       setBusy(true);
       const name = await keepPhoto(receipt.id, photo, folder, receipt.photo);
       if (name) {
-        setReceiptPhoto(receipt.id, name);
+        setReceiptPhoto(receipt.id, name, photo.source);
         haptics.success();
       }
     } catch (error) {
@@ -109,7 +110,10 @@ export function ReceiptPhotoCard({ receipt }: { receipt: Receipt }) {
         )}
       </PressScale>
       <View style={styles.footer}>
-        <Text style={[styles.hint, { color: theme.textMuted }]}>Proof of purchase{userId ? " · backed up" : ""}</Text>
+        <Text style={[styles.hint, styles.footerText, { color: theme.textMuted }]}>
+          Proof of purchase{receipt.photoSource ? ` · ${evidenceSource(receipt.photoSource)}` : ""}
+          {userId ? " · backed up" : ""}
+        </Text>
         {canAdd && (
           <Button
             title="Replace"
@@ -180,6 +184,9 @@ const styles = StyleSheet.create({
   pdf: {
     alignItems: "center",
     gap: 8,
+  },
+  footerText: {
+    flexShrink: 1,
   },
   footer: {
     flexDirection: "row",

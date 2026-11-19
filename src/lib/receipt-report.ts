@@ -1,4 +1,5 @@
 import { DEADLINE_EXPLANATIONS, daysBetween, getDeadlines } from "@/lib/deadlines";
+import { evidenceText } from "@/lib/evidence";
 import { PAYMENT_LABELS } from "@/lib/export";
 import { formatFullDate, formatPrice } from "@/lib/format";
 import { CLOSED_LABELS } from "@/lib/receipt-status";
@@ -78,6 +79,7 @@ function receiptBody(receipt: Receipt, today: string, { photo, withDeadlines = f
   ];
   if (receipt.returnWindowDays !== undefined) facts.push(["Shop returns", `${receipt.returnWindowDays} days`]);
   if (receipt.warrantyMonths !== undefined) facts.push(["Warranty", `${receipt.warrantyMonths} months`]);
+  facts.push(["Proof", evidenceText(receipt)]);
 
   const deadlines = withDeadlines
     ? `<h2>Deadlines, as of ${e(formatFullDate(today))}</h2>

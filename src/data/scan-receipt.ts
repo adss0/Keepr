@@ -26,7 +26,11 @@ export async function pickReceiptPhoto(source: "camera" | "library"): Promise<Re
 
   const asset = result.assets[0];
   if (!asset.base64) throw new Error("Couldn't read that photo. Try another one.");
-  return { base64: asset.base64, mediaType: asset.mimeType ?? "image/jpeg" };
+  return {
+    base64: asset.base64,
+    mediaType: asset.mimeType ?? "image/jpeg",
+    source: source === "camera" ? "Camera" : "Photo library",
+  };
 }
 
 /** The scan function accepts up to about 5 MB. */
@@ -48,7 +52,7 @@ export async function pickReceiptDocument(): Promise<ReceiptPhoto | undefined> {
   // Browsers hand over the file as base64 already; on phones it's read from the copy in the cache.
   const base64 = Platform.OS === "web" ? asset.base64?.replace(/^data:[^,]*,/, "") : await new File(asset.uri).base64();
   if (!base64) throw new Error("Couldn't read that file. Try another one.");
-  return { base64, mediaType };
+  return { base64, mediaType, source: `File: ${asset.name}` };
 }
 
 /** Sends the photo to the extract-receipt function, which reads it with Google Gemini. Returns its raw JSON. */

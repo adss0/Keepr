@@ -1,7 +1,14 @@
 import { describe, expect, it } from "@jest/globals";
 
 import { emptyReceiptInput } from "@/lib/receipt-input";
-import { countChangedFields, MAX_PRINTED_TEXT, scannedItems, scannedText, scanResultToInput } from "@/lib/scan-result";
+import {
+  countChangedFields,
+  MAX_PRINTED_TEXT,
+  receiptName,
+  scannedItems,
+  scannedText,
+  scanResultToInput,
+} from "@/lib/scan-result";
 
 const blank = emptyReceiptInput("2026-11-12");
 
@@ -98,5 +105,28 @@ describe("scannedText", () => {
     expect(scannedText({})).toBeUndefined();
     expect(scannedText({ printed_text: "   " })).toBeUndefined();
     expect(scannedText(null)).toBeUndefined();
+  });
+});
+
+describe("receiptName", () => {
+  const items = [{ name: "Energy drink", pricePence: 150 }, { name: "Donuts" }, { name: "Milk" }];
+
+  it("keeps the scanner's name for one item, or its summary of several", () => {
+    expect(receiptName("Kettle", [{ name: "Kettle" }])).toBe("Kettle");
+    expect(receiptName("Food shop: energy drink, donuts and milk", items)).toBe("Food shop: energy drink, donuts and milk");
+  });
+
+  it("sums up several items itself when the scanner named just one", () => {
+    expect(receiptName("Energy drink", items)).toBe("Energy drink and 2 more items");
+    expect(receiptName(undefined, items.slice(0, 2))).toBe("Energy drink and 1 more item");
+  });
+
+  it("names the whole receipt when filling the form", () => {
+    const result = scanResultToInput(
+      { is_receipt: true, product: "Energy drink", total_pence: 1658, items: items.map((i) => ({ name: i.name })) },
+      blank,
+    );
+    expect(result?.product).toBe("Energy drink and 2 more items");
+    expect(result?.price).toBe("16.58");
   });
 });

@@ -26,7 +26,7 @@ export function scanResultToInput(result: unknown, current: ReceiptInput): Recei
 
   return {
     ...current,
-    product: text(data.product) ?? current.product,
+    product: receiptName(text(data.product), scannedItems(result)) ?? current.product,
     retailer: text(data.retailer) ?? current.retailer,
     price: pence !== undefined ? (pence / 100).toFixed(2) : current.price,
     purchaseDate: date && ISO_DATE.test(date) ? date : current.purchaseDate,
@@ -45,6 +45,18 @@ export function countChangedFields(before: ReceiptInput, after: ReceiptInput): n
 }
 
 export type ScannedItem = { name: string; pricePence?: number };
+
+/**
+ * A name for the whole receipt. The scanner sums up several items itself; if it named just one of them anyway
+ * (as older versions did), that one plus a count: "Energy drink and 4 more items".
+ */
+export function receiptName(product: string | undefined, items: ScannedItem[]): string | undefined {
+  if (items.length < 2) return product;
+  const named = product?.toLowerCase();
+  if (product && !items.some((item) => item.name.toLowerCase() === named)) return product;
+  const others = items.length - 1;
+  return `${product ?? items[0].name} and ${others} more ${others === 1 ? "item" : "items"}`;
+}
 
 /** The separate products on a scanned receipt (empty if the scan didn't list them). */
 export function scannedItems(result: unknown): ScannedItem[] {

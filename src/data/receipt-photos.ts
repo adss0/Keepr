@@ -6,7 +6,12 @@ import { Platform } from "react-native";
 import { supabase } from "@/data/supabase";
 
 /** A photo (or PDF) of a receipt, as picked or scanned. */
-export type ReceiptPhoto = { base64: string; mediaType: string };
+export type ReceiptPhoto = {
+  base64: string;
+  mediaType: string;
+  /** Where it came from, kept as evidence: "Camera", "Photo library", "File: order.pdf", "Shared from another app". */
+  source?: string;
+};
 
 /** Private Supabase Storage bucket. Objects live at "<user id>/<file name>". */
 export const PHOTO_BUCKET = "receipt-photos";

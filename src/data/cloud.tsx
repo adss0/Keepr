@@ -20,6 +20,7 @@ import {
   rowToSubscription,
   type SubscriptionRow,
   subscriptionToRow,
+  withCloudCopies,
 } from "@/lib/cloud-rows";
 import type { Receipt } from "@/types/receipt";
 import type { Subscription } from "@/types/subscription";
@@ -102,6 +103,29 @@ async function upsertRows<R extends Record<string, unknown>>(table: "receipts" |
     if (!missing || attempt === 3) return result;
     current = current.map(({ [missing]: _dropped, ...row }) => row);
   }
+}
+
+/** Postgres's "permission denied", which row level security gives for a row this user may not change. */
+const PERMISSION_DENIED = "42501";
+
+/**
+ * After an upsert failed, saves the rows one at a time and returns the ids the database refused permission for
+ * (shared items someone else added). Any other failure is thrown as before. No error: nothing refused.
+ */
+async function refusedRows<R extends { id: string }>(
+  table: "receipts" | "subscriptions",
+  error: { code?: string } | null | undefined,
+  rows: R[],
+): Promise<Set<string>> {
+  const refused = new Set<string>();
+  if (!error) return refused;
+  if (error.code !== PERMISSION_DENIED) throw error;
+  for (const row of rows) {
+    const result = await upsertRows(table, [row]);
+    if (result.error?.code === PERMISSION_DENIED) refused.add(row.id);
+    else if (result.error) throw result.error;
+  }
+  return refused;
 }
 
 /**
@@ -197,14 +221,30 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     }
 
     setSyncState("syncing");
-    const results = await Promise.all([
+    const [receiptsSaved, subscriptionsSaved, ...deletes] = await Promise.all([
       changedReceipts.length > 0 ? upsertRows("receipts", changedReceipts.map(receiptToRow)) : null,
       changedSubscriptions.length > 0 ? upsertRows("subscriptions", changedSubscriptions.map(subscriptionToRow)) : null,
+      // A delete the database refuses removes nothing without an error, and the next pull brings the item back.
       deletedReceipts.length > 0 ? supabase.from("receipts").delete().in("id", deletedReceipts) : null,
       deletedSubscriptions.length > 0 ? supabase.from("subscriptions").delete().in("id", deletedSubscriptions) : null,
     ]);
-    const failed = results.find((result) => result?.error);
-    if (failed?.error) throw failed.error;
+    const failedDelete = deletes.find((result) => result?.error);
+    if (failedDelete?.error) throw failedDelete.error;
+    // Shared items this account isn't allowed to change: save the rest, and put those back as the cloud has them.
+    const refusedReceipts = await refusedRows("receipts", receiptsSaved?.error, changedReceipts.map(receiptToRow));
+    const refusedSubscriptions = await refusedRows(
+      "subscriptions",
+      subscriptionsSaved?.error,
+      changedSubscriptions.map(subscriptionToRow),
+    );
+    const savedReceipts = withCloudCopies(localReceipts, before.receipts, refusedReceipts);
+    const savedSubscriptions = withCloudCopies(localSubscriptions, before.subscriptions, refusedSubscriptions);
+    const refused = refusedReceipts.size + refusedSubscriptions.size;
+    if (refused > 0) {
+      // Local is the "base" here, so only the refused items change: back to the cloud's copy.
+      mergeReceipts(savedReceipts, localReceipts);
+      mergeSubscriptions(savedSubscriptions, localSubscriptions);
+    }
     // Tell other members about receipts and subscriptions just added to their spaces.
     if ([...changedReceipts, ...changedSubscriptions].some((item) => item.spaceId)) notifySpaceMembers();
 
@@ -217,12 +257,16 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     ]).catch((photoError: unknown) => console.warn("Couldn't sync receipt photos", photoError));
 
     // The cloud now matches the phone (anything others added since arrives with the next pull).
-    base.current = { userId, receipts: localReceipts, subscriptions: localSubscriptions };
+    base.current = { userId, receipts: savedReceipts, subscriptions: savedSubscriptions };
     await saveSyncBase(base.current);
     setLastSyncedAt(new Date());
     setSyncState("synced");
-    setError(undefined);
-  }, []);
+    setError(
+      refused > 0
+        ? `${refused === 1 ? "A change to a shared item wasn't" : `${refused} changes to shared items weren't`} saved: only whoever added an item, or the space's owner and admins, can change it. It's back as it was.`
+        : undefined,
+    );
+  }, [mergeReceipts, mergeSubscriptions]);
 
   /** Adds work to the sync queue, reporting any error on the Account screen. */
   const enqueue = useCallback((work: () => Promise<void>) => {

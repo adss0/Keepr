@@ -92,6 +92,8 @@ export function ReceiptForm({
     }
   }
   const [items, setItems] = useState<ScannedItem[]>([]);
+  /** The scan's name and total for the whole receipt, to switch back to after picking one item. */
+  const [whole, setWhole] = useState<{ name: string; price: string }>();
   const [spaceId, setSpaceId] = useState(initialSpaceId ?? "");
   /** The receipt's printed words from the last scan, saved with it so search can find them. */
   const [printedText, setPrintedText] = useState<string>();
@@ -182,6 +184,7 @@ export function ReceiptForm({
             const scanned = usual ? { ...read, returnWindowDays: usual } : read;
             setUsualDays(usual);
             setInput(scanned);
+            setWhole({ name: scanned.product, price: scanned.price });
             setErrors({});
             return countChangedFields(input, scanned);
           }}
@@ -239,9 +242,29 @@ export function ReceiptForm({
         <View style={[styles.items, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.photoTitle, { color: theme.text }]}>{items.length} items on this receipt</Text>
           <Text style={[styles.photoHint, { color: theme.textMuted }]}>
-            {onSubmitMany ? "Pick the one this receipt is for, or add them all." : "Pick the one this receipt is for."}
+            Keep it as one receipt for everything, or pick the item it&apos;s for
+            {onSubmitMany ? ", or add each item separately." : "."}
           </Text>
           <View accessibilityRole="radiogroup" style={styles.itemList}>
+            {whole && (
+              <Pressable
+                accessibilityRole="radio"
+                accessibilityState={{ selected: input.product === whole.name }}
+                onPress={() => pickItem({ name: whole.name, pricePence: Math.round(Number(whole.price) * 100) })}
+                style={[
+                  styles.item,
+                  {
+                    borderColor: input.product === whole.name ? theme.accent : theme.border,
+                    backgroundColor: input.product === whole.name ? theme.accentSoft : "transparent",
+                  },
+                ]}
+              >
+                <Text style={[styles.itemName, { color: theme.text }]} numberOfLines={2}>
+                  Whole receipt: {whole.name}
+                </Text>
+                {whole.price ? <Text style={[styles.itemPrice, { color: theme.text }]}>£{whole.price}</Text> : null}
+              </Pressable>
+            )}
             {items.map((item, index) => {
               const selected = input.product === item.name;
               return (

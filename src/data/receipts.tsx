@@ -23,7 +23,8 @@ type ReceiptsContextValue = {
   /** Replaces a receipt's details. Its photo is kept unless `fields` sets one. */
   updateReceipt: (id: string, fields: ReceiptFields) => void;
   /** Attaches (or with undefined, removes) a receipt's photo file name. */
-  setReceiptPhoto: (id: string, photo: string | undefined) => void;
+  /** Sets (or with no `photo`, removes) the receipt's photo, and where it came from. */
+  setReceiptPhoto: (id: string, photo: string | undefined, source?: string) => void;
   /** Marks a receipt as finished with, or with undefined, makes it active again. */
   closeReceipt: (id: string, closed: Receipt["closed"]) => void;
   deleteReceipt: (id: string) => void;
@@ -62,12 +63,13 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
     );
   }, [setReceipts]);
 
-  const setReceiptPhoto = useCallback((id: string, photo: string | undefined) => {
+  const setReceiptPhoto = useCallback((id: string, photo: string | undefined, source?: string) => {
     setReceipts((current) =>
       current.map((receipt) => {
         if (receipt.id !== id) return receipt;
-        const { photo: _old, ...rest } = receipt;
-        return photo ? { ...rest, photo } : rest;
+        const { photo: _old, photoSource: _oldSource, ...rest } = receipt;
+        if (!photo) return rest;
+        return source ? { ...rest, photo, photoSource: source } : { ...rest, photo };
       }),
     );
   }, [setReceipts]);

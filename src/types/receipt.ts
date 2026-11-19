@@ -21,6 +21,8 @@ export type Receipt = {
   warrantyMonths?: number;
   /** File name of the receipt's photo or PDF, kept as proof of purchase (see data/receipt-photos). */
   photo?: string;
+  /** Where the photo or file came from, as evidence (see ReceiptPhoto.source). */
+  photoSource?: string;
   /** The shared space (family or organisation) this belongs to; personal when missing. */
   spaceId?: string;
   /** Who added it, from the cloud. Used for shared items' names and photo folders. */
