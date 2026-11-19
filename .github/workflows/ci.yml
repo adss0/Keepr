@@ -11,11 +11,15 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   check:
     name: Typecheck, lint and build
     # The job name is a required status check in the "Protect main" ruleset; keep it unchanged.
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
 
@@ -25,11 +29,16 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --no-audit --no-fund
+
+      # Fails if a package doesn't match the version the Expo SDK expects.
+      - name: Expo package versions
+        run: npx expo install --check
 
       - name: Typecheck
         run: npm run typecheck
 
+      # Warnings fail too (--max-warnings 0 in the lint script).
       - name: Lint
         run: npm run lint
 
@@ -38,3 +47,18 @@ jobs:
 
       - name: Build (web bundle)
         run: npx expo export --platform web
+
+  functions:
+    name: Edge functions
+    # Runs alongside the main job. Type-checks the Supabase functions, which the app's typecheck skips.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Type-check functions
+        run: deno check supabase/functions/*/index.ts
