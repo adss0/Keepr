@@ -2,10 +2,10 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Alert, Platform, Pressable, ScrollView, Share, StyleSheet, Switch, Text, View } from "react-native";
 
-import { DateField } from "@/components/date-field";
 import { Button, Field, Segmented } from "@/components/form";
 import { Icon } from "@/components/icon";
 import { ReceiptCard } from "@/components/receipt-card";
+import { allDates, ReceiptFilters } from "@/components/receipt-filters";
 import { useToast } from "@/components/toast";
 import { Fonts, useTheme } from "@/constants/theme";
 import { useCloud } from "@/data/cloud";
@@ -15,7 +15,8 @@ import { useSpaceActivity } from "@/data/space-activity";
 import { canManage, type Space, type SpaceMember, useSpaces } from "@/data/spaces";
 import { useSubscriptions } from "@/data/subscriptions";
 import { todayIso } from "@/lib/deadlines";
-import { type ExportPeriod, PERIOD_OPTIONS, periodRange, receiptsInRange } from "@/lib/export-range";
+import { boughtIn, periodRange } from "@/lib/export-range";
+import { type ReceiptsSort, sortReceipts } from "@/lib/receipt-views";
 import { errorMessage, formatPrice } from "@/lib/format";
 import { activityDetail, activityText, timeAgo } from "@/lib/space-activity";
 import { formatInviteCode, KIND_LABELS, ROLE_LABELS } from "@/lib/spaces";
@@ -168,12 +169,15 @@ function ReceiptsTab({ space }: { space: Space }) {
   const receipts = useReceipts();
   const { subscriptions } = useSubscriptions();
   const today = todayIso();
-  const [period, setPeriod] = useState<ExportPeriod>("all");
-  const [from, setFrom] = useState(`${today.slice(0, 7)}-01`);
-  const [to, setTo] = useState(today);
+  const [sort, setSort] = useState<ReceiptsSort>("newest");
+  const [dates, setDates] = useState(() => allDates(today));
   const inSpace = receipts.filter((receipt) => receipt.spaceId === space.id);
-  // Newest first, within the chosen dates.
-  const shared = receiptsInRange(inSpace, periodRange(period, today, { from, to }), true).reverse();
+  const range = periodRange(dates.period, today, dates);
+  const shared = sortReceipts(
+    inSpace.filter((receipt) => boughtIn(receipt, range)),
+    sort,
+    today,
+  );
   const total = shared.reduce((sum, receipt) => sum + receipt.pricePence, 0);
   const sharedSubscriptions = subscriptions.filter((subscription) => subscription.spaceId === space.id).length;
 
@@ -191,12 +195,8 @@ function ReceiptsTab({ space }: { space: Space }) {
           ? ` · ${sharedSubscriptions} shared ${sharedSubscriptions === 1 ? "subscription" : "subscriptions"}`
           : ""}
       </Text>
-      {inSpace.length > 0 && <Segmented label="Bought" value={period} options={PERIOD_OPTIONS} onChange={setPeriod} />}
-      {inSpace.length > 0 && period === "custom" && (
-        <View style={styles.list}>
-          <DateField label="From" value={from} onChange={setFrom} maximumDate={today} />
-          <DateField label="To" value={to} onChange={setTo} maximumDate={today} />
-        </View>
+      {inSpace.length > 0 && (
+        <ReceiptFilters sort={sort} onSortChange={setSort} dates={dates} onDatesChange={setDates} today={today} />
       )}
       {inSpace.length === 0 ? (
         <Text style={[styles.body, { color: theme.textMuted }]}>

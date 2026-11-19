@@ -175,11 +175,10 @@ export default function AccountScreen() {
   useEffect(() => {
     const returning = Platform.OS === "web" && /access_token|error_description/.test(window.location.href);
     if (!returning) return;
-    const url = window.location.href;
-    window.history.replaceState(null, "", window.location.pathname);
-    completeSignInRedirect(url).catch((error: unknown) =>
-      setRedirectError(errorMessage(error)),
-    );
+    // Expo Router keeps the part after "#" as the "#" param and writes it back into the address, so clear it there.
+    completeSignInRedirect(window.location.href)
+      .catch((error: unknown) => setRedirectError(errorMessage(error)))
+      .finally(() => router.setParams({ "#": undefined }));
   }, [completeSignInRedirect]);
   const card = [styles.card, { backgroundColor: theme.card, borderColor: theme.border }];
 

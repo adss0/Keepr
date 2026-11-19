@@ -22,6 +22,7 @@ import { ReceiptCard } from "@/components/receipt-card";
 import { ReceiptTile } from "@/components/receipt-tile";
 import { RemindersBanner } from "@/components/reminders-banner";
 import { ScreenHeader } from "@/components/screen-header";
+import { allDates, ReceiptFilters } from "@/components/receipt-filters";
 import { SwipeableReceipt } from "@/components/swipeable-receipt";
 import { Fonts, useTheme } from "@/constants/theme";
 import { usePullToSync } from "@/data/cloud";
@@ -31,7 +32,8 @@ import { useSettings } from "@/data/settings";
 import { useSpaces } from "@/data/spaces";
 import { daysBetween, getNextDeadline, todayIso } from "@/lib/deadlines";
 import { formatPrice } from "@/lib/format";
-import { groupByMonth, type ReceiptsSort, type ReceiptsView, SORT_LABELS, sortReceipts } from "@/lib/receipt-views";
+import { boughtIn, periodRange } from "@/lib/export-range";
+import { groupByMonth, type ReceiptsView, sortReceipts } from "@/lib/receipt-views";
 import { searchReceipts } from "@/lib/search";
 
 const VIEWS: { view: ReceiptsView; icon: IconName; label: string }[] = [
@@ -39,7 +41,6 @@ const VIEWS: { view: ReceiptsView; icon: IconName; label: string }[] = [
   { view: "grid", icon: "viewGrid", label: "Grid" },
   { view: "timeline", icon: "viewTimeline", label: "By month" },
 ];
-const SORTS: ReceiptsSort[] = ["deadline", "newest", "price"];
 
 /** Opens Add receipt with the camera already open, so scanning is one tap from home. */
 function scanReceipt() {
@@ -61,18 +62,20 @@ export default function ReceiptsScreen() {
   const [filter, setFilter] = useState("all");
   /** Whether finished-with receipts (returned, claimed or archived) are listed too. */
   const [showDone, setShowDone] = useState(false);
+  const [dates, setDates] = useState(() => allDates(today));
   // A space you've left (or that was deleted) can't stay selected.
   const activeFilter = filter === "all" || filter === "mine" || spaces.some((space) => space.id === filter) ? filter : "all";
 
   const receipts = useMemo(() => sortReceipts(allReceipts, sort, today), [allReceipts, sort, today]);
 
-  const filteredReceipts = useMemo(
-    () =>
-      activeFilter === "all"
-        ? receipts
-        : receipts.filter((receipt) => (activeFilter === "mine" ? !receipt.spaceId : receipt.spaceId === activeFilter)),
-    [receipts, activeFilter],
-  );
+  const filteredReceipts = useMemo(() => {
+    const range = periodRange(dates.period, today, dates);
+    return receipts.filter(
+      (receipt) =>
+        boughtIn(receipt, range) &&
+        (activeFilter === "all" || (activeFilter === "mine" ? !receipt.spaceId : receipt.spaceId === activeFilter)),
+    );
+  }, [receipts, activeFilter, dates, today]);
   const doneCount = filteredReceipts.filter((receipt) => receipt.closed).length;
   // Searching looks through everything, finished receipts included.
   const listedReceipts = useMemo(
@@ -219,44 +222,44 @@ export default function ReceiptsScreen() {
                 </Pressable>
               )}
             </View>
-            <View style={styles.toolbar}>
-              <View style={[styles.viewSwitch, { backgroundColor: theme.card, borderColor: theme.border }]} accessibilityRole="tablist">
-                {VIEWS.map((item) => {
-                  const selected = item.view === view;
-                  return (
-                    <Pressable
-                      key={item.view}
-                      accessibilityRole="tab"
-                      accessibilityLabel={`${item.label} view`}
-                      accessibilityState={{ selected }}
-                      hitSlop={4}
-                      onPress={() => update({ receiptsView: item.view })}
-                      style={[styles.viewButton, selected && { backgroundColor: theme.accentSoft }]}
-                    >
-                      <Icon name={item.icon} size={18} color={selected ? theme.accent : theme.textMuted} />
-                    </Pressable>
-                  );
-                })}
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Sorted by ${SORT_LABELS[sort]}. Change order`}
-                onPress={() => update({ receiptsSort: SORTS[(SORTS.indexOf(sort) + 1) % SORTS.length] })}
-                style={[styles.sortButton, { backgroundColor: theme.card, borderColor: theme.border }]}
-              >
-                <Icon name="sort" size={16} color={theme.textMuted} />
-                <Text style={[styles.sortText, { color: theme.text }]}>{SORT_LABELS[sort]}</Text>
-              </Pressable>
-            </View>
+            <ReceiptFilters
+              sort={sort}
+              onSortChange={(receiptsSort) => update({ receiptsSort })}
+              dates={dates}
+              onDatesChange={setDates}
+              today={today}
+              leading={
+                <View style={[styles.viewSwitch, { backgroundColor: theme.card, borderColor: theme.border }]} accessibilityRole="tablist">
+                  {VIEWS.map((item) => {
+                    const selected = item.view === view;
+                    return (
+                      <Pressable
+                        key={item.view}
+                        accessibilityRole="tab"
+                        accessibilityLabel={`${item.label} view`}
+                        accessibilityState={{ selected }}
+                        hitSlop={4}
+                        onPress={() => update({ receiptsView: item.view })}
+                        style={[styles.viewButton, selected && { backgroundColor: theme.accentSoft }]}
+                      >
+                        <Icon name={item.icon} size={18} color={selected ? theme.accent : theme.textMuted} />
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              }
+            />
           </View>
     ),
     ListEmptyComponent: (
       <Text style={[styles.noResults, { color: theme.textMuted }]}>
         {query.trim()
           ? `No receipts match “${query.trim()}”.`
-          : doneCount > 0
-            ? "All done. Nothing to keep an eye on."
-            : "No receipts here yet."}
+          : dates.period !== "all"
+            ? "No receipts bought in these dates."
+            : doneCount > 0
+              ? "All done. Nothing to keep an eye on."
+              : "No receipts here yet."}
       </Text>
     ),
     ListFooterComponent:
@@ -373,12 +376,6 @@ const styles = StyleSheet.create({
   chips: {
     gap: 8,
   },
-  toolbar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-  },
   viewSwitch: {
     flexDirection: "row",
     borderWidth: StyleSheet.hairlineWidth,
@@ -392,19 +389,6 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
-  },
-  sortButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 40,
-  },
-  sortText: {
-    fontSize: 14,
-    fontWeight: "600",
   },
   gridRow: {
     justifyContent: "space-between",

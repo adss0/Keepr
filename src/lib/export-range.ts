@@ -35,15 +35,15 @@ export function periodRange(period: ExportPeriod, today: string, custom: DateRan
   }
 }
 
+/** Whether the receipt was bought within `range`. */
+export function boughtIn(receipt: Receipt, range: DateRange): boolean {
+  return (!range.from || receipt.purchaseDate >= range.from) && (!range.to || receipt.purchaseDate <= range.to);
+}
+
 /** The receipts bought within `range`, oldest first. Finished-with ones only if `includeFinished`. */
 export function receiptsInRange(receipts: Receipt[], range: DateRange, includeFinished: boolean): Receipt[] {
   return receipts
-    .filter(
-      (receipt) =>
-        (includeFinished || !receipt.closed) &&
-        (!range.from || receipt.purchaseDate >= range.from) &&
-        (!range.to || receipt.purchaseDate <= range.to),
-    )
+    .filter((receipt) => (includeFinished || !receipt.closed) && boughtIn(receipt, range))
     .sort((a, b) => a.purchaseDate.localeCompare(b.purchaseDate));
 }
 
