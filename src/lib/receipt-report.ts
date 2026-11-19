@@ -22,21 +22,21 @@ function status(today: string, date: string): string {
 
 const STYLES = `
   @page { margin: 18mm; }
-  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1c1c1a; font-size: 12pt; }
-  .brand { color: #185fa5; font-weight: 800; letter-spacing: 0.04em; font-size: 11pt; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #21201c; font-size: 12pt; }
+  .brand { color: #d13415; font-weight: 800; letter-spacing: 0.04em; font-size: 11pt; }
   h1 { font-size: 22pt; margin: 4px 0 2px; }
-  .muted { color: #6b6b66; font-size: 10pt; margin-top: 2px; }
+  .muted { color: #63635e; font-size: 10pt; margin-top: 2px; }
   table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-  th, td { text-align: left; vertical-align: top; padding: 8px 6px; border-bottom: 1px solid #e2e1dc; }
-  th { font-size: 9pt; text-transform: uppercase; letter-spacing: 0.06em; color: #6b6b66; }
-  .details td:first-child { color: #6b6b66; width: 38%; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 6px; border-bottom: 1px solid #dad9d6; }
+  th { font-size: 9pt; text-transform: uppercase; letter-spacing: 0.06em; color: #63635e; }
+  .details td:first-child { color: #63635e; width: 38%; }
   .nowrap { white-space: nowrap; }
-  .passed { color: #6b6b66; }
-  .open { color: #185fa5; font-weight: 600; }
+  .passed { color: #63635e; }
+  .open { color: #d13415; font-weight: 600; }
   h2 { font-size: 13pt; margin: 22px 0 0; }
   .photo { margin-top: 18px; text-align: center; page-break-inside: avoid; }
-  .photo img { max-width: 100%; max-height: 150mm; border: 1px solid #e2e1dc; border-radius: 6px; }
-  footer { margin-top: 24px; color: #6b6b66; font-size: 9pt; }
+  .photo img { max-width: 100%; max-height: 150mm; border: 1px solid #dad9d6; border-radius: 6px; }
+  footer { margin-top: 24px; color: #63635e; font-size: 9pt; }
   .receipt { page-break-before: always; }
   .total td { font-weight: 700; border-bottom: none; }
   .right { text-align: right; }

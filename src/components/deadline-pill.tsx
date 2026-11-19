@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { Fonts, type Theme, useTheme } from "@/constants/theme";
+import { type Theme, useTheme } from "@/constants/theme";
 import { type Deadline, daysBetween } from "@/lib/deadlines";
 import { formatDate } from "@/lib/format";
 import { closedText } from "@/lib/receipt-status";
@@ -70,8 +70,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   text: {
-    fontFamily: Fonts.mono,
-    fontSize: 11.5,
-    letterSpacing: 0.2,
+    fontSize: 12,
+    fontWeight: "500",
   },
 });

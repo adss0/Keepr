@@ -53,10 +53,10 @@ export function DateField({ label, value, onChange, hint, error, maximumDate, pa
         onPress={() => onChange(isoDate)}
         style={[
           styles.chip,
-          { backgroundColor: selected ? theme.accent : theme.card, borderColor: selected ? theme.accent : theme.border },
+          { backgroundColor: selected ? theme.primary : theme.card, borderColor: selected ? theme.primary : theme.border },
         ]}
       >
-        <Text style={{ color: selected ? theme.onAccent : theme.text, fontWeight: "500" }}>{title}</Text>
+        <Text style={{ color: selected ? theme.onPrimary : theme.text, fontWeight: "500" }}>{title}</Text>
       </Pressable>
     );
   };

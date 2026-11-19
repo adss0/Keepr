@@ -38,10 +38,10 @@ export function ScreenHeader({ title, subtitle, actions = [], children }: Props)
               onPress={action.onPress}
               style={StyleSheet.flatten([
                 styles.action,
-                { backgroundColor: action.primary ? theme.accent : theme.card, borderColor: theme.border },
+                { backgroundColor: action.primary ? theme.primary : theme.card, borderColor: theme.border },
               ])}
             >
-              <Icon name={action.icon} size={20} color={action.primary ? theme.onAccent : theme.text} />
+              <Icon name={action.icon} size={20} color={action.primary ? theme.onPrimary : theme.text} />
             </PressScale>
           ))}
         </View>

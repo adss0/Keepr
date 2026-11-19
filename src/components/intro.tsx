@@ -43,12 +43,13 @@ export function Intro({
 
   useEffect(() => {
     if (!animate || !launched) return;
-    progress.set(withDelay(delay, withTiming(1, { duration: rise ? 480 : 360, easing: EASE_OUT })));
+    // Short and firm: the content is simply there as the opening receipt tears away.
+    progress.set(withDelay(delay, withTiming(1, { duration: 200, easing: EASE_OUT })));
   }, [animate, launched, delay, rise, progress]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: progress.get(),
-    transform: [{ translateY: rise ? (1 - progress.get()) * 14 : 0 }],
+    transform: [{ translateY: rise ? (1 - progress.get()) * 6 : 0 }],
   }));
 
   return <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>;

@@ -79,12 +79,12 @@ export function Segmented<T extends string>({ label, value, options, onChange }:
               style={[
                 styles.segment,
                 {
-                  backgroundColor: selected ? theme.accent : theme.card,
-                  borderColor: selected ? theme.accent : theme.border,
+                  backgroundColor: selected ? theme.primary : theme.card,
+                  borderColor: selected ? theme.primary : theme.border,
                 },
               ]}
             >
-              <Text style={{ color: selected ? theme.onAccent : theme.text, fontWeight: "500" }}>
+              <Text style={{ color: selected ? theme.onPrimary : theme.text, fontWeight: "500" }}>
                 {option.label}
               </Text>
             </Pressable>
@@ -108,7 +108,7 @@ type ButtonProps = {
 export function Button({ title, onPress, variant = "secondary", icon, busy = false }: ButtonProps) {
   const theme = useTheme();
   const colours = {
-    primary: { bg: theme.accent, text: theme.onAccent, border: theme.accent },
+    primary: { bg: theme.primary, text: theme.onPrimary, border: theme.primary },
     secondary: { bg: theme.card, text: theme.text, border: theme.border },
     danger: { bg: theme.card, text: theme.urgentText, border: theme.urgentText },
     ghost: { bg: "transparent", text: theme.accent, border: "transparent" },

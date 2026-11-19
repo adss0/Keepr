@@ -28,20 +28,20 @@ export function NextDeadlineCard({ receipts, today }: { receipts: Receipt[]; tod
       accessibilityRole="button"
       accessibilityLabel={`Next deadline: ${next.deadline.label} for ${next.receipt.product}, ${days === 0 ? "today" : `${days} ${unit}`}`}
       onPress={() => router.push({ pathname: "/receipt/[id]", params: { id: next.receipt.id } })}
-      style={StyleSheet.flatten([styles.card, { backgroundColor: theme.accent }])}
+      style={StyleSheet.flatten([styles.card, { backgroundColor: theme.primary }])}
     >
       <View style={styles.text}>
-        <Text style={[styles.eyebrow, { color: theme.onAccent }]}>Next deadline</Text>
-        <Text style={[styles.product, { color: theme.onAccent }]} numberOfLines={1}>
+        <Text style={[styles.eyebrow, { color: theme.onPrimary }]}>Next deadline</Text>
+        <Text style={[styles.product, { color: theme.onPrimary }]} numberOfLines={1}>
           {next.receipt.product}
         </Text>
-        <Text style={[styles.detail, { color: theme.onAccent }]} numberOfLines={1}>
+        <Text style={[styles.detail, { color: theme.onPrimary }]} numberOfLines={1}>
           {next.deadline.label} · {formatFullDate(next.deadline.date)}
         </Text>
       </View>
-      <View style={[styles.countdown, { borderColor: theme.onAccent }]}>
-        <Text style={[styles.count, { color: theme.onAccent }, days === 0 && styles.countToday]}>{count}</Text>
-        <Text style={[styles.unit, { color: theme.onAccent }]}>{unit}</Text>
+      <View style={[styles.countdown, { borderColor: theme.onPrimary }]}>
+        <Text style={[styles.count, { color: theme.onPrimary }, days === 0 && styles.countToday]}>{count}</Text>
+        <Text style={[styles.unit, { color: theme.onPrimary }]}>{unit}</Text>
       </View>
     </PressScale>
   );

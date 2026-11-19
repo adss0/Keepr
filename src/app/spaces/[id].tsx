@@ -89,10 +89,10 @@ export default function SpaceScreen() {
     >
       <Stack.Screen options={{ title: space.name }} />
 
-      <View style={[styles.hero, { backgroundColor: theme.accent }]}>
-        <Text style={[styles.heroKind, { color: theme.onAccent }]}>{KIND_LABELS[space.kind]}</Text>
-        <Text style={[styles.heroName, { color: theme.onAccent }]}>{space.name}</Text>
-        <Text style={[styles.heroMeta, { color: theme.onAccent }]}>
+      <View style={[styles.hero, { backgroundColor: theme.primary }]}>
+        <Text style={[styles.heroKind, { color: theme.onPrimary }]}>{KIND_LABELS[space.kind]}</Text>
+        <Text style={[styles.heroName, { color: theme.onPrimary }]}>{space.name}</Text>
+        <Text style={[styles.heroMeta, { color: theme.onPrimary }]}>
           {space.members.length === 1 ? "Just you so far" : `${space.members.length} people`} · {sharedReceipts}{" "}
           {sharedReceipts === 1 ? "receipt" : "receipts"} · {sharedSubscriptions}{" "}
           {sharedSubscriptions === 1 ? "subscription" : "subscriptions"}
