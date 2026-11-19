@@ -18,8 +18,9 @@ export const remindersSupported = Platform.OS !== "web";
 
 if (remindersSupported) {
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowBanner: true,
+    // Shared-space pushes aren't shown while Keepr is open: the in-app alert (SpaceAlerts) already says it.
+    handleNotification: async (notification) => ({
+      shouldShowBanner: (notification.request.content.data as { type?: unknown } | undefined)?.type !== "space-activity",
       shouldShowList: true,
       shouldPlaySound: false,
       shouldSetBadge: false,
@@ -117,8 +118,12 @@ function useOpenRemindersOnTap() {
     if (!remindersSupported) return;
 
     function open(notification: Notifications.Notification) {
-      const data = notification.request.content.data as { receiptId?: unknown; subscriptionId?: unknown } | undefined;
-      if (typeof data?.receiptId === "string") {
+      const data = notification.request.content.data as
+        | { receiptId?: unknown; subscriptionId?: unknown; spaceId?: unknown }
+        | undefined;
+      if (typeof data?.spaceId === "string") {
+        router.push({ pathname: "/spaces/[id]", params: { id: data.spaceId, tab: "activity" } });
+      } else if (typeof data?.receiptId === "string") {
         router.push({ pathname: "/receipt/[id]", params: { id: data.receiptId } });
       } else if (typeof data?.subscriptionId === "string") {
         router.push({ pathname: "/subscriptions/edit/[id]", params: { id: data.subscriptionId } });

@@ -8,6 +8,7 @@ import { AppState, Platform } from "react-native";
 import { useReceiptsStore } from "@/data/receipts";
 import { useSubscriptions } from "@/data/subscriptions";
 import { recoveryParams, signInRedirectParams } from "@/lib/recovery-link";
+import { forgetPushToken, notifySpaceMembers } from "@/data/push-notifications";
 import { deleteRemotePhotos, uploadNewPhotos } from "@/data/receipt-photos";
 import { supabase } from "@/data/supabase";
 import {
@@ -164,6 +165,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     ]);
     const failed = results.find((result) => result?.error);
     if (failed?.error) throw failed.error;
+    // Tell other members about receipts and subscriptions just added to their spaces.
+    if ([...changedReceipts, ...changedSubscriptions].some((item) => item.spaceId)) notifySpaceMembers();
 
     // Photos follow the rows: back up new ones, and remove those of deleted receipts. Failures don't block the sync.
     // A shared receipt's photo lives in the folder of whoever added it.
@@ -258,6 +261,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    // Stop this phone getting the account's shared-space notifications first, while still signed in.
+    await forgetPushToken().catch(() => undefined);
     await supabase?.auth.signOut();
   }, []);
 

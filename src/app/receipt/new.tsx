@@ -16,7 +16,7 @@ import { emptyReceiptInput } from "@/lib/receipt-input";
 export default function NewReceiptScreen() {
   const { addReceipt, setReceiptPhoto } = useReceiptsStore();
   const { showToast } = useToast();
-  const { scan } = useLocalSearchParams<{ scan?: string }>();
+  const { scan, space } = useLocalSearchParams<{ scan?: string; space?: string }>();
   const { settings } = useSettings();
   const { userId } = useCloud();
   // Taken once, so going back and opening Add receipt again doesn't rescan it.
@@ -44,6 +44,7 @@ export default function NewReceiptScreen() {
       submitLabel="Save receipt"
       allowScan
       autoScan={scan === "camera"}
+      initialSpaceId={space}
       sharedPhoto={sharedPhoto}
       onSubmitMany={(fieldsList, photo) => {
         for (const fields of fieldsList) {
