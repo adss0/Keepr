@@ -69,6 +69,29 @@ Supabase only sends people back to addresses on its allow list. This is needed f
 
 To turn off email confirmation while testing, open **Authentication → Sign In / Providers → Email** in Supabase and switch off **Confirm email**.
 
+### Sign in with Google (optional)
+
+**Continue with Google** lets people sign in without a password, and Keepr never has to send them an email. Google charges nothing for it; each person counts towards Supabase's monthly active users like any other sign-in.
+
+**In Google Cloud** ([console.cloud.google.com](https://console.cloud.google.com)):
+
+1. Create a project (or pick one), then open **APIs & Services → OAuth consent screen** (called **Google Auth Platform** in newer consoles).
+2. Choose **External**. Fill in the app name (Keepr), a support email and your developer email. For scopes, keep only the basic ones: `openid`, `email` and `profile`.
+3. Open **Clients** (or **Credentials → Create credentials → OAuth client ID**), choose **Web application**, and under **Authorised redirect URIs** add your Supabase callback address:
+   `https://<your-project-ref>.supabase.co/auth/v1/callback`
+   (Supabase shows this exact address on its Google provider page.)
+4. Copy the **Client ID** and **Client secret**.
+5. When you're ready for anyone to sign in, open **Audience** (or the consent screen) and click **Publish app** so it's **In production**. In **Testing**, only the test users you list can sign in, and their sign-ins expire after 7 days. With only the basic scopes, Google doesn't need to review the app.
+
+**In Supabase:**
+
+1. Open **Authentication → Sign In / Providers → Google**, turn it on, paste the Client ID and Client secret, and save.
+2. Check that the redirect URLs from step 4 are there (`http://localhost:8081/**`, `exp://**`, `keepr://**`); Google sign-in comes back to Keepr's Account screen through them. Add your website's address too once it's online.
+
+In Keepr, open **Account and sync** and tap **Continue with Google**. On a phone a Google sheet opens and closes again once you've signed in; on the web the page goes to Google and comes back.
+
+If you publish the iPhone app on the App Store, Apple also requires **Sign in with Apple** whenever Google sign-in is offered.
+
 ## 6. Turn on AI receipt scanning
 
 Scanning runs in a Supabase **Edge Function** ([`supabase/functions/extract-receipt`](../supabase/functions/extract-receipt/index.ts)). The app sends the photo to the function, and the function asks **Google Gemini** (`gemini-3.5-flash-lite`, on Gemini's free tier) to read it. Your Gemini API key is stored as a secret on Supabase, so it is never inside the app.

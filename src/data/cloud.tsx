@@ -1,12 +1,13 @@
 import type { Session } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { AppState } from "react-native";
+import { AppState, Platform } from "react-native";
 
 import { useReceiptsStore } from "@/data/receipts";
 import { useSubscriptions } from "@/data/subscriptions";
-import { recoveryParams } from "@/lib/recovery-link";
+import { recoveryParams, signInRedirectParams } from "@/lib/recovery-link";
 import { deleteRemotePhotos, uploadNewPhotos } from "@/data/receipt-photos";
 import { supabase } from "@/data/supabase";
 import {
@@ -38,6 +39,13 @@ type CloudContextValue = {
   /** Creates an account. Resolves with a message to show, such as "check your email". */
   signUp: (email: string, password: string) => Promise<string>;
   signOut: () => Promise<void>;
+  /**
+   * Signs in (or signs up) with Google. On a phone it opens Google in a browser sheet and finishes there;
+   * resolves false if the person closes it. On the web the page goes to Google and comes back to /account.
+   */
+  signInWithGoogle: () => Promise<boolean>;
+  /** Finishes a Google sign-in from the address Supabase sent the browser back to. False if it holds no sign-in. */
+  completeSignInRedirect: (url: string) => Promise<boolean>;
   syncNow: () => Promise<void>;
   /** Emails a link that opens Keepr's Reset password screen on this device. */
   sendPasswordResetEmail: (email: string) => Promise<void>;
@@ -253,6 +261,34 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     await supabase?.auth.signOut();
   }, []);
 
+  const completeSignInRedirect = useCallback(async (url: string) => {
+    if (!supabase) return false;
+    const params = signInRedirectParams(url);
+    if (params.error) throw new Error(params.error);
+    if (!params.accessToken || !params.refreshToken) return false;
+    const { error: sessionError } = await supabase.auth.setSession({
+      access_token: params.accessToken,
+      refresh_token: params.refreshToken,
+    });
+    if (sessionError) throw sessionError;
+    return true;
+  }, []);
+
+  const signInWithGoogle = useCallback(async () => {
+    if (!supabase) return false;
+    // Must be in Supabase's allowed redirect list (Authentication > URL Configuration), see docs/cloud-setup.md.
+    const redirectTo = Platform.OS === "web" ? `${window.location.origin}/account` : Linking.createURL("/account");
+    const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo, skipBrowserRedirect: Platform.OS !== "web" },
+    });
+    if (oauthError) throw oauthError;
+    if (Platform.OS === "web") return false; // The page is on its way to Google.
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    if (result.type !== "success") return false;
+    return completeSignInRedirect(result.url);
+  }, [completeSignInRedirect]);
+
   const sendPasswordResetEmail = useCallback(async (email: string) => {
     if (!supabase) return;
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
@@ -298,6 +334,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       signIn,
       signUp,
       signOut,
+      signInWithGoogle,
+      completeSignInRedirect,
       syncNow,
       sendPasswordResetEmail,
       startPasswordRecovery,
@@ -311,6 +349,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       signIn,
       signUp,
       signOut,
+      signInWithGoogle,
+      completeSignInRedirect,
       syncNow,
       sendPasswordResetEmail,
       startPasswordRecovery,
