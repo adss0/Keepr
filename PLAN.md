@@ -35,6 +35,7 @@
 - ✅ Shared spaces for families and organisations: invites, roles, shared receipts and subscriptions, live sync
 - ✅ Mark receipts as returned, claimed or archived (no more reminders, kept as history; returned ones don't count as spending), and swipe a receipt row to archive or delete it
 - ✅ Usual return windows of common UK shops fill themselves in (Argos, John Lewis, M&S, Next, Amazon, IKEA and more), with a reminder to check the receipt
+- ✅ Continue with Google: sign in without a password or any email, through Supabase (Google turned on in Supabase, see docs/cloud-setup.md). Sign in with Apple is still to do before an App Store release
 - ✅ Share into Keepr: share a photo, screenshot or PDF from any app and it opens in Add receipt and is scanned (needs a development build, not Expo Go)
 - ✅ Search inside receipts: scanning keeps every word printed on the receipt, and search looks through them
 - ✅ Opening animation: a receipt prints out of a till slot and is stamped "Kept", then the home screen rises in. Keepr's own type: Fraunces for titles and big figures, IBM Plex Mono for prices and deadlines
