@@ -5,7 +5,7 @@ import { Platform } from "react-native";
 type FileType = { mimeType: string; uti: string; dialogTitle: string };
 
 /** Saves `content` as a file and opens the share sheet (phone) or downloads it (web). */
-export async function shareFile(content: string | Uint8Array, fileName: string, type: FileType): Promise<void> {
+async function shareFile(content: string | Uint8Array, fileName: string, type: FileType): Promise<void> {
   if (Platform.OS === "web") {
     const url = URL.createObjectURL(new Blob([content as BlobPart], { type: type.mimeType }));
     const link = document.createElement("a");

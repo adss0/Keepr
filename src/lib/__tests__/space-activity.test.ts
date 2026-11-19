@@ -61,5 +61,8 @@ describe("wantsAlert", () => {
     expect(wantsAlert("member_joined", { ...all, notifyMembers: false })).toBe(false);
     expect(wantsAlert("receipt_added", { ...all, notifyReceipts: false })).toBe(false);
     expect(wantsAlert("receipt_closed", all)).toBe(false);
+    // Same rule as the push notifications: a new shared subscription counts as a new receipt.
+    expect(wantsAlert("subscription_added", all)).toBe(true);
+    expect(wantsAlert("subscription_added", { ...all, notifyReceipts: false })).toBe(false);
   });
 });

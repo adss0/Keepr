@@ -20,7 +20,7 @@ export type Settings = {
   receiptsSort: ReceiptsSort;
 };
 
-export const DEFAULT_SETTINGS: Settings = {
+const DEFAULT_SETTINGS: Settings = {
   reminders: DEFAULT_REMINDER_OPTIONS,
   defaultChannel: "in_store",
   defaultPaymentMethod: "debit_card",

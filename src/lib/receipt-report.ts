@@ -4,7 +4,7 @@ import { formatFullDate, formatPrice } from "@/lib/format";
 import { CLOSED_LABELS } from "@/lib/receipt-status";
 import type { Receipt } from "@/types/receipt";
 
-export function escapeHtml(text: string): string {
+function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")

@@ -8,6 +8,7 @@ import { useTheme } from "@/constants/theme";
 import { useCloud } from "@/data/cloud";
 import { isPdf, mediaTypeOf, photosStoredLocally, usePhotoUri } from "@/data/receipt-photos";
 import { useReceipt } from "@/data/receipts";
+import { errorMessage } from "@/lib/format";
 
 /** The receipt's photo, full screen, with a Share button (to print it or send it with a claim). */
 export default function ReceiptPhotoScreen() {
@@ -22,7 +23,7 @@ export default function ReceiptPhotoScreen() {
     try {
       await Sharing.shareAsync(uri, { mimeType: mediaTypeOf(receipt.photo), dialogTitle: "Share receipt" });
     } catch (error) {
-      Alert.alert("Couldn't share the receipt", error instanceof Error ? error.message : String(error));
+      Alert.alert("Couldn't share the receipt", errorMessage(error));
     }
   }
 

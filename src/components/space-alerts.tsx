@@ -16,7 +16,7 @@ import { type ActivityRow, activityText, rowToActivity, wantsAlert } from "@/lib
  */
 export function SpaceAlerts() {
   const { userId } = useCloud();
-  const { spaces } = useSpaces();
+  const { spaces, refresh } = useSpaces();
   const { permission } = useReminders();
   const { showToast } = useToast();
   // The Realtime listener lives as long as the sign-in, so it reads the latest spaces through a ref.
@@ -42,6 +42,10 @@ export function SpaceAlerts() {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "space_activity" }, (payload) => {
         const activity = rowToActivity(payload.new as ActivityRow);
         if (activity.actorId === userId) return;
+        // Someone joined, left or changed role: reload the member list so names and roles are current.
+        if (activity.kind.startsWith("member_") || activity.kind.endsWith("_changed")) {
+          refresh().catch(() => undefined);
+        }
         const space = spacesRef.current.find((item) => item.id === activity.spaceId);
         const me = space?.members.find((member) => member.userId === userId);
         if (!space || !me || !wantsAlert(activity.kind, me)) return;
@@ -58,7 +62,7 @@ export function SpaceAlerts() {
     return () => {
       client.removeChannel(channel);
     };
-  }, [userId, showToast]);
+  }, [userId, showToast, refresh]);
 
   return null;
 }

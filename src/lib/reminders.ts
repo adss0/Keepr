@@ -17,7 +17,7 @@ export type ReminderOptions = {
 export const DEFAULT_REMINDER_OPTIONS: ReminderOptions = { daysBefore: 3, onLastDay: true, hour: 9 };
 
 /** "in 3 days", or "tomorrow" for 1. */
-export function inDays(days: number): string {
+function inDays(days: number): string {
   return days === 1 ? "tomorrow" : `in ${days} days`;
 }
 /** iOS keeps at most 64 scheduled notifications per app; stay under it. */

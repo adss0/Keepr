@@ -4,6 +4,7 @@ import { useCloud } from "@/data/cloud";
 import { notifySpaceMembers } from "@/data/push-notifications";
 import { supabase } from "@/data/supabase";
 import { nameFromEmail } from "@/lib/spaces";
+import { errorMessage } from "@/lib/format";
 
 export type SpaceKind = "family" | "organization";
 export type SpaceRole = "owner" | "admin" | "member";
@@ -79,10 +80,6 @@ function isMissingColumn(error: { code?: string } | null): boolean {
 const MEMBER_COLUMNS = "user_id, role, display_name, notify_receipts, notify_members";
 const OLD_MEMBER_COLUMNS = "user_id, role, display_name";
 
-function messageOf(error: unknown): string {
-  return error instanceof Error ? error.message : typeof error === "object" && error && "message" in error ? String(error.message) : String(error);
-}
-
 const MANAGERS: SpaceRole[] = ["owner", "admin"];
 
 type LoadResult = { status: SpacesStatus; error?: string; spaces?: Space[] };
@@ -139,7 +136,7 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
     if (!userId) return;
     loadSpaces(userId)
       .then(apply)
-      .catch((loadError: unknown) => apply({ status: "error", error: messageOf(loadError) }));
+      .catch((loadError: unknown) => apply({ status: "error", error: errorMessage(loadError) }));
   }, [apply, userId]);
 
   /** Runs a change, then reloads spaces and pulls items (joining or leaving changes what you can see). */

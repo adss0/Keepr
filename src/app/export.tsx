@@ -14,7 +14,7 @@ import { useSubscriptions } from "@/data/subscriptions";
 import { todayIso } from "@/lib/deadlines";
 import { receiptsToCsv } from "@/lib/export";
 import { type ExportPeriod, PERIOD_OPTIONS, periodRange, rangeFileSuffix, receiptsInRange } from "@/lib/export-range";
-import { formatFullDate, formatPrice } from "@/lib/format";
+import { errorMessage, formatFullDate, formatPrice } from "@/lib/format";
 import { spendingWorkbook } from "@/lib/spending-workbook";
 import { buildXlsx } from "@/lib/xlsx";
 
@@ -50,7 +50,7 @@ export default function ExportScreen() {
       await task();
     } catch (error) {
       // A toast rather than an alert, which does nothing in browsers.
-      showToast({ message: `Couldn't export: ${error instanceof Error ? error.message : String(error)}` });
+      showToast({ message: `Couldn't export: ${errorMessage(error)}` });
     } finally {
       setBusy(undefined);
     }

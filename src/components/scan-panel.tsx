@@ -8,6 +8,7 @@ import { useTheme } from "@/constants/theme";
 import { useCloud } from "@/data/cloud";
 import { haptics } from "@/data/haptics";
 import { extractReceipt, pickReceiptDocument, pickReceiptPhoto, type ReceiptPhoto } from "@/data/scan-receipt";
+import { errorMessage } from "@/lib/format";
 
 type Props = {
   /** Called with the raw scan result and the photo, to fill in the form. Returns how many details it filled in. */
@@ -62,7 +63,7 @@ export function ScanPanel({ onScanned, autoStart = false, sharedPhoto }: Props) 
       if (photo) await read(photo);
     } catch (error) {
       haptics.error();
-      setMessage(error instanceof Error ? error.message : String(error));
+      setMessage(errorMessage(error));
     }
   }
 
@@ -84,7 +85,7 @@ export function ScanPanel({ onScanned, autoStart = false, sharedPhoto }: Props) 
       );
     } catch (error) {
       haptics.error();
-      setMessage(error instanceof Error ? error.message : String(error));
+      setMessage(errorMessage(error));
     } finally {
       setBusy(false);
     }

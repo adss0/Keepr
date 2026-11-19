@@ -104,9 +104,12 @@ export function timeAgo(iso: string, now: Date = new Date()): string {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
-/** Whether a member who chose these settings should be told about an activity by someone else. */
+/**
+ * Whether a member who chose these settings should be told about an activity by someone else.
+ * Keep in step with `wants` in supabase/functions/notify-space, which decides the push notifications.
+ */
 export function wantsAlert(kind: ActivityKind, settings: { notifyReceipts: boolean; notifyMembers: boolean }): boolean {
-  if (kind === "receipt_added") return settings.notifyReceipts;
+  if (kind === "receipt_added" || kind === "subscription_added") return settings.notifyReceipts;
   if (kind === "member_joined" || kind === "member_left") return settings.notifyMembers;
   return false;
 }
