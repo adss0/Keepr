@@ -442,6 +442,28 @@ function SettingsTab({ space, onError }: { space: Space; onError: (message: stri
       </View>
 
       <View style={card}>
+        <Text style={[styles.title, { color: theme.text }]}>Who can change shared items</Text>
+        {manager ? (
+          <Segmented
+            label=""
+            value={space.membersCanEdit ? "everyone" : "adder"}
+            options={[
+              { value: "adder", label: "Whoever added it" },
+              { value: "everyone", label: "Everyone" },
+            ]}
+            onChange={(choice) =>
+              act("edit-rights", () => spaces.setMembersCanEdit(space.id, choice === "everyone"))
+            }
+          />
+        ) : null}
+        <Text style={[styles.hint, { color: theme.textMuted }]}>
+          {space.membersCanEdit
+            ? "Everyone in the space can edit, finish with or delete any shared receipt or subscription."
+            : "Only whoever added a receipt or subscription, and the owner and admins, can edit, finish with or delete it. Everyone can still see and export it."}
+        </Text>
+      </View>
+
+      <View style={card}>
         <Text style={[styles.title, { color: theme.text }]}>Names</Text>
         <Field
           label="Your name in this space"

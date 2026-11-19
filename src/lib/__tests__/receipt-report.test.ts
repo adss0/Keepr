@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 
-import { receiptReportHtml, receiptsReportHtml } from "@/lib/receipt-report";
+import { receiptPhotosHtml, receiptReportHtml, receiptsReportHtml } from "@/lib/receipt-report";
 import type { Receipt } from "@/types/receipt";
 
 const receipt: Receipt = {
@@ -42,5 +42,20 @@ describe("receiptsReportHtml", () => {
     expect(html.match(/class="receipt"/g)).toHaveLength(2);
     expect(html.match(/<img/g)).toHaveLength(1);
     expect(html).not.toContain("<script>");
+  });
+});
+
+describe("receiptPhotosHtml", () => {
+  it("puts each photo on its own page, captioned only when there are several", () => {
+    const other = { ...receipt, id: "r2", product: "Toaster" };
+    const one = receiptPhotosHtml([receipt], "2026-11-17", { [receipt.id]: "data:image/jpeg;base64,AAAA" });
+    expect(one).toContain('src="data:image/jpeg;base64,AAAA"');
+    expect(one).not.toContain('class="caption"');
+    const two = receiptPhotosHtml([receipt, other], "2026-11-17", { [receipt.id]: "data:image/jpeg;base64,AAAA" });
+    expect(two).toContain('class="caption"');
+    expect(two).toContain('class="page next"');
+    // No photo: the receipt's details instead.
+    expect(two).toContain("Toaster");
+    expect(two.match(/<img/g)).toHaveLength(1);
   });
 });

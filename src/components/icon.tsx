@@ -15,6 +15,7 @@ export const ICONS = {
   chevronLeft: { ios: "chevron.left", android: "chevron_left", web: "chevron_left" },
   chevronDown: { ios: "chevron.down", android: "expand_more", web: "expand_more" },
   chevronUp: { ios: "chevron.up", android: "expand_less", web: "expand_less" },
+  check: { ios: "checkmark", android: "check", web: "check" },
   share: { ios: "square.and.arrow.up", android: "ios_share", web: "ios_share" },
   account: { ios: "person.crop.circle", android: "account_circle", web: "account_circle" },
   bell: { ios: "bell", android: "notifications", web: "notifications" },

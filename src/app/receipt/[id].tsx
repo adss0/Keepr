@@ -54,12 +54,13 @@ export default function ReceiptDetailScreen() {
     ["Paid by", PAYMENT_LABELS[receipt.paymentMethod]],
   ];
   const sharedIn = spaces.spaceName(receipt.spaceId);
+  // No owner yet means it was added on this phone and hasn't synced.
+  const addedBy = sharedIn ? spaces.memberName(receipt.spaceId, receipt.ownerId ?? userId) : undefined;
   if (sharedIn) {
     details.push(["Shared in", sharedIn]);
-    // No owner yet means it was added on this phone and hasn't synced.
-    const addedBy = spaces.memberName(receipt.spaceId, receipt.ownerId ?? userId);
     if (addedBy) details.push(["Added by", addedBy]);
   }
+  const editable = spaces.canChange(receipt);
   if (receipt.returnWindowDays !== undefined) {
     details.push(["Shop return window", `${receipt.returnWindowDays} days`]);
   }
@@ -86,21 +87,32 @@ export default function ReceiptDetailScreen() {
 
       <ReceiptPhotoCard receipt={receipt} />
 
+      {!editable && (
+        <View style={[styles.card, { backgroundColor: theme.calmBg, borderColor: theme.border }]}>
+          <Text style={[styles.explanation, { color: theme.text }]}>
+            Only {addedBy && addedBy !== "Someone" ? addedBy : "whoever added it"} or {sharedIn}&apos;s owner and admins can
+            change or delete this receipt. You can still check your rights and save it as a PDF.
+          </Text>
+        </View>
+      )}
+
       {receipt.closed ? (
         <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <DeadlinePill deadline={undefined} today={today} closed={receipt.closed} />
           <Text style={[styles.explanation, { color: theme.textMuted }]}>
             Finished with, so Keepr won&apos;t remind you about it. It stays here as a record.
           </Text>
-          <Button
-            title="Make active again"
-            onPress={() => {
-              closeReceipt(receipt.id, undefined);
-              haptics.success();
-            }}
-          />
+          {editable && (
+            <Button
+              title="Make active again"
+              onPress={() => {
+                closeReceipt(receipt.id, undefined);
+                haptics.success();
+              }}
+            />
+          )}
         </View>
-      ) : (
+      ) : !editable ? null : (
         <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <Text style={[styles.cardTitle, { color: theme.text }]}>Finished with it?</Text>
           <Text style={[styles.explanation, { color: theme.textMuted }]}>
@@ -159,24 +171,28 @@ export default function ReceiptDetailScreen() {
             }
           }}
         />
-        <Button
-          title="Edit"
-          onPress={() => router.push({ pathname: "/receipt/edit/[id]", params: { id: receipt.id } })}
-        />
-        <Button
-          title="Delete receipt"
-          variant="danger"
-          onPress={() => {
-            const deleted = receipt;
-            deleteReceipt(deleted.id);
-            haptics.warning();
-            showToast({
-              message: `Deleted ${deleted.product}`,
-              action: { label: "Undo", onPress: () => restoreReceipt(deleted) },
-            });
-            goBack();
-          }}
-        />
+        {editable && (
+          <Button
+            title="Edit"
+            onPress={() => router.push({ pathname: "/receipt/edit/[id]", params: { id: receipt.id } })}
+          />
+        )}
+        {editable && (
+          <Button
+            title="Delete receipt"
+            variant="danger"
+            onPress={() => {
+              const deleted = receipt;
+              deleteReceipt(deleted.id);
+              haptics.warning();
+              showToast({
+                message: `Deleted ${deleted.product}`,
+                action: { label: "Undo", onPress: () => restoreReceipt(deleted) },
+              });
+              goBack();
+            }}
+          />
+        )}
       </View>
     </ScrollView>
   );

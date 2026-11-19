@@ -2,6 +2,7 @@ import { Link } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
 import { DeadlinePill, toneFor } from "@/components/deadline-pill";
+import { Icon } from "@/components/icon";
 import { PressScale } from "@/components/press-scale";
 import { Fonts, useTheme } from "@/constants/theme";
 import { useReceiptActions } from "@/components/swipeable-receipt";
@@ -55,10 +56,14 @@ export function ReceiptCard({ receipt, today }: Props) {
           {receipt.retailer} · {channel} · {formatDate(receipt.purchaseDate, currentYear)}
         </Text>
         {space && (
-          <Text style={[styles.space, { color: theme.accent }]} numberOfLines={1}>
-            Shared · {space}
-            {addedBy ? ` · added by ${addedBy}` : ""}
-          </Text>
+          // Grey, not the accent colour: on a finished receipt the accent read like a warning.
+          <View style={styles.spaceRow}>
+            <Icon name="people" size={14} color={theme.textMuted} />
+            <Text style={[styles.space, { color: theme.textMuted }]} numberOfLines={1}>
+              {space}
+              {addedBy ? ` · added by ${addedBy}` : ""}
+            </Text>
+          </View>
         )}
         <View style={[styles.tear, { borderColor: theme.border }]} />
         <View style={styles.pill}>
@@ -101,7 +106,13 @@ const styles = StyleSheet.create({
   meta: {
     fontSize: 13,
   },
+  spaceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
   space: {
+    flexShrink: 1,
     fontSize: 12,
     fontWeight: "600",
   },

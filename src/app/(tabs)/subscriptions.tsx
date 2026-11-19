@@ -43,7 +43,7 @@ function SubscriptionRow({ subscription, today }: { subscription: Subscription; 
         </View>
         <Text style={{ color: soon ? theme.urgentText : theme.textMuted, fontSize: 13 }}>
           {onTrial ? "Free trial ends" : "Renews"} {daysLeft === 0 ? "today" : formatDate(nextDate, currentYear)}
-          {space ? <Text style={{ color: theme.accent, fontWeight: "600" }}> · {space}</Text> : null}
+          {space ? <Text style={{ fontWeight: "600" }}> · Shared in {space}</Text> : null}
         </Text>
       </PressScale>
     </Link>

@@ -5,7 +5,7 @@ import { Platform } from "react-native";
 
 import { isPdf, localPhotoUri, mediaTypeOf, PHOTO_BUCKET } from "@/data/receipt-photos";
 import { supabase } from "@/data/supabase";
-import { receiptReportHtml, receiptsReportHtml } from "@/lib/receipt-report";
+import { receiptPhotosHtml, receiptReportHtml, receiptsReportHtml } from "@/lib/receipt-report";
 import type { Receipt } from "@/types/receipt";
 
 /** The photo as something an HTML page can show: inlined from the phone, or the web link as it is. */
@@ -17,16 +17,75 @@ async function photoSource(receipt: Receipt, photoUri: string | undefined): Prom
 }
 
 /**
- * Makes a PDF of the receipt (details, deadlines and photo) and opens the share sheet, to email it or
- * attach it to a claim. Browsers open their print dialog instead, where "Save as PDF" is one of the options.
+ * Saves the receipt as a PDF and opens the share sheet, to email it or attach it to a claim: the photo of the
+ * receipt filling the page, the file itself if it was a PDF already, or its details if there's no photo.
+ * Browsers open their print dialog instead, where "Save as PDF" is one of the options.
  */
 export async function shareReceiptPdf(receipt: Receipt, today: string, photoUri?: string): Promise<void> {
-  const html = receiptReportHtml(receipt, today, await photoSource(receipt, photoUri));
+  if (isPdf(receipt.photo) && photoUri) {
+    if (Platform.OS === "web") {
+      window.open(photoUri, "_blank", "noopener");
+      return;
+    }
+    await Sharing.shareAsync(photoUri, { mimeType: "application/pdf", UTI: "com.adobe.pdf", dialogTitle: "Share receipt PDF" });
+    return;
+  }
+  const photo = await photoSource(receipt, photoUri);
+  const html = photo ? receiptPhotosHtml([receipt], today, { [receipt.id]: photo }) : receiptReportHtml(receipt, today);
   if (Platform.OS === "web") {
-    await Print.printAsync({ html });
+    await printOnWeb(html);
     return;
   }
   await sharePdf(html, "Share receipt PDF");
+}
+
+/**
+ * One PDF of the chosen receipts' photos, a page each, shared like a single receipt's PDF. Receipts without a
+ * photo (or kept as a PDF) get a page of their details. `folderFor` gives the cloud folder of each one's owner.
+ */
+export async function shareReceiptPhotosPdf(
+  receipts: Receipt[],
+  today: string,
+  folderFor: (receipt: Receipt) => string | undefined,
+): Promise<void> {
+  const photos: Record<string, string> = {};
+  for (const receipt of receipts) {
+    const source = await reportPhoto(receipt, folderFor(receipt)).catch(() => undefined);
+    if (source) photos[receipt.id] = source;
+  }
+  const html = receiptPhotosHtml(receipts, today, photos);
+  if (Platform.OS === "web") {
+    await printOnWeb(html);
+    return;
+  }
+  await sharePdf(html, "Share receipts PDF");
+}
+
+/**
+ * Prints `html` from the browser, whose print dialog has "Save as PDF". expo-print's web version ignores the HTML
+ * and prints the app's screen, so the page goes into a hidden frame (photos loaded) and that frame is printed.
+ */
+function printOnWeb(html: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const frame = document.createElement("iframe");
+    frame.setAttribute("aria-hidden", "true");
+    frame.style.cssText = "position:fixed;width:0;height:0;border:0;right:0;bottom:0;";
+    frame.onload = () => {
+      const view = frame.contentWindow;
+      if (!view) {
+        frame.remove();
+        reject(new Error("The browser blocked printing."));
+        return;
+      }
+      // Leave the frame until printing is over; some browsers return from print() before the dialog closes.
+      view.addEventListener("afterprint", () => setTimeout(() => frame.remove(), 1000));
+      view.focus();
+      view.print();
+      resolve();
+    };
+    frame.srcdoc = html;
+    document.body.appendChild(frame);
+  });
 }
 
 async function sharePdf(html: string, dialogTitle: string): Promise<void> {
@@ -65,7 +124,7 @@ export async function shareReceiptsPdf(
   }
   const html = receiptsReportHtml(receipts, today, period, photos);
   if (Platform.OS === "web") {
-    await Print.printAsync({ html });
+    await printOnWeb(html);
     return;
   }
   await sharePdf(html, "Share receipts PDF");

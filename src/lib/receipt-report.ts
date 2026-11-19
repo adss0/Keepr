@@ -146,3 +146,42 @@ export function receiptsReportHtml(
     .join("");
   return documentHtml(`Keepr receipts, ${period}`, summary + pages);
 }
+
+/**
+ * Receipt photos as a PDF, one to a page and as large as the page allows. `photos` maps receipt ids to image
+ * sources. With several receipts each page has a one-line caption; a receipt with no photo gets its details instead.
+ */
+export function receiptPhotosHtml(receipts: Receipt[], today: string, photos: Record<string, string>): string {
+  const e = escapeHtml;
+  const captioned = receipts.length > 1;
+  const pages = receipts
+    .map((r, index) => {
+      const photo = photos[r.id];
+      const caption = captioned
+        ? `<div class="caption">${e(r.product)} · ${e(r.retailer)} · ${e(formatFullDate(r.purchaseDate))} · ${e(formatPrice(r.pricePence))}</div>`
+        : "";
+      const content = photo
+        ? `${caption}<img src="${e(photo)}" alt="Receipt for ${e(r.product)}" />`
+        : `<div class="brand">KEEPR</div>${receiptBody(r, today)}`;
+      return `<section class="${index > 0 ? "page next" : "page"}">${content}</section>`;
+    })
+    .join("\n");
+  return `<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8" />
+<title>${e(receipts.length === 1 ? `${receipts[0].product} receipt` : "Keepr receipts")}</title>
+<style>${STYLES}
+  @page { margin: 10mm; }
+  .page { text-align: center; }
+  .page.next { page-break-before: always; }
+  .page img { max-width: 100%; max-height: 270mm; object-fit: contain; }
+  .page .caption { text-align: left; color: #63635e; font-size: 10pt; margin-bottom: 6px; }
+  .page .details, .page h1, .page h2, .page table { text-align: left; }
+</style>
+</head>
+<body>
+${pages}
+</body>
+</html>`;
+}

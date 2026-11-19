@@ -1,11 +1,10 @@
 import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
   RefreshControl,
-  ScrollView,
   SectionList,
   StyleSheet,
   Text,
@@ -25,13 +24,15 @@ import { ScreenHeader } from "@/components/screen-header";
 import { allDates, ReceiptFilters } from "@/components/receipt-filters";
 import { SwipeableReceipt } from "@/components/swipeable-receipt";
 import { Fonts, useTheme } from "@/constants/theme";
-import { usePullToSync } from "@/data/cloud";
+import { useToast } from "@/components/toast";
+import { useCloud, usePullToSync } from "@/data/cloud";
+import { shareReceiptPhotosPdf } from "@/data/receipt-pdf";
 import { useReceiptsStore } from "@/data/receipts";
 import { useReminders } from "@/data/reminders";
 import { useSettings } from "@/data/settings";
 import { useSpaces } from "@/data/spaces";
 import { daysBetween, getNextDeadline, todayIso } from "@/lib/deadlines";
-import { formatPrice } from "@/lib/format";
+import { errorMessage, formatPrice } from "@/lib/format";
 import { boughtIn, periodRange } from "@/lib/export-range";
 import { groupByMonth, type ReceiptsView, sortReceipts } from "@/lib/receipt-views";
 import { searchReceipts } from "@/lib/search";
@@ -57,6 +58,11 @@ export default function ReceiptsScreen() {
   const view = settings.receiptsView;
   const sort = settings.receiptsSort;
   const pull = usePullToSync();
+  const { userId } = useCloud();
+  const { showToast } = useToast();
+  /** Ticked receipts while choosing several to export; undefined when not choosing. */
+  const [selected, setSelected] = useState<Set<string>>();
+  const [exporting, setExporting] = useState(false);
   const { spaces } = useSpaces();
   /** "all", "mine" (personal only) or a space id. */
   const [filter, setFilter] = useState("all");
@@ -83,10 +89,10 @@ export default function ReceiptsScreen() {
     [filteredReceipts, showDone, query],
   );
   const visibleReceipts = useMemo(() => searchReceipts(listedReceipts, query), [listedReceipts, query]);
-  const filters = [
-    { id: "all", label: "All" },
-    { id: "mine", label: "Just mine" },
-    ...spaces.map((space) => ({ id: space.id, label: space.name })),
+  const whoOptions = [
+    { value: "all", label: "All receipts" },
+    { value: "mine", label: "Just mine" },
+    ...spaces.map((space) => ({ value: space.id, label: space.name })),
   ];
 
   const dueThisWeek = receipts.filter((receipt) => {
@@ -144,7 +150,41 @@ export default function ReceiptsScreen() {
   }
 
   const sections = view === "timeline" ? groupByMonth(visibleReceipts) : [];
+  const selecting = selected !== undefined;
+  const toggleSelected = (id: string) =>
+    setSelected((current) => {
+      const next = new Set(current);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  async function exportSelected() {
+    const chosen = visibleReceipts.filter((receipt) => selected?.has(receipt.id));
+    if (chosen.length === 0) return;
+    setExporting(true);
+    try {
+      await shareReceiptPhotosPdf(chosen, today, (receipt) => receipt.ownerId ?? userId);
+      setSelected(undefined);
+    } catch (error) {
+      showToast({ message: `Couldn't make the PDF: ${errorMessage(error)}` });
+    } finally {
+      setExporting(false);
+    }
+  }
+  /** A receipt in the list: swipeable normally, a tick box while choosing several. */
+  const row = (item: (typeof visibleReceipts)[number], tile: boolean) => {
+    const content = tile ? <ReceiptTile receipt={item} today={today} fill={selecting} /> : <ReceiptCard receipt={item} today={today} />;
+    if (selecting) {
+      return (
+        <SelectableRow selected={selected.has(item.id)} onToggle={() => toggleSelected(item.id)} tile={tile} label={item.product}>
+          {content}
+        </SelectableRow>
+      );
+    }
+    return tile ? content : <SwipeableReceipt receipt={item}>{content}</SwipeableReceipt>;
+  };
+
   const listProps = {
+    extraData: selected,
     style: { backgroundColor: theme.background },
     contentContainerStyle: styles.list,
     keyboardShouldPersistTaps: "handled" as const,
@@ -155,50 +195,6 @@ export default function ReceiptsScreen() {
     ListHeaderComponent: (
           <View style={styles.listHeader}>
             {query.length === 0 && <NextDeadlineCard receipts={filteredReceipts} today={today} />}
-            {spaces.length > 0 && (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.chips}
-                accessibilityRole="tablist"
-              >
-                {filters.map((item) => {
-                  const selected = item.id === activeFilter;
-                  return (
-                    <Pressable
-                      key={item.id}
-                      accessibilityRole="tab"
-                      accessibilityState={{ selected }}
-                      onPress={() => setFilter(item.id)}
-                      style={[
-                        styles.chip,
-                        {
-                          backgroundColor: selected ? theme.text : theme.card,
-                          borderColor: selected ? theme.text : theme.border,
-                        },
-                      ]}
-                    >
-                      <Text style={[styles.chipText, { color: selected ? theme.background : theme.text }]} numberOfLines={1}>
-                        {item.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-            )}
-            {spaces.some((space) => space.id === activeFilter) && (
-              <Pressable
-                accessibilityRole="link"
-                onPress={() => router.push({ pathname: "/spaces/[id]", params: { id: activeFilter } })}
-                style={[styles.spaceLink, { backgroundColor: theme.card, borderColor: theme.border }]}
-              >
-                <Icon name="people" size={18} color={theme.accent} />
-                <Text style={[styles.spaceLinkText, { color: theme.text }]} numberOfLines={1}>
-                  Open {spaces.find((space) => space.id === activeFilter)?.name}: activity, people and settings
-                </Text>
-                <Icon name="chevronRight" size={18} color={theme.textMuted} />
-              </Pressable>
-            )}
             <RemindersBanner
               permission={reminders.permission}
               onEnable={reminders.request}
@@ -228,27 +224,51 @@ export default function ReceiptsScreen() {
               dates={dates}
               onDatesChange={setDates}
               today={today}
-              leading={
-                <View style={[styles.viewSwitch, { backgroundColor: theme.card, borderColor: theme.border }]} accessibilityRole="tablist">
-                  {VIEWS.map((item) => {
-                    const selected = item.view === view;
-                    return (
-                      <Pressable
-                        key={item.view}
-                        accessibilityRole="tab"
-                        accessibilityLabel={`${item.label} view`}
-                        accessibilityState={{ selected }}
-                        hitSlop={4}
-                        onPress={() => update({ receiptsView: item.view })}
-                        style={[styles.viewButton, selected && { backgroundColor: theme.accentSoft }]}
-                      >
-                        <Icon name={item.icon} size={18} color={selected ? theme.accent : theme.textMuted} />
-                      </Pressable>
-                    );
-                  })}
+              who={spaces.length > 0 ? { value: activeFilter, options: whoOptions, onChange: setFilter } : undefined}
+              trailing={
+                <View style={styles.trailing}>
+                  <Pressable
+                    accessibilityRole="button"
+                    hitSlop={6}
+                    onPress={() => setSelected(selecting ? undefined : new Set())}
+                    style={styles.selectToggle}
+                  >
+                    <Text style={[styles.selectAction, { color: theme.text }]}>{selecting ? "Cancel" : "Select"}</Text>
+                  </Pressable>
+                  <View style={[styles.viewSwitch, { backgroundColor: theme.card, borderColor: theme.border }]} accessibilityRole="tablist">
+                    {VIEWS.map((item) => {
+                      const current = item.view === view;
+                      return (
+                        <Pressable
+                          key={item.view}
+                          accessibilityRole="tab"
+                          accessibilityLabel={`${item.label} view`}
+                          accessibilityState={{ selected: current }}
+                          hitSlop={4}
+                          onPress={() => update({ receiptsView: item.view })}
+                          style={[styles.viewButton, current && { backgroundColor: theme.accentSoft }]}
+                        >
+                          <Icon name={item.icon} size={18} color={current ? theme.accent : theme.textMuted} />
+                        </Pressable>
+                      );
+                    })}
+                  </View>
                 </View>
               }
             />
+            {spaces.some((space) => space.id === activeFilter) && (
+              <Pressable
+                accessibilityRole="link"
+                onPress={() => router.push({ pathname: "/spaces/[id]", params: { id: activeFilter } })}
+                style={[styles.spaceLink, { backgroundColor: theme.card, borderColor: theme.border }]}
+              >
+                <Icon name="people" size={18} color={theme.accent} />
+                <Text style={[styles.spaceLinkText, { color: theme.text }]} numberOfLines={1}>
+                  Open {spaces.find((space) => space.id === activeFilter)?.name}: activity, people and settings
+                </Text>
+                <Icon name="chevronRight" size={18} color={theme.textMuted} />
+              </Pressable>
+            )}
           </View>
     ),
     ListEmptyComponent: (
@@ -286,11 +306,7 @@ export default function ReceiptsScreen() {
             {...listProps}
             sections={sections}
             stickySectionHeadersEnabled={false}
-            renderItem={({ item }) => (
-              <SwipeableReceipt receipt={item}>
-                <ReceiptCard receipt={item} today={today} />
-              </SwipeableReceipt>
-            )}
+            renderItem={({ item }) => row(item, false)}
             renderSectionHeader={({ section }) => (
               <View style={styles.sectionHeader}>
                 <Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.text }]}>
@@ -310,19 +326,73 @@ export default function ReceiptsScreen() {
             data={visibleReceipts}
             numColumns={view === "grid" ? 2 : 1}
             columnWrapperStyle={view === "grid" ? styles.gridRow : undefined}
-            renderItem={({ item }) =>
-              view === "grid" ? (
-                <ReceiptTile receipt={item} today={today} />
-              ) : (
-                <SwipeableReceipt receipt={item}>
-                  <ReceiptCard receipt={item} today={today} />
-                </SwipeableReceipt>
-              )
-            }
+            renderItem={({ item }) => row(item, view === "grid")}
           />
         )}
       </Intro>
+      {selecting && (
+        <View style={[styles.selectBar, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Text style={[styles.selectCount, { color: theme.text }]}>
+            {selected.size === 0 ? "Tap receipts to choose" : `${selected.size} chosen`}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() =>
+              setSelected(
+                selected.size === visibleReceipts.length ? new Set() : new Set(visibleReceipts.map((receipt) => receipt.id)),
+              )
+            }
+          >
+            <Text style={[styles.selectAction, { color: theme.text }]}>
+              {selected.size === visibleReceipts.length && selected.size > 0 ? "Select none" : "Select all"}
+            </Text>
+          </Pressable>
+          <Button title="Export PDF" variant="primary" busy={exporting} onPress={exportSelected} />
+        </View>
+      )}
     </View>
+  );
+}
+
+/** Wraps a receipt while choosing several: tapping ticks it rather than opening it. */
+function SelectableRow({
+  selected,
+  onToggle,
+  tile,
+  label,
+  children,
+}: {
+  selected: boolean;
+  onToggle: () => void;
+  tile: boolean;
+  label: string;
+  children: ReactNode;
+}) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="checkbox"
+      accessibilityLabel={label}
+      accessibilityState={{ checked: selected }}
+      onPress={onToggle}
+      style={tile ? styles.selectTile : styles.selectRow}
+    >
+      {/* The card inside opens the receipt when tapped; while choosing, taps go to the tick box instead. */}
+      <View pointerEvents="none" style={[!tile && styles.selectCard, !selected && styles.unselected]}>
+        {children}
+      </View>
+      <View
+        style={[
+          styles.tick,
+          // On a tile it sits in the photo's corner; in the list, beside the card so it covers nothing.
+          tile && styles.tileTick,
+          { borderColor: selected ? theme.text : theme.border, backgroundColor: selected ? theme.text : theme.card },
+        ]}
+      >
+        {selected && <Icon name="check" size={14} color={theme.background} />}
+      </View>
+    </Pressable>
   );
 }
 
@@ -373,8 +443,63 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 16,
   },
-  chips: {
-    gap: 8,
+  trailing: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  selectToggle: {
+    height: 36,
+    justifyContent: "center",
+  },
+  selectAction: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  selectBar: {
+    position: "absolute",
+    left: 12,
+    right: 12,
+    bottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    padding: 10,
+    paddingLeft: 16,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  selectCount: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  selectTile: {
+    width: "48.5%",
+  },
+  unselected: {
+    opacity: 0.6,
+  },
+  selectRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  selectCard: {
+    flex: 1,
+  },
+  tileTick: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+  },
+  tick: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
   },
   viewSwitch: {
     flexDirection: "row",
@@ -407,17 +532,6 @@ const styles = StyleSheet.create({
   sectionTotal: {
     fontSize: 13,
     fontVariant: ["tabular-nums"],
-  },
-  chip: {
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    maxWidth: 200,
-  },
-  chipText: {
-    fontSize: 14,
-    fontWeight: "600",
   },
   search: {
     flexDirection: "row",

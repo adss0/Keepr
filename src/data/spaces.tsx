@@ -3,7 +3,7 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useM
 import { useCloud } from "@/data/cloud";
 import { notifySpaceMembers } from "@/data/push-notifications";
 import { supabase } from "@/data/supabase";
-import { nameFromEmail } from "@/lib/spaces";
+import { canChangeItem, nameFromEmail } from "@/lib/spaces";
 import { errorMessage } from "@/lib/format";
 
 export type SpaceKind = "family" | "organization";
@@ -17,7 +17,15 @@ export type SpaceMember = {
   notifyMembers: boolean;
 };
 export type SpaceNotifications = { notifyReceipts: boolean; notifyMembers: boolean };
-export type Space = { id: string; name: string; kind: SpaceKind; myRole: SpaceRole; members: SpaceMember[] };
+export type Space = {
+  id: string;
+  name: string;
+  kind: SpaceKind;
+  myRole: SpaceRole;
+  members: SpaceMember[];
+  /** Whether every member can change shared items, not just whoever added each one and the owner and admins. */
+  membersCanEdit: boolean;
+};
 
 /**
  * - signed_out: sharing needs an account;
@@ -49,6 +57,10 @@ type SpacesContextValue = {
   setNotifications: (spaceId: string, choices: SpaceNotifications) => Promise<void>;
   leaveSpace: (spaceId: string) => Promise<void>;
   deleteSpace: (spaceId: string) => Promise<void>;
+  /** Owner and admins: let every member change shared items, or only whoever added each one. */
+  setMembersCanEdit: (spaceId: string, value: boolean) => Promise<void>;
+  /** Whether you can edit, finish with or delete an item: yours, or shared in a space that lets you. */
+  canChange: (item: { spaceId?: string; ownerId?: string }) => boolean;
   spaceName: (spaceId: string | undefined) => string | undefined;
   /** "You", or a member's name in that space. */
   memberName: (spaceId: string | undefined, userId: string | undefined) => string | undefined;
@@ -60,6 +72,7 @@ type SpaceRow = {
   id: string;
   name: string;
   kind: SpaceKind;
+  members_can_edit?: boolean;
   space_members: {
     user_id: string;
     role: SpaceRole;
@@ -89,10 +102,12 @@ type LoadResult = { status: SpacesStatus; error?: string; spaces?: Space[] };
 /** Fetches the user's spaces with their members. */
 async function loadSpaces(userId: string): Promise<LoadResult> {
   if (!supabase) return { status: "signed_out" };
-  const query = (columns: string) =>
-    supabase!.from("spaces").select(`id, name, kind, space_members(${columns})`).order("created_at");
-  let { data, error } = await query(MEMBER_COLUMNS);
-  if (isMissingColumn(error)) ({ data, error } = await query(OLD_MEMBER_COLUMNS));
+  const query = (spaceColumns: string, memberColumns: string) =>
+    supabase!.from("spaces").select(`${spaceColumns}, space_members(${memberColumns})`).order("created_at");
+  // Newest columns first, falling back while the database is a migration or two behind.
+  let { data, error } = await query("id, name, kind, members_can_edit", MEMBER_COLUMNS);
+  if (isMissingColumn(error)) ({ data, error } = await query("id, name, kind", MEMBER_COLUMNS));
+  if (isMissingColumn(error)) ({ data, error } = await query("id, name, kind", OLD_MEMBER_COLUMNS));
   if (error) return { status: isMissing(error) ? "unavailable" : "error", error: error.message };
   return {
     status: "ready",
@@ -100,6 +115,8 @@ async function loadSpaces(userId: string): Promise<LoadResult> {
       id: row.id,
       name: row.name,
       kind: row.kind,
+      // Before the edit-rights migration, the database still lets every member edit.
+      membersCanEdit: row.members_can_edit ?? true,
       myRole: row.space_members.find((member) => member.user_id === userId)?.role ?? "member",
       members: row.space_members
         .map((member) => ({
@@ -208,6 +225,9 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
       leaveSpace: (spaceId) =>
         run(() => client.from("space_members").delete().eq("space_id", spaceId).eq("user_id", userId!)).then(() => undefined),
       deleteSpace: (spaceId) => run(() => client.from("spaces").delete().eq("id", spaceId)).then(() => undefined),
+      setMembersCanEdit: (spaceId, value) =>
+        run(() => client.from("spaces").update({ members_can_edit: value }).eq("id", spaceId)).then(() => undefined),
+      canChange: (item) => canChangeItem(item, userId, byId.get(item.spaceId ?? "")),
       spaceName: (spaceId) => (spaceId ? byId.get(spaceId)?.name : undefined),
       memberName: (spaceId, memberId) => {
         if (!memberId) return undefined;
