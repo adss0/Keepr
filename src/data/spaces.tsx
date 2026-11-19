@@ -1,12 +1,21 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { useCloud } from "@/data/cloud";
+import { notifySpaceMembers } from "@/data/push-notifications";
 import { supabase } from "@/data/supabase";
 import { nameFromEmail } from "@/lib/spaces";
 
 export type SpaceKind = "family" | "organization";
 export type SpaceRole = "owner" | "admin" | "member";
-export type SpaceMember = { userId: string; role: SpaceRole; displayName: string };
+export type SpaceMember = {
+  userId: string;
+  role: SpaceRole;
+  displayName: string;
+  /** Their own choices for this space's notifications (both on until the database has them). */
+  notifyReceipts: boolean;
+  notifyMembers: boolean;
+};
+export type SpaceNotifications = { notifyReceipts: boolean; notifyMembers: boolean };
 export type Space = { id: string; name: string; kind: SpaceKind; myRole: SpaceRole; members: SpaceMember[] };
 
 /**
@@ -29,6 +38,12 @@ type SpacesContextValue = {
   renameSpace: (spaceId: string, name: string) => Promise<void>;
   setMyName: (spaceId: string, name: string) => Promise<void>;
   removeMember: (spaceId: string, userId: string) => Promise<void>;
+  /** Owner only: make another member an admin or a member. */
+  setRole: (spaceId: string, userId: string, role: "admin" | "member") => Promise<void>;
+  /** Owner only: hand the space to another member; you become an admin. */
+  transferOwnership: (spaceId: string, userId: string) => Promise<void>;
+  /** Your own notification choices for a space. */
+  setNotifications: (spaceId: string, choices: SpaceNotifications) => Promise<void>;
   leaveSpace: (spaceId: string) => Promise<void>;
   deleteSpace: (spaceId: string) => Promise<void>;
   spaceName: (spaceId: string | undefined) => string | undefined;
@@ -42,13 +57,27 @@ type SpaceRow = {
   id: string;
   name: string;
   kind: SpaceKind;
-  space_members: { user_id: string; role: SpaceRole; display_name: string }[];
+  space_members: {
+    user_id: string;
+    role: SpaceRole;
+    display_name: string;
+    notify_receipts?: boolean;
+    notify_members?: boolean;
+  }[];
 };
 
 /** Errors that mean the shared-spaces tables or functions don't exist yet. */
 function isMissing(error: { code?: string } | null): boolean {
   return ["PGRST202", "PGRST205", "42P01", "42883"].includes(error?.code ?? "");
 }
+
+/** An unknown column: the database is a migration behind (no notification choices yet). */
+function isMissingColumn(error: { code?: string } | null): boolean {
+  return error?.code === "42703" || error?.code === "PGRST204";
+}
+
+const MEMBER_COLUMNS = "user_id, role, display_name, notify_receipts, notify_members";
+const OLD_MEMBER_COLUMNS = "user_id, role, display_name";
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : typeof error === "object" && error && "message" in error ? String(error.message) : String(error);
@@ -61,20 +90,26 @@ type LoadResult = { status: SpacesStatus; error?: string; spaces?: Space[] };
 /** Fetches the user's spaces with their members. */
 async function loadSpaces(userId: string): Promise<LoadResult> {
   if (!supabase) return { status: "signed_out" };
-  const { data, error } = await supabase
-    .from("spaces")
-    .select("id, name, kind, space_members(user_id, role, display_name)")
-    .order("created_at");
+  const query = (columns: string) =>
+    supabase!.from("spaces").select(`id, name, kind, space_members(${columns})`).order("created_at");
+  let { data, error } = await query(MEMBER_COLUMNS);
+  if (isMissingColumn(error)) ({ data, error } = await query(OLD_MEMBER_COLUMNS));
   if (error) return { status: isMissing(error) ? "unavailable" : "error", error: error.message };
   return {
     status: "ready",
-    spaces: (data as SpaceRow[]).map((row) => ({
+    spaces: (data as unknown as SpaceRow[]).map((row) => ({
       id: row.id,
       name: row.name,
       kind: row.kind,
       myRole: row.space_members.find((member) => member.user_id === userId)?.role ?? "member",
       members: row.space_members
-        .map((member) => ({ userId: member.user_id, role: member.role, displayName: member.display_name }))
+        .map((member) => ({
+          userId: member.user_id,
+          role: member.role,
+          displayName: member.display_name,
+          notifyReceipts: member.notify_receipts ?? true,
+          notifyMembers: member.notify_members ?? true,
+        }))
         .sort((a, b) => MANAGERS.indexOf(b.role) - MANAGERS.indexOf(a.role) || a.displayName.localeCompare(b.displayName)),
     })),
   };
@@ -118,6 +153,8 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
       }
       await refresh();
       syncNow().catch(() => undefined);
+      // Joining, leaving and removing people can notify the others.
+      notifySpaceMembers();
       return data;
     },
     [refresh, syncNow, userId],
@@ -146,6 +183,18 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
         ).then(() => undefined),
       removeMember: (spaceId, memberId) =>
         run(() => client.from("space_members").delete().eq("space_id", spaceId).eq("user_id", memberId)).then(() => undefined),
+      setRole: (spaceId, memberId, role) =>
+        run(() => client.rpc("set_space_role", { target: spaceId, member: memberId, new_role: role })).then(() => undefined),
+      transferOwnership: (spaceId, memberId) =>
+        run(() => client.rpc("transfer_space_ownership", { target: spaceId, new_owner: memberId })).then(() => undefined),
+      setNotifications: (spaceId, choices) =>
+        run(() =>
+          client
+            .from("space_members")
+            .update({ notify_receipts: choices.notifyReceipts, notify_members: choices.notifyMembers })
+            .eq("space_id", spaceId)
+            .eq("user_id", userId!),
+        ).then(() => undefined),
       leaveSpace: (spaceId) =>
         run(() => client.from("space_members").delete().eq("space_id", spaceId).eq("user_id", userId!)).then(() => undefined),
       deleteSpace: (spaceId) => run(() => client.from("spaces").delete().eq("id", spaceId)).then(() => undefined),

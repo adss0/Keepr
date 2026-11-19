@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 
 import { LaunchReceipt } from "@/components/launch-receipt";
+import { SpaceAlerts } from "@/components/space-alerts";
 import { ToastProvider } from "@/components/toast";
 import { Fonts, useColorMode, useTheme } from "@/constants/theme";
 import { goBack } from "@/lib/navigation";
@@ -75,6 +76,7 @@ function AppStack() {
         <Stack.Screen name="spaces/[id]" options={{ title: "Space" }} />
         <Stack.Screen name="reset-password" options={{ title: "Reset password" }} />
       </Stack>
+      <SpaceAlerts />
       <LaunchReceipt />
     </>
   );

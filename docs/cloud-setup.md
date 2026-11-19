@@ -23,6 +23,7 @@ Supabase's free tier is enough for Keepr.
 4. And with [`supabase/migrations/20261118000000_shared_spaces.sql`](../supabase/migrations/20261118000000_shared_spaces.sql), which adds shared spaces for families and organisations, and turns on live updates (Realtime) for receipts and subscriptions.
 5. And with [`supabase/migrations/20261119000000_receipt_status.sql`](../supabase/migrations/20261119000000_receipt_status.sql), which saves whether a receipt was returned, claimed or archived.
 6. And with [`supabase/migrations/20261120000000_receipt_printed_text.sql`](../supabase/migrations/20261120000000_receipt_printed_text.sql), which keeps the words printed on scanned receipts for search.
+7. And with [`supabase/migrations/20261121000000_space_activity_roles_push.sql`](../supabase/migrations/20261121000000_space_activity_roles_push.sql), which adds each space's activity feed, role changes, notification choices and push tokens.
 
 This creates the `receipts` and `subscriptions` tables with **row level security**, so each person can only ever read or change their own data. The second file adds a private `receipt-photos` storage bucket for receipt photos (each person can only reach their own folder), and stops the anonymous sessions used for signed-out scanning from reading or writing any data.
 
@@ -121,6 +122,24 @@ Only Keepr app sessions can use the function (signed-in or anonymous): it asks S
 - **Daily limits:** it has request limits per minute and per day. If you hit them, Keepr shows "Too many scans right now".
 - **Data use:** Google may use what's sent on the free tier to improve its products, so receipt photos may be seen by Google. For real users, switch the key to a paid Gemini plan, or move scanning to a provider that doesn't use your data.
 - **Changing models:** if Google retires the model, change `MODEL` at the top of the function and deploy again.
+
+## Shared-space notifications
+
+Members of a shared space can be told when someone else adds a receipt, or joins or leaves. Each person chooses which, per space, in the space's **Settings** tab.
+
+- **While Keepr is open**, these show as an alert at the bottom of the screen. This needs only migration 7 above, and works in Expo Go and on the web.
+- **When Keepr is closed**, they come as push notifications. That needs three more things:
+  1. Deploy the function that sends them:
+     ```bash
+     npx supabase functions deploy notify-space --no-verify-jwt
+     ```
+  2. Link the app to an Expo (EAS) project, which gives it the project id push notifications need:
+     ```bash
+     npx eas-cli@latest init
+     ```
+  3. Install a development or store build (`eas build`). Expo Go can't receive these on Android.
+
+  Each phone registers when its owner is signed in and has allowed notifications, and unregisters on sign-out. If you turn on **Enhanced push security** in your Expo account, also run `npx supabase secrets set EXPO_ACCESS_TOKEN=your-expo-access-token`.
 
 ## Phone builds (EAS)
 

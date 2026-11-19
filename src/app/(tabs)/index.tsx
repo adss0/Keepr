@@ -182,6 +182,19 @@ export default function ReceiptsScreen() {
                 })}
               </ScrollView>
             )}
+            {spaces.some((space) => space.id === activeFilter) && (
+              <Pressable
+                accessibilityRole="link"
+                onPress={() => router.push({ pathname: "/spaces/[id]", params: { id: activeFilter } })}
+                style={[styles.spaceLink, { backgroundColor: theme.card, borderColor: theme.border }]}
+              >
+                <Icon name="people" size={18} color={theme.accent} />
+                <Text style={[styles.spaceLinkText, { color: theme.text }]} numberOfLines={1}>
+                  Open {spaces.find((space) => space.id === activeFilter)?.name}: activity, people and settings
+                </Text>
+                <Icon name="chevronRight" size={18} color={theme.textMuted} />
+              </Pressable>
+            )}
             <RemindersBanner
               permission={reminders.permission}
               onEnable={reminders.request}
@@ -324,6 +337,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 24,
     gap: 8,
+  },
+  spaceLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    minHeight: 48,
+  },
+  spaceLinkText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
   },
   doneToggle: {
     flexDirection: "row",
