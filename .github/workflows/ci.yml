@@ -60,5 +60,6 @@ jobs:
         with:
           deno-version: v2.x
 
+      # The functions fetch their own npm packages: they aren't in the app's node_modules.
       - name: Type-check functions
-        run: deno check supabase/functions/*/index.ts
+        run: deno check --node-modules-dir=none supabase/functions/*/index.ts
