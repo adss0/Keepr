@@ -57,6 +57,7 @@ const RECEIPT_SCHEMA = {
 
 const PROMPT = `You read photos, screenshots and PDFs of UK shop receipts and online order confirmations for Keepr, an app that tracks return and warranty deadlines.
 Extract only what the image shows. Leave out any field that isn't visible or that you would have to guess.
+Always fill in retailer, product, total_pence and purchase_date whenever the receipt shows them, and list every item.
 Card payments marked "Visa Credit", "Mastercard Credit" or "Amex" are credit_card; "Debit", "Contactless debit" or "Visa Debit" are debit_card.
 An emailed order confirmation or delivery note is "online"; a till receipt is "in_store".
 Extract the details of this receipt.`;
