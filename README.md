@@ -206,7 +206,7 @@ See **[Run Keepr on your phone](docs/run-on-your-phone.md)** for step-by-step in
 | `npm start` | Starts the dev server |
 | `npm run web` | Opens the app in a browser |
 | `npm run typecheck` | Checks the TypeScript types |
-| `npm run lint` | Lints the code |
+| `npm run lint` | Lints the code (warnings fail too, as in CI) |
 | `npm test` | Runs the unit tests |
 | `npx expo install <package>` | Adds a package at a version compatible with this Expo SDK. Use this instead of `npm install <package>`. |
 
