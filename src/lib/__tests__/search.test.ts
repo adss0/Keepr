@@ -36,3 +36,11 @@ describe("searchReceipts", () => {
     expect(searchReceipts(receipts, "nike argos")).toEqual([]);
   });
 });
+
+describe("searching printed text", () => {
+  it("finds a receipt by a word only printed on it", () => {
+    const scanned = { ...receipts[0], id: "scanned", printedText: "ARGOS STORE 0423 KETTLE BOSCH TWK3P420GB" };
+    expect(searchReceipts([scanned], "bosch").map((r) => r.id)).toEqual(["scanned"]);
+    expect(searchReceipts([scanned], "twk3p420gb store").map((r) => r.id)).toEqual(["scanned"]);
+  });
+});

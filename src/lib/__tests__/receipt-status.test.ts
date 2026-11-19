@@ -36,6 +36,8 @@ describe("finished-with receipts", () => {
 
   it("keep their status through the cloud", () => {
     expect(rowToReceipt(receiptToRow(returned))).toEqual(returned);
+    const scanned: Receipt = { ...receipt, printedText: "ARGOS KETTLE" };
+    expect(rowToReceipt(receiptToRow(scanned))).toEqual(scanned);
     expect(receiptToRow(receipt)).toMatchObject({ closed_reason: null, closed_on: null });
     expect(rowToReceipt(receiptToRow(receipt)).closed).toBeUndefined();
   });

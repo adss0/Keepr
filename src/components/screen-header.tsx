@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon, type IconName } from "@/components/icon";
 import { PressScale } from "@/components/press-scale";
-import { useTheme } from "@/constants/theme";
+import { Fonts, useTheme } from "@/constants/theme";
 
 type Action = { icon: IconName; label: string; onPress: () => void; primary?: boolean };
 
@@ -38,10 +38,10 @@ export function ScreenHeader({ title, subtitle, actions = [], children }: Props)
               onPress={action.onPress}
               style={StyleSheet.flatten([
                 styles.action,
-                { backgroundColor: action.primary ? theme.accent : theme.card, borderColor: theme.border },
+                { backgroundColor: action.primary ? theme.primary : theme.card, borderColor: theme.border },
               ])}
             >
-              <Icon name={action.icon} size={20} color={action.primary ? theme.onAccent : theme.text} />
+              <Icon name={action.icon} size={20} color={action.primary ? theme.onPrimary : theme.text} />
             </PressScale>
           ))}
         </View>
@@ -67,9 +67,9 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   title: {
-    fontSize: 32,
-    fontWeight: "800",
     letterSpacing: -0.6,
+    fontFamily: Fonts.display,
+    fontSize: 34,
   },
   subtitle: {
     fontSize: 14,

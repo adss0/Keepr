@@ -6,7 +6,7 @@ import { Button, Field, Segmented } from "@/components/form";
 import { Icon } from "@/components/icon";
 import { PressScale } from "@/components/press-scale";
 import { useToast } from "@/components/toast";
-import { useTheme } from "@/constants/theme";
+import { Fonts, useTheme } from "@/constants/theme";
 import { useCloud } from "@/data/cloud";
 import { haptics } from "@/data/haptics";
 import { type SpaceKind, useSpaces } from "@/data/spaces";
@@ -228,8 +228,8 @@ const styles = StyleSheet.create({
   },
   introTitle: {
     fontSize: 22,
-    fontWeight: "800",
     letterSpacing: -0.3,
+    fontFamily: Fonts.display,
   },
   notice: {
     borderRadius: 14,

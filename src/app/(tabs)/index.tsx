@@ -23,7 +23,7 @@ import { ReceiptTile } from "@/components/receipt-tile";
 import { RemindersBanner } from "@/components/reminders-banner";
 import { ScreenHeader } from "@/components/screen-header";
 import { SwipeableReceipt } from "@/components/swipeable-receipt";
-import { useTheme } from "@/constants/theme";
+import { Fonts, useTheme } from "@/constants/theme";
 import { usePullToSync } from "@/data/cloud";
 import { useReceiptsStore } from "@/data/receipts";
 import { useReminders } from "@/data/reminders";
@@ -123,7 +123,7 @@ export default function ReceiptsScreen() {
     return (
       <View style={[styles.screen, { backgroundColor: theme.background }]}>
         {header}
-        <Intro id="home-body" rise delay={90} style={styles.centered}>
+        <Intro id="home-body" rise delay={40} style={styles.centered}>
           <ExampleReceipt today={today} />
           <Text style={[styles.emptyTitle, { color: theme.text }]}>Keep your first receipt</Text>
           <Text style={[styles.emptyBody, { color: theme.textMuted }]}>
@@ -131,7 +131,7 @@ export default function ReceiptsScreen() {
             pass.
           </Text>
           <View style={styles.emptyButtons}>
-            <Button title="Scan a receipt" variant="primary" icon={<Icon name="camera" size={18} color={theme.onAccent} />} onPress={scanReceipt} />
+            <Button title="Scan a receipt" variant="primary" icon={<Icon name="camera" size={18} color={theme.onPrimary} />} onPress={scanReceipt} />
             <Button title="Add one by hand" onPress={() => router.push("/receipt/new")} />
           </View>
         </Intro>
@@ -192,7 +192,7 @@ export default function ReceiptsScreen() {
               <TextInput
                 value={query}
                 onChangeText={setQuery}
-                placeholder="Search by product or shop"
+                placeholder="Search products, shops or any word on a receipt"
                 placeholderTextColor={theme.textMuted}
                 accessibilityLabel="Search receipts"
                 autoCorrect={false}
@@ -263,7 +263,7 @@ export default function ReceiptsScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       {header}
-      <Intro id="home-body" rise delay={90} style={styles.screen}>
+      <Intro id="home-body" rise delay={40} style={styles.screen}>
         {view === "timeline" ? (
           <SectionList
             {...listProps}
@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "800",
+    fontFamily: Fonts.display,
   },
   sectionTotal: {
     fontSize: 13,
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 22,
-    fontWeight: "700",
+    fontFamily: Fonts.display,
   },
   emptyBody: {
     fontSize: 15,

@@ -25,6 +25,8 @@ export type Receipt = {
   spaceId?: string;
   /** Who added it, from the cloud. Used for shared items' names and photo folders. */
   ownerId?: string;
+  /** The words printed on the receipt, read when it was scanned, so search can find it by any of them. */
+  printedText?: string;
   /** Set once it's finished with: no more deadlines or reminders, but it stays in the history. `on` is YYYY-MM-DD. */
   closed?: { reason: ClosedReason; on: string };
 };

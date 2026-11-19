@@ -1,14 +1,23 @@
 import { type ReactNode, useEffect, useState } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
-import Animated, { Easing, FadeIn, FadeInDown } from "react-native-reanimated";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from "react-native-reanimated";
+
+import { useLaunchDone } from "@/components/launch-receipt";
 
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
 /** Parts that have already played their entrance since the app started. */
 const played = new Set<string>();
 
 /**
- * Fades a part of the screen in the first time it appears after the app opens, then never again,
- * so switching tabs or views stays instant. Reduced motion is respected by Reanimated.
+ * Fades a part of the screen in the first time it appears after the app opens, once the opening receipt clears,
+ * then never again, so switching tabs or views stays instant. Shown at once with Reduce Motion on.
  */
 export function Intro({
   id,
@@ -23,19 +32,25 @@ export function Intro({
   style?: StyleProp<ViewStyle>;
   children: ReactNode;
 }) {
-  const [animate] = useState(() => !played.has(id));
+  const reduced = useReducedMotion();
+  const [animate] = useState(() => !played.has(id) && !reduced);
+  const launched = useLaunchDone();
+  const progress = useSharedValue(animate ? 0 : 1);
+
   useEffect(() => {
     played.add(id);
   }, [id]);
-  const entering = rise
-    ? FadeInDown.duration(480)
-        .delay(delay)
-        .easing(EASE_OUT)
-        .withInitialValues({ transform: [{ translateY: 14 }] })
-    : FadeIn.duration(360).delay(delay).easing(EASE_OUT);
-  return (
-    <Animated.View style={style} entering={animate ? entering : undefined}>
-      {children}
-    </Animated.View>
-  );
+
+  useEffect(() => {
+    if (!animate || !launched) return;
+    // Short and firm: the content is simply there as the opening receipt tears away.
+    progress.set(withDelay(delay, withTiming(1, { duration: 200, easing: EASE_OUT })));
+  }, [animate, launched, delay, rise, progress]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: progress.get(),
+    transform: [{ translateY: rise ? (1 - progress.get()) * 6 : 0 }],
+  }));
+
+  return <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>;
 }

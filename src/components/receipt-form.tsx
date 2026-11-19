@@ -1,21 +1,31 @@
 import { type ComponentRef, useRef, useState } from "react";
 import { Image } from "expo-image";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { DateField } from "@/components/date-field";
 import { Button, Field, Segmented } from "@/components/form";
 import { Icon } from "@/components/icon";
 import { ScanPanel } from "@/components/scan-panel";
 import { SpacePicker } from "@/components/space-picker";
+import { useToast } from "@/components/toast";
 import { useTheme } from "@/constants/theme";
-import { photosStoredLocally, type ReceiptPhoto } from "@/data/receipt-photos";
+import { useCloud } from "@/data/cloud";
+import { canKeepPhotos, type ReceiptPhoto } from "@/data/receipt-photos";
 import { haptics } from "@/data/haptics";
 import { pickReceiptPhoto } from "@/data/scan-receipt";
 import type { ReceiptFields } from "@/data/receipts";
 import { todayIso } from "@/lib/deadlines";
 import { type ReceiptInput, type ReceiptInputErrors, validateReceiptInput } from "@/lib/receipt-input";
 import { formatPrice } from "@/lib/format";
-import { countChangedFields, penceToInput, type ScannedItem, scannedItems, scanResultToInput } from "@/lib/scan-result";
+import { usualReturnDays } from "@/lib/return-policies";
+import {
+  countChangedFields,
+  penceToInput,
+  type ScannedItem,
+  scannedItems,
+  scannedText,
+  scanResultToInput,
+} from "@/lib/scan-result";
 import type { PaymentMethod, PurchaseChannel } from "@/types/receipt";
 
 const CHANNEL_OPTIONS: { value: PurchaseChannel; label: string }[] = [
@@ -41,6 +51,8 @@ type Props = {
   allowScan?: boolean;
   /** Open the camera as soon as the form appears (with allowScan). */
   autoScan?: boolean;
+  /** A receipt shared from another app, scanned as the form opens. */
+  sharedPhoto?: ReceiptPhoto;
   /** The shared space it's in ("" or undefined for personal). */
   initialSpaceId?: string;
   /** False for someone else's shared receipt, which can't become your personal one. */
@@ -54,13 +66,17 @@ export function ReceiptForm({
   onSubmitMany,
   allowScan = false,
   autoScan = false,
+  sharedPhoto,
   initialSpaceId,
   allowPersonal = true,
 }: Props) {
   const theme = useTheme();
   const [input, setInput] = useState(initial);
   const [errors, setErrors] = useState<ReceiptInputErrors>({});
-  const [photo, setPhoto] = useState<ReceiptPhoto>();
+  // A shared receipt is kept as proof of purchase even if scanning it fails.
+  const [photo, setPhoto] = useState<ReceiptPhoto | undefined>(sharedPhoto);
+  const keepsPhotos = canKeepPhotos(useCloud().userId);
+  const { showToast } = useToast();
 
   /** Keeps a photo as proof of purchase without reading it, for receipts added by hand. */
   async function attachPhoto(source: "camera" | "library") {
@@ -71,12 +87,19 @@ export function ReceiptForm({
         haptics.success();
       }
     } catch (error) {
-      Alert.alert("Couldn't add the photo", error instanceof Error ? error.message : String(error));
+      // A toast rather than an alert, which does nothing in browsers.
+      showToast({ message: error instanceof Error ? error.message : "Couldn't add the photo." });
     }
   }
   const [items, setItems] = useState<ScannedItem[]>([]);
   const [spaceId, setSpaceId] = useState(initialSpaceId ?? "");
-  const withSpace = (fields: ReceiptFields): ReceiptFields => (spaceId ? { ...fields, spaceId } : fields);
+  /** The receipt's printed words from the last scan, saved with it so search can find them. */
+  const [printedText, setPrintedText] = useState<string>();
+  const withSpace = (fields: ReceiptFields): ReceiptFields => ({
+    ...fields,
+    ...(spaceId && { spaceId }),
+    ...(printedText && { printedText }),
+  });
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
 
   /** Errors sit next to their fields near the top, so bring them into view. */
@@ -84,6 +107,18 @@ export function ReceiptForm({
     setErrors(next);
     haptics.error();
     scroll.current?.scrollTo({ y: 0, animated: true });
+  }
+
+  /** The return window Keepr filled in from the shop's usual policy, while the user hasn't changed it. */
+  const [usualDays, setUsualDays] = useState<string>();
+
+  /** Sets the shop, and fills in its usual return window unless the user typed their own. */
+  function updateShop(text: string) {
+    const ours = input.returnWindowDays.trim() === "" || input.returnWindowDays === usualDays;
+    const usual = usualReturnDays(text)?.toString();
+    setInput({ ...input, retailer: text, ...(ours && { returnWindowDays: usual ?? "" }) });
+    setErrors((current) => ({ ...current, retailer: undefined, ...(ours && { returnWindowDays: undefined }) }));
+    if (ours) setUsualDays(usual);
   }
 
   function update<K extends keyof ReceiptInput>(key: K, value: ReceiptInput[K]) {
@@ -136,18 +171,23 @@ export function ReceiptForm({
       {allowScan && (
         <ScanPanel
           autoStart={autoScan}
+          sharedPhoto={sharedPhoto}
           onScanned={(result, scannedPhoto) => {
             setPhoto(scannedPhoto);
             setItems(scannedItems(result));
-            const scanned = scanResultToInput(result, input);
-            if (!scanned) return 0;
+            setPrintedText(scannedText(result));
+            const read = scanResultToInput(result, input);
+            if (!read) return 0;
+            const usual = read.returnWindowDays.trim() ? undefined : usualReturnDays(read.retailer)?.toString();
+            const scanned = usual ? { ...read, returnWindowDays: usual } : read;
+            setUsualDays(usual);
             setInput(scanned);
             setErrors({});
             return countChangedFields(input, scanned);
           }}
         />
       )}
-      {photo && photosStoredLocally && (
+      {photo && keepsPhotos && (
         <View style={[styles.photoRow, { backgroundColor: theme.card, borderColor: theme.border }]}>
           {photo.mediaType.startsWith("image/") ? (
             <Image
@@ -166,7 +206,7 @@ export function ReceiptForm({
           </Pressable>
         </View>
       )}
-      {!photo && photosStoredLocally && (
+      {!photo && keepsPhotos && (
         <View style={[styles.photoRow, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <View style={[styles.photoIcon, { backgroundColor: theme.accentSoft }]}>
             <Icon name="camera" size={18} color={theme.accent} />
@@ -242,7 +282,7 @@ export function ReceiptForm({
         label="Shop"
         placeholder="e.g. Currys"
         value={input.retailer}
-        onChangeText={(text) => update("retailer", text)}
+        onChangeText={updateShop}
         error={errors.retailer}
       />
       <Field
@@ -278,7 +318,11 @@ export function ReceiptForm({
       <Field
         label="Shop return window (days)"
         placeholder="e.g. 28"
-        hint="Optional. Check the receipt or the shop's returns policy."
+        hint={
+          usualDays && input.returnWindowDays === usualDays
+            ? `Filled in from ${input.retailer.trim()}'s usual policy. Check your receipt: some items differ.`
+            : "Optional. Check the receipt or the shop's returns policy."
+        }
         keyboardType="number-pad"
         value={input.returnWindowDays}
         onChangeText={(text) => update("returnWindowDays", text)}

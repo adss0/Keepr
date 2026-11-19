@@ -5,7 +5,7 @@ import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ReceiptPhotoCard } from "@/components/receipt-photo-card";
 import { DeadlinePill } from "@/components/deadline-pill";
 import { Button } from "@/components/form";
-import { useTheme } from "@/constants/theme";
+import { Fonts, useTheme } from "@/constants/theme";
 import { useToast } from "@/components/toast";
 import { useCloud } from "@/data/cloud";
 import { haptics } from "@/data/haptics";
@@ -211,8 +211,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   price: {
-    fontSize: 28,
-    fontWeight: "600",
+    fontFamily: Fonts.display,
+    fontSize: 34,
   },
   detailRow: {
     flexDirection: "row",

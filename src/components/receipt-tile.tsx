@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { DeadlinePill } from "@/components/deadline-pill";
 import { PressScale } from "@/components/press-scale";
-import { useTheme } from "@/constants/theme";
+import { Fonts, useTheme } from "@/constants/theme";
 import { useCloud } from "@/data/cloud";
 import { isPdf, usePhotoUri } from "@/data/receipt-photos";
 import { getNextDeadline } from "@/lib/deadlines";
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
   },
   initial: {
     fontSize: 36,
-    fontWeight: "800",
+    fontFamily: Fonts.display,
   },
   body: {
     padding: 10,
@@ -79,8 +79,8 @@ const styles = StyleSheet.create({
   },
   price: {
     fontSize: 15,
-    fontWeight: "700",
     fontVariant: ["tabular-nums"],
+    fontFamily: Fonts.mono,
   },
   shop: {
     fontSize: 12,

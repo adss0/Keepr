@@ -1,7 +1,7 @@
 import Constants from "expo-constants";
 import { router } from "expo-router";
 import type { ReactNode } from "react";
-import { Alert, Linking, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { Linking, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 
 import { Segmented } from "@/components/form";
 import { Icon, type IconName } from "@/components/icon";
@@ -9,16 +9,9 @@ import { PressScale } from "@/components/press-scale";
 import { ScreenHeader } from "@/components/screen-header";
 import { useTheme } from "@/constants/theme";
 import { useCloud } from "@/data/cloud";
-import { useReceipts } from "@/data/receipts";
 import { useReminders } from "@/data/reminders";
 import { useSettings } from "@/data/settings";
 import { useSpaces } from "@/data/spaces";
-import { shareCsv, shareXlsx } from "@/data/share-csv";
-import { useSubscriptions } from "@/data/subscriptions";
-import { todayIso } from "@/lib/deadlines";
-import { receiptsToCsv } from "@/lib/export";
-import { spendingWorkbook } from "@/lib/spending-workbook";
-import { buildXlsx } from "@/lib/xlsx";
 import { STATUS_TEXT } from "@/lib/cloud-status";
 
 function Section({ title, footer, children }: { title: string; footer?: string; children: ReactNode }) {
@@ -58,23 +51,7 @@ export default function SettingsScreen() {
   const cloud = useCloud();
   const reminders = useReminders();
   const { spaces } = useSpaces();
-  const receipts = useReceipts();
-  const { subscriptions } = useSubscriptions();
   const r = settings.reminders;
-
-  function exportCsv() {
-    const today = todayIso();
-    shareCsv(receiptsToCsv(receipts, today), `keepr-receipts-${today}.csv`).catch((error: unknown) =>
-      Alert.alert("Couldn't export receipts", error instanceof Error ? error.message : String(error)),
-    );
-  }
-
-  function exportExcel() {
-    const today = todayIso();
-    shareXlsx(buildXlsx(spendingWorkbook(receipts, subscriptions, today)), `keepr-spending-${today}.xlsx`).catch(
-      (error: unknown) => Alert.alert("Couldn't export spending", error instanceof Error ? error.message : String(error)),
-    );
-  }
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
@@ -188,9 +165,7 @@ export default function SettingsScreen() {
         </Section>
 
         <Section title="Your data">
-          <LinkRow icon="insights" title="Spending breakdown (Excel)" onPress={exportExcel} />
-          <View style={[styles.divided, { borderTopColor: theme.border }]} />
-          <LinkRow icon="share" title="Export receipts (CSV)" onPress={exportCsv} />
+          <LinkRow icon="share" title="Export receipts" value="PDF, CSV or Excel" onPress={() => router.push("/export")} />
         </Section>
 
         <Text style={[styles.about, { color: theme.textMuted }]}>

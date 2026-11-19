@@ -1,44 +1,65 @@
 import { createContext, useContext } from "react";
 import { useColorScheme } from "react-native";
 
-/** Warm receipt-paper neutrals, ink-dark text and a deep "kept safe" green. */
+/**
+ * "Thermal print": receipt paper, near-black ink and a tomato-red accent like a till stamp.
+ * Every value is a step from Radix Colors (https://www.radix-ui.com/colors, MIT licence), named alongside, so light
+ * and dark stay matched and text keeps its contrast. Solid buttons and hero cards are ink (`primary`); red is kept
+ * for highlights, the selected tab, links and urgent deadlines.
+ */
 const light = {
-  background: "#F3F0E8",
-  card: "#FFFDF8",
-  text: "#1A1915",
-  textMuted: "#6E6A60",
-  border: "#E4DED2",
-  accent: "#1E6B52",
-  accentSoft: "#DDEDE4",
+  background: "#F9F9F8", // sand 2
+  card: "#FDFDFC", // sand 1
+  text: "#21201C", // sand 12
+  textMuted: "#63635E", // sand 11
+  border: "#DAD9D6", // sand 6
+  primary: "#21201C", // sand 12
+  onPrimary: "#FDFDFC", // sand 1
+  accent: "#D13415", // tomato 11
+  accentSoft: "#FEEBE7", // tomato 3
   onAccent: "#FFFFFF",
-  urgentBg: "#FBE7E3",
-  urgentText: "#A8321F",
-  soonBg: "#F8EBD3",
-  soonText: "#8A5A0B",
-  calmBg: "#EFEBE1",
-  calmText: "#5F5B52",
-  trial: "#6B4FBF",
+  urgentBg: "#FEEBE7", // tomato 3
+  urgentText: "#D13415", // tomato 11
+  soonBg: "#FFF7C2", // amber 3
+  soonText: "#AB6400", // amber 11
+  calmBg: "#F1F0EF", // sand 3
+  calmText: "#63635E", // sand 11
+  trial: "#3A5BC7", // indigo 11
 };
 
 const dark: typeof light = {
-  background: "#0F110F",
-  card: "#1A1D1A",
-  text: "#F2EFE7",
-  textMuted: "#A29E93",
-  border: "#2C302B",
-  accent: "#6FD1A6",
-  accentSoft: "#183128",
-  onAccent: "#062418",
-  urgentBg: "#4A1712",
-  urgentText: "#F6B8AD",
-  soonBg: "#3E2A06",
-  soonText: "#F3C978",
-  calmBg: "#262823",
-  calmText: "#D2CEC3",
-  trial: "#C3AEFF",
+  background: "#111110", // sand 1
+  card: "#191918", // sand 2
+  text: "#EEEEEC", // sand 12
+  textMuted: "#B5B3AD", // sand 11
+  border: "#3B3A37", // sand 6
+  primary: "#EEEEEC", // sand 12
+  onPrimary: "#111110", // sand 1
+  accent: "#FF977D", // tomato 11
+  accentSoft: "#391714", // tomato 3
+  onAccent: "#111110",
+  urgentBg: "#391714", // tomato 3
+  urgentText: "#FF977D", // tomato 11
+  soonBg: "#302008", // amber 3
+  soonText: "#FFCA16", // amber 11
+  calmBg: "#222221", // sand 3
+  calmText: "#B5B3AD", // sand 11
+  trial: "#9EB1FF", // indigo 11
 };
 
 export type Theme = typeof light;
+
+/**
+ * Keepr's own type: Fraunces (a soft serif) for titles and big figures, IBM Plex Mono for prices and dates, like a
+ * till receipt. Body text stays in the phone's system font. Loaded in the root layout; set no fontWeight with these,
+ * as each name is already one weight.
+ */
+export const Fonts = {
+  display: "Fraunces_600SemiBold",
+  displayBold: "Fraunces_700Bold",
+  mono: "IBMPlexMono_500Medium",
+  monoBold: "IBMPlexMono_600SemiBold",
+} as const;
 
 export type Appearance = "system" | "light" | "dark";
 

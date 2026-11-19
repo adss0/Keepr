@@ -1,20 +1,17 @@
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { Button, Segmented } from "@/components/form";
 import { Icon } from "@/components/icon";
 import { ScreenHeader } from "@/components/screen-header";
-import { useTheme } from "@/constants/theme";
+import { Fonts, useTheme } from "@/constants/theme";
 import { useReceipts } from "@/data/receipts";
-import { shareXlsx } from "@/data/share-csv";
 import { useSubscriptions } from "@/data/subscriptions";
 import { todayIso } from "@/lib/deadlines";
 import { formatPrice } from "@/lib/format";
 import { lastMonths, monthLabel, spendByMonth, spendByShop } from "@/lib/insights";
-import { spendingWorkbook } from "@/lib/spending-workbook";
 import { totalMonthlyPence, totalYearlyPence } from "@/lib/subscriptions";
-import { buildXlsx } from "@/lib/xlsx";
 
 const TOP_SHOPS = 5;
 const CHART_HEIGHT = 140;
@@ -61,17 +58,11 @@ export default function InsightsScreen() {
   const change =
     lastMonth && lastMonth.pence > 0 ? Math.round(((thisMonth.pence - lastMonth.pence) / lastMonth.pence) * 100) : undefined;
 
-  function exportExcel() {
-    shareXlsx(buildXlsx(spendingWorkbook(receipts, subscriptions, today)), `keepr-spending-${today}.xlsx`).catch(
-      (error: unknown) => Alert.alert("Couldn't export spending", error instanceof Error ? error.message : String(error)),
-    );
-  }
-
   const header = (
     <ScreenHeader
       title="Insights"
       subtitle={`${formatPrice(thisMonth.pence)} spent this month`}
-      actions={[{ icon: "share", label: "Export spending to Excel", onPress: exportExcel }]}
+      actions={[{ icon: "share", label: "Export spending", onPress: () => router.push("/export") }]}
     />
   );
 
@@ -94,15 +85,15 @@ export default function InsightsScreen() {
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       {header}
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={[styles.hero, { backgroundColor: theme.accent }]}>
-          <Text style={[styles.heroLabel, { color: theme.onAccent }]}>{monthLabel(thisMonth.month)}</Text>
-          <Text style={[styles.heroValue, { color: theme.onAccent }]}>{formatPrice(thisMonth.pence + subsMonthly)}</Text>
-          <Text style={[styles.heroDetail, { color: theme.onAccent }]}>
+        <View style={[styles.hero, { backgroundColor: theme.primary }]}>
+          <Text style={[styles.heroLabel, { color: theme.onPrimary }]}>{monthLabel(thisMonth.month)}</Text>
+          <Text style={[styles.heroValue, { color: theme.onPrimary }]}>{formatPrice(thisMonth.pence + subsMonthly)}</Text>
+          <Text style={[styles.heroDetail, { color: theme.onPrimary }]}>
             {formatPrice(thisMonth.pence)} on {thisMonth.count === 1 ? "1 purchase" : `${thisMonth.count} purchases`}
             {subsMonthly > 0 ? ` + ${formatPrice(subsMonthly)} subscriptions` : ""}
           </Text>
           {change !== undefined && (
-            <Text style={[styles.heroChange, { color: theme.onAccent }]}>
+            <Text style={[styles.heroChange, { color: theme.onPrimary }]}>
               {change === 0 ? "Same as" : `${Math.abs(change)}% ${change > 0 ? "more than" : "less than"}`} last month
             </Text>
           )}
@@ -211,12 +202,12 @@ export default function InsightsScreen() {
         </Card>
 
         <Button
-          title="Download spending breakdown (Excel)"
+          title="Export receipts and spending"
           icon={<Icon name="share" size={18} color={theme.text} />}
-          onPress={exportExcel}
+          onPress={() => router.push("/export")}
         />
         <Text style={[styles.footnote, { color: theme.textMuted, textAlign: "center" }]}>
-          A workbook with your totals by month and by shop, plus every receipt and subscription.
+          Pick the dates, then save a PDF of the receipts, a CSV, or an Excel breakdown by month and shop.
         </Text>
       </ScrollView>
     </View>
@@ -244,9 +235,9 @@ const styles = StyleSheet.create({
   },
   heroValue: {
     fontSize: 38,
-    fontWeight: "800",
     letterSpacing: -1,
     fontVariant: ["tabular-nums"],
+    fontFamily: Fonts.display,
   },
   heroDetail: {
     fontSize: 14,
@@ -282,8 +273,8 @@ const styles = StyleSheet.create({
   },
   selectedValue: {
     fontSize: 24,
-    fontWeight: "800",
     fontVariant: ["tabular-nums"],
+    fontFamily: Fonts.display,
   },
   selectedLabel: {
     fontSize: 14,
@@ -357,8 +348,8 @@ const styles = StyleSheet.create({
   },
   subsValue: {
     fontSize: 20,
-    fontWeight: "800",
     fontVariant: ["tabular-nums"],
+    fontFamily: Fonts.display,
   },
   subsLabel: {
     fontSize: 13,

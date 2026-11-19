@@ -229,6 +229,7 @@ Keepr/
 │   │   ├── _layout.tsx #   Root stack: tabs, plus detail and form screens on top
 │   │   ├── (tabs)/     #   Tab screens: Receipts (index), Calendar, Subscriptions, Insights and Settings
 │   │   ├── account.tsx #   Sign in and cloud sync
+│   │   ├── export.tsx  #   Export receipts for chosen dates as PDF, CSV or Excel
 │   │   ├── spaces/     #   Shared spaces: list, create and join (index), and one space's members and invites ([id])
 │   │   ├── receipt/    #   Receipt detail ([id]), add (new), edit, rights and full-screen photo screens
 │   │   └── subscriptions/ #  Add (new) and edit (edit/[id]) subscription screens
