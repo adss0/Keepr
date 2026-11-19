@@ -41,6 +41,12 @@ type CloudContextValue = {
   userId: string | undefined;
   lastSyncedAt: Date | undefined;
   error: string | undefined;
+  /** Why the account was signed out when the person didn't ask, such as a sign-in that couldn't be refreshed. */
+  notice: string | undefined;
+  /** The ways this account can sign in, such as ["email", "google"]. */
+  providers: string[];
+  /** Signs out every other phone and browser using this account; this one stays signed in. */
+  signOutOtherDevices: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   /** Creates an account. Resolves with a message to show, such as "check your email". */
   signUp: (email: string, password: string) => Promise<string>;
@@ -120,6 +126,9 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   const [syncState, setSyncState] = useState<"syncing" | "synced" | "error">("syncing");
   const [error, setError] = useState<string>();
   const [lastSyncedAt, setLastSyncedAt] = useState<Date>();
+  const [notice, setNotice] = useState<string>();
+  /** Set while the person signs out themselves, so it isn't reported as an unexpected sign-out. */
+  const signingOut = useRef(false);
   /** The user the cloud was last pulled for, and how many pulls so far. Changes are only pushed after a pull. */
   const [pulled, setPulled] = useState<{ userId: string; count: number }>();
   /** Pulls and pushes run one at a time: overlapping ones could undo each other (e.g. bring back a delete). */
@@ -130,9 +139,26 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!supabase) return;
     // An anonymous session only exists so signed-out users can scan; it never syncs or counts as signed in.
-    const keepRealSession = (newSession: Session | null) => setSession(newSession?.user.is_anonymous ? null : newSession);
+    const keepRealSession = (newSession: Session | null) => {
+      const real = newSession?.user.is_anonymous ? null : newSession;
+      setSession(real);
+      if (real) return;
+      // Signed out: what the last account synced (and any error) no longer applies.
+      setLastSyncedAt(undefined);
+      setError(undefined);
+      setSyncState("syncing");
+    };
     supabase.auth.getSession().then(({ data }) => keepRealSession(data.session));
-    const { data } = supabase.auth.onAuthStateChange((_event, newSession) => keepRealSession(newSession));
+    const { data } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (event === "SIGNED_OUT" && !signingOut.current) {
+        setNotice(
+          "Keepr was signed out because your sign-in couldn't be renewed, usually after a while offline. Sign in again to carry on backing up. Your receipts are still here.",
+        );
+      }
+      if (newSession && !newSession.user.is_anonymous) setNotice(undefined);
+      signingOut.current = false;
+      keepRealSession(newSession);
+    });
     return () => data.subscription.unsubscribe();
   }, []);
 
@@ -277,7 +303,14 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     // Stop this phone getting the account's shared-space notifications first, while still signed in.
     await forgetPushToken().catch(() => undefined);
+    signingOut.current = true;
     await supabase?.auth.signOut();
+  }, []);
+
+  const signOutOtherDevices = useCallback(async () => {
+    if (!supabase) return;
+    const { error: signOutError } = await supabase.auth.signOut({ scope: "others" });
+    if (signOutError) throw signOutError;
   }, []);
 
   const completeSignInRedirect = useCallback((url: string) => signInWithLinkTokens(signInRedirectParams(url)), []);
@@ -338,8 +371,11 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       displayName,
       setDisplayName,
       userId: session?.user.id,
+      providers: (session?.user.app_metadata.providers as string[] | undefined) ?? [],
       lastSyncedAt,
       error,
+      notice,
+      signOutOtherDevices,
       signIn,
       signUp,
       signOut,
@@ -357,6 +393,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       setDisplayName,
       lastSyncedAt,
       error,
+      notice,
+      signOutOtherDevices,
       signIn,
       signUp,
       signOut,

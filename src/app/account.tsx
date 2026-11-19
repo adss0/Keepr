@@ -182,6 +182,8 @@ export default function AccountScreen() {
   }, [completeSignInRedirect]);
   const card = [styles.card, { backgroundColor: theme.card, borderColor: theme.border }];
 
+  const signedIn = !!cloud.email;
+
   return (
     <ScrollView
       style={{ backgroundColor: theme.background }}
@@ -192,14 +194,15 @@ export default function AccountScreen() {
         <Text style={[styles.status, { color: cloud.status === "error" ? theme.urgentText : theme.text }]}>
           {STATUS_TEXT[cloud.status]}
         </Text>
-        {cloud.email && <Text style={[styles.body, { color: theme.textMuted }]}>Signed in as {cloud.email}</Text>}
         {cloud.lastSyncedAt && (
           <Text style={[styles.body, { color: theme.textMuted }]}>
             Last synced at {cloud.lastSyncedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </Text>
         )}
         {cloud.error && <Text style={[styles.body, { color: theme.urgentText }]}>{cloud.error}</Text>}
+        {!signedIn && cloud.notice && <Text style={[styles.body, { color: theme.text }]}>{cloud.notice}</Text>}
         {redirectError && <Text style={[styles.body, { color: theme.urgentText }]}>{redirectError}</Text>}
+        {signedIn && <Button title="Sync now" onPress={cloud.syncNow} />}
       </View>
 
       {cloud.status === "not_set_up" && (
@@ -211,18 +214,127 @@ export default function AccountScreen() {
 
       {cloud.status === "signed_out" && <SignInForm />}
 
-      {cloud.email && <NameCard key={cloud.displayName ?? ""} />}
+      {signedIn && (
+        <>
+          <SectionTitle title="Profile" />
+          <NameCard key={cloud.displayName ?? ""} />
+          <View style={card}>
+            <Row label="Email" value={cloud.email ?? ""} />
+            <Row label="Signs in with" value={signInMethods(cloud.providers)} divided />
+          </View>
 
-      {cloud.email && (
-        <View style={styles.form}>
-          <Button title="Sync now" variant="primary" onPress={cloud.syncNow} />
-          <Button title="Sign out" onPress={cloud.signOut} />
-          <Text style={[styles.body, { color: theme.textMuted }]}>
-            Signing out keeps your receipts on this phone.
-          </Text>
-        </View>
+          <SectionTitle title="Security" />
+          {cloud.providers.includes("email") && <ChangePassword />}
+          <SecurityActions />
+        </>
       )}
     </ScrollView>
+  );
+}
+
+/** "Google, or email and password", from the account's sign-in methods. */
+function signInMethods(providers: string[]): string {
+  const names = providers.map((provider) =>
+    provider === "email" ? "email and password" : provider[0].toUpperCase() + provider.slice(1),
+  );
+  const text = names.join(", or ") || "Email and password";
+  return text[0].toUpperCase() + text.slice(1);
+}
+
+function SectionTitle({ title }: { title: string }) {
+  const theme = useTheme();
+  return (
+    <Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.textMuted }]}>
+      {title}
+    </Text>
+  );
+}
+
+function Row({ label, value, divided }: { label: string; value: string; divided?: boolean }) {
+  const theme = useTheme();
+  return (
+    <View style={[styles.row, divided && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border }]}>
+      <Text style={[styles.body, { color: theme.textMuted }]}>{label}</Text>
+      <Text style={[styles.body, styles.rowValue, { color: theme.text }]} numberOfLines={1}>
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+/** For email accounts: a new password, used from the next sign-in on. */
+function ChangePassword() {
+  const theme = useTheme();
+  const { updatePassword } = useCloud();
+  const { showToast } = useToast();
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+
+  return (
+    <View style={[styles.card, styles.form, { backgroundColor: theme.card, borderColor: theme.border }]}>
+      <Field
+        label="New password"
+        placeholder="At least 8 characters"
+        secureTextEntry
+        autoComplete="new-password"
+        value={password}
+        onChangeText={setPassword}
+        error={error}
+      />
+      <Button
+        title="Change password"
+        busy={busy}
+        onPress={async () => {
+          if (password.length < 8) {
+            setError("Use at least 8 characters");
+            return;
+          }
+          setBusy(true);
+          setError(undefined);
+          try {
+            await updatePassword(password);
+            setPassword("");
+            showToast({ message: "Password changed" });
+          } catch (changeError) {
+            setError(errorMessage(changeError));
+          } finally {
+            setBusy(false);
+          }
+        }}
+      />
+    </View>
+  );
+}
+
+function SecurityActions() {
+  const theme = useTheme();
+  const { signOut, signOutOtherDevices } = useCloud();
+  const { showToast } = useToast();
+  const [busy, setBusy] = useState(false);
+
+  return (
+    <View style={styles.form}>
+      <Button
+        title="Sign out on other devices"
+        busy={busy}
+        onPress={async () => {
+          setBusy(true);
+          try {
+            await signOutOtherDevices();
+            showToast({ message: "Signed out everywhere else" });
+          } catch (signOutError) {
+            showToast({ message: `Couldn't sign out other devices: ${errorMessage(signOutError)}` });
+          } finally {
+            setBusy(false);
+          }
+        }}
+      />
+      <Button title="Sign out" variant="danger" onPress={signOut} />
+      <Text style={[styles.body, { color: theme.textMuted }]}>
+        Signing out keeps your receipts on this phone. Other devices stay signed in until they sign out themselves.
+      </Text>
+    </View>
   );
 }
 
@@ -262,5 +374,23 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 12,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: -8,
+    paddingHorizontal: 4,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+    paddingVertical: 8,
+  },
+  rowValue: {
+    flexShrink: 1,
+    fontWeight: "600",
   },
 });

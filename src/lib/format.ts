@@ -14,9 +14,16 @@ export function formatDate(isoDate: string, currentYear?: number): string {
   return currentYear === undefined || year === currentYear ? short : `${short} ${year}`;
 }
 
-/** A caught error's message, to show to the user. */
+/**
+ * A caught error's message, to show to the user. Supabase reports failed requests as plain objects with a
+ * `message`, not as Errors, so those are read too rather than showing "[object Object]".
+ */
 export function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error !== null && "message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+  return typeof error === "string" ? error : "Something went wrong.";
 }
 
 /** "2026-11-05" → "5 Nov 2026". Use for legal deadlines and letters, where the year matters. */
