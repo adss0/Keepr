@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 
 import { DateField } from "@/components/date-field";
 import { FilterMenu } from "@/components/filter-menu";
@@ -35,6 +35,8 @@ type Props = {
 /** A row of chips (whose, which dates, what order); each lists its options and applies a choice at once. */
 export function ReceiptFilters({ sort, onSortChange, dates, onDatesChange, today, who, trailing }: Props) {
   const theme = useTheme();
+  // On a phone the chips need the whole width, so anything trailing (Select, list or grid) gets its own line.
+  const narrow = useWindowDimensions().width < 600;
   const currentYear = Number(today.slice(0, 4));
   const datesLabel =
     dates.period === "custom"
@@ -43,8 +45,9 @@ export function ReceiptFilters({ sort, onSortChange, dates, onDatesChange, today
   const filtering = dates.period !== "all" || (who !== undefined && who.value !== "all");
 
   return (
-    <View style={styles.row}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} style={styles.scroll}>
+    <View style={narrow ? styles.stacked : styles.row}>
+      {narrow && trailing ? <View style={styles.trailingLine}>{trailing}</View> : null}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} style={narrow ? undefined : styles.scroll}>
         {who && (
           <FilterMenu
             title="Show"
@@ -86,7 +89,7 @@ export function ReceiptFilters({ sort, onSortChange, dates, onDatesChange, today
           </Pressable>
         )}
       </ScrollView>
-      {trailing}
+      {narrow ? null : trailing}
     </View>
   );
 }
@@ -96,6 +99,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+  },
+  stacked: {
+    gap: 8,
+  },
+  trailingLine: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
   },
   scroll: {
     flex: 1,
