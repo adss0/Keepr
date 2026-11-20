@@ -45,3 +45,8 @@ export function shareXlsx(bytes: Uint8Array, fileName: string): Promise<void> {
     dialogTitle: "Export spending",
   });
 }
+
+/** Saves a PDF and opens the share sheet (phone) or downloads it (web). */
+export function sharePdf(bytes: Uint8Array, fileName: string, dialogTitle: string): Promise<void> {
+  return shareFile(bytes, fileName, { mimeType: "application/pdf", uti: "com.adobe.pdf", dialogTitle });
+}

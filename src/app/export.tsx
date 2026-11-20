@@ -95,7 +95,12 @@ export default function ExportScreen() {
         <>
           {/* Each format with only the choices that apply to it, then its button. */}
           <Format title="PDF" hint="A summary with the total, then a page for each receipt.">
-            <Toggle label="Receipt photos" value={withPhotos} onChange={setWithPhotos} />
+            <Toggle
+              label="Proof of purchase"
+              hint="Each receipt's photo, and the pages of any receipt kept as a PDF."
+              value={withPhotos}
+              onChange={setWithPhotos}
+            />
             <Toggle
               label="Deadlines"
               hint="Return, refund and warranty dates, with what each one means."

@@ -9,7 +9,6 @@ import { Fonts, useTheme } from "@/constants/theme";
 import { useToast } from "@/components/toast";
 import { useCloud } from "@/data/cloud";
 import { haptics } from "@/data/haptics";
-import { usePhotoUri } from "@/data/receipt-photos";
 import { shareReceiptPdf } from "@/data/receipt-pdf";
 import { useReceipt, useReceiptsStore } from "@/data/receipts";
 import { useSpaces } from "@/data/spaces";
@@ -34,7 +33,6 @@ export default function ReceiptDetailScreen() {
   const theme = useTheme();
   const today = todayIso();
   const { userId } = useCloud();
-  const photoUri = usePhotoUri(receipt?.photo, receipt?.ownerId ?? userId);
   const [exporting, setExporting] = useState(false);
   const spaces = useSpaces();
 
@@ -163,7 +161,7 @@ export default function ReceiptDetailScreen() {
           onPress={async () => {
             setExporting(true);
             try {
-              await shareReceiptPdf(receipt, today, photoUri);
+              await shareReceiptPdf(receipt, today, receipt.ownerId ?? userId);
             } catch (error) {
               showToast({ message: `Couldn't make the PDF: ${errorMessage(error)}` });
             } finally {
