@@ -16,7 +16,7 @@ import { ExampleReceipt } from "@/components/example-receipt";
 import { Button } from "@/components/form";
 import { Icon, type IconName } from "@/components/icon";
 import { Intro } from "@/components/intro";
-import { NextDeadlineCard } from "@/components/next-deadline-card";
+import { NeedsAttention } from "@/components/needs-attention";
 import { ReceiptCard } from "@/components/receipt-card";
 import { ReceiptTile } from "@/components/receipt-tile";
 import { RemindersBanner } from "@/components/reminders-banner";
@@ -31,11 +31,13 @@ import { useReceiptsStore } from "@/data/receipts";
 import { useReminders } from "@/data/reminders";
 import { useSettings } from "@/data/settings";
 import { useSpaces } from "@/data/spaces";
-import { daysBetween, getNextDeadline, todayIso } from "@/lib/deadlines";
+import { useSubscriptions } from "@/data/subscriptions";
+import { todayIso } from "@/lib/deadlines";
 import { errorMessage, formatPrice } from "@/lib/format";
 import { boughtIn, periodRange } from "@/lib/export-range";
 import { groupByMonth, type ReceiptsView, sortReceipts } from "@/lib/receipt-views";
 import { searchReceipts } from "@/lib/search";
+import { needsAttention } from "@/lib/attention";
 
 const VIEWS: { view: ReceiptsView; icon: IconName; label: string }[] = [
   { view: "list", icon: "viewList", label: "List" },
@@ -73,6 +75,9 @@ export default function ReceiptsScreen() {
   const activeFilter = filter === "all" || filter === "mine" || spaces.some((space) => space.id === filter) ? filter : "all";
 
   const receipts = useMemo(() => sortReceipts(allReceipts, sort, today), [allReceipts, sort, today]);
+  const inScope = (item: { spaceId?: string }) =>
+    activeFilter === "all" || (activeFilter === "mine" ? !item.spaceId : item.spaceId === activeFilter);
+  const { subscriptions } = useSubscriptions();
 
   const filteredReceipts = useMemo(() => {
     const range = periodRange(dates.period, today, dates);
@@ -95,10 +100,7 @@ export default function ReceiptsScreen() {
     ...spaces.map((space) => ({ value: space.id, label: space.name })),
   ];
 
-  const dueThisWeek = receipts.filter((receipt) => {
-    const deadline = getNextDeadline(receipt, today);
-    return deadline !== undefined && daysBetween(today, deadline.date) <= 7;
-  }).length;
+  const dueSoon = needsAttention(receipts.filter(inScope), subscriptions.filter(inScope), today).now.length;
 
   const header = (
     <Intro id="home-header">
@@ -107,7 +109,9 @@ export default function ReceiptsScreen() {
         subtitle={
           receipts.length === 0
             ? "You keep your receipts. Keepr keeps your rights."
-            : `${dueThisWeek === 1 ? "1 deadline" : `${dueThisWeek} deadlines`} in the next 7 days`
+            : dueSoon === 0
+              ? "Nothing due soon"
+              : `${dueSoon === 1 ? "1 thing" : `${dueSoon} things`} due soon`
         }
         actions={[
           { icon: "people", label: "Shared spaces", onPress: () => router.push("/spaces") },
@@ -194,7 +198,10 @@ export default function ReceiptsScreen() {
     ItemSeparatorComponent: () => <View style={styles.separator} />,
     ListHeaderComponent: (
           <View style={styles.listHeader}>
-            {query.length === 0 && <NextDeadlineCard receipts={filteredReceipts} today={today} />}
+            {/* Whose things it shows follows the Show filter; the Bought dates don't hide what's due. */}
+            {query.length === 0 && (
+              <NeedsAttention receipts={receipts.filter(inScope)} subscriptions={subscriptions.filter(inScope)} today={today} />
+            )}
             <RemindersBanner
               permission={reminders.permission}
               onEnable={reminders.request}

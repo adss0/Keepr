@@ -53,7 +53,8 @@
 - ✅ Attach a receipt photo when adding by hand, choose camera or library when replacing it, and a one-time opening animation with a matching splash
 - ✅ "Capture, keep, find" intro: shown once to someone opening Keepr with no receipts. A receipt is scanned, stamped "Kept" and found by a search, in about three seconds, and Get started works throughout (Settings → How Keepr works plays it again). A scan line passes over the photo while a scan is read, and a newly saved receipt is stamped "Kept" as it opens
 - ✅ Scan review: after a scan, any detail that may be misread is marked in amber with what to check (no shop name, no total, items that don't add up to the total, a date in the future or over 2 years ago). Saving a receipt with the same shop, date and price as one already kept asks first. A scan can be cancelled, and one that fails can be tried again without picking the photo again
-- ⏭️ **Next (in order):** a home-screen Needs attention list with subscriptions and trials; order number, serial number and notes on receipts; a timeline on the receipt screen; claim tracking with an editable letter; account deletion and Sign in with Apple before the App Store
+- ✅ Needs attention on the home screen: receipt deadlines in the next two weeks, free trials ending in the next week and payments in the next 3 days, in one list. Deadlines and trials come before routine payments; the most urgent is the big card, two more sit under it, and the rest are a tap away in the Calendar. Each opens its receipt or subscription. With nothing due it says "You're all caught up" and names the next deadline. It follows the Show filter (all, just mine, or a space)
+- ⏭️ **Next (in order):** order number, serial number and notes on receipts; a timeline on the receipt screen; claim tracking with an editable letter; account deletion and Sign in with Apple before the App Store
 
 ---
 
