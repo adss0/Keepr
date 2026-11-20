@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 
 import { LaunchReceipt } from "@/components/launch-receipt";
+import { PdfPreview } from "@/components/pdf-preview";
 import { SpaceAlerts } from "@/components/space-alerts";
 import { ToastProvider } from "@/components/toast";
 import { Fonts, useColorMode, useTheme } from "@/constants/theme";
@@ -81,6 +82,7 @@ function AppStack() {
         <Stack.Screen name="reset-password" options={{ title: "Reset password" }} />
       </Stack>
       <SpaceAlerts />
+      <PdfPreview />
       <LaunchReceipt />
     </>
   );

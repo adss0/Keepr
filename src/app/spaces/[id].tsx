@@ -196,7 +196,25 @@ function ReceiptsTab({ space }: { space: Space }) {
           : ""}
       </Text>
       {inSpace.length > 0 && (
-        <ReceiptFilters sort={sort} onSortChange={setSort} dates={dates} onDatesChange={setDates} today={today} />
+        <ReceiptFilters
+          sort={sort}
+          onSortChange={setSort}
+          dates={dates}
+          onDatesChange={setDates}
+          today={today}
+          trailing={
+            <Button
+              title="Export"
+              variant="ghost"
+              onPress={() =>
+                router.push({
+                  pathname: "/export",
+                  params: { space: space.id, period: dates.period, from: dates.from, to: dates.to },
+                })
+              }
+            />
+          }
+        />
       )}
       {inSpace.length === 0 ? (
         <Text style={[styles.body, { color: theme.textMuted }]}>

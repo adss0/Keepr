@@ -97,7 +97,8 @@ export function getDeadlines(receipt: Receipt): Deadline[] {
     });
   }
 
-  if (receipt.warrantyMonths !== undefined) {
+  // A 0-month warranty (a scan that found none) is no warranty.
+  if (receipt.warrantyMonths !== undefined && receipt.warrantyMonths > 0) {
     deadlines.push({
       kind: "warranty",
       label: "Warranty",

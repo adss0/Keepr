@@ -113,6 +113,8 @@ describe("receiptName", () => {
 
   it("keeps the scanner's name for one item, or its summary of several", () => {
     expect(receiptName("Kettle", [{ name: "Kettle" }])).toBe("Kettle");
+    expect(receiptName(undefined, [{ name: "Kettle" }])).toBe("Kettle");
+    expect(receiptName(undefined, [])).toBeUndefined();
     expect(receiptName("Food shop: energy drink, donuts and milk", items)).toBe("Food shop: energy drink, donuts and milk");
   });
 

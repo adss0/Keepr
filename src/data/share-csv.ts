@@ -2,6 +2,8 @@ import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { Platform } from "react-native";
 
+import { previewPdf } from "@/data/pdf-preview";
+
 type FileType = { mimeType: string; uti: string; dialogTitle: string };
 
 /** Saves `content` as a file and opens the share sheet (phone) or downloads it (web). */
@@ -46,7 +48,11 @@ export function shareXlsx(bytes: Uint8Array, fileName: string): Promise<void> {
   });
 }
 
-/** Saves a PDF and opens the share sheet (phone) or downloads it (web). */
-export function sharePdf(bytes: Uint8Array, fileName: string, dialogTitle: string): Promise<void> {
+/**
+ * Opens a PDF to look at before saving it: the share sheet on a phone (which shows it), or Keepr's preview on the
+ * web, with Download. If the preview isn't on screen, the browser downloads it straight away.
+ */
+export async function sharePdf(bytes: Uint8Array, fileName: string, dialogTitle: string): Promise<void> {
+  if (Platform.OS === "web" && previewPdf({ bytes, fileName })) return;
   return shareFile(bytes, fileName, { mimeType: "application/pdf", uti: "com.adobe.pdf", dialogTitle });
 }

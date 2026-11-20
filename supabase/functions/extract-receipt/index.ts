@@ -38,7 +38,7 @@ const RECEIPT_SCHEMA = {
     product: {
       type: "string",
       description:
-        "A name for the whole receipt. One item: its name as a shopper would say it. Several items: a short summary of them all, under 60 characters, naming the main things, e.g. \"Food shop: milk, bread and 9 more\" or \"Headphones and case\".",
+        "A short title saying what the receipt is for, under 60 characters. One item: its name as a shopper would say it, e.g. \"Sony WH-1000XM5 headphones\". Several items: what the shopping was, then the main things, e.g. \"Food shop: donuts, energy drinks and more\" or \"Phone case and charger\". Never just the first item.",
     },
     total_pence: { type: "integer", description: "Total paid, in pence. £79.99 is 7999." },
     purchase_date: { type: "string", description: "Date of purchase as YYYY-MM-DD." },

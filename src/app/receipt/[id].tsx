@@ -28,7 +28,7 @@ const CLOSE_OPTIONS: { reason: ClosedReason; label: string }[] = [
 export default function ReceiptDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const receipt = useReceipt(id);
-  const { closeReceipt, deleteReceipt, restoreReceipt } = useReceiptsStore();
+  const { closeReceipt, deleteReceipt, restoreReceipt, removeWarranty, updateReceipt } = useReceiptsStore();
   const { showToast } = useToast();
   const theme = useTheme();
   const today = todayIso();
@@ -62,7 +62,7 @@ export default function ReceiptDetailScreen() {
   if (receipt.returnWindowDays !== undefined) {
     details.push(["Shop return window", `${receipt.returnWindowDays} days`]);
   }
-  if (receipt.warrantyMonths !== undefined) {
+  if (receipt.warrantyMonths) {
     details.push(["Warranty", `${receipt.warrantyMonths} months`]);
   }
 
@@ -146,6 +146,26 @@ export default function ReceiptDetailScreen() {
           <Text style={[styles.explanation, { color: theme.textMuted }]}>
             {DEADLINE_EXPLANATIONS[deadline.kind]}
           </Text>
+          {deadline.kind === "warranty" && editable && (
+            <Button
+              title="Remove warranty"
+              variant="ghost"
+              onPress={() => {
+                const months = receipt.warrantyMonths;
+                removeWarranty(receipt.id);
+                showToast({
+                  message: "Warranty removed",
+                  action: {
+                    label: "Undo",
+                    onPress: () => {
+                      const { id: _id, photo: _photo, ownerId: _owner, closed: _closed, ...fields } = receipt;
+                      updateReceipt(receipt.id, { ...fields, warrantyMonths: months });
+                    },
+                  },
+                });
+              }}
+            />
+          )}
         </View>
       ))}
 

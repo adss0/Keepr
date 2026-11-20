@@ -35,7 +35,8 @@ export function scanResultToInput(result: unknown, current: ReceiptInput): Recei
       ? (data.payment_method as PaymentMethod)
       : current.paymentMethod,
     returnWindowDays: returnDays !== undefined ? String(returnDays) : current.returnWindowDays,
-    warrantyMonths: warranty !== undefined ? String(warranty) : current.warrantyMonths,
+    // 0 months means the receipt gave no warranty, not one that ends the day it was bought.
+    warrantyMonths: warranty ? String(warranty) : current.warrantyMonths,
   };
 }
 
@@ -51,7 +52,7 @@ export type ScannedItem = { name: string; pricePence?: number };
  * (as older versions did), that one plus a count: "Energy drink and 4 more items".
  */
 export function receiptName(product: string | undefined, items: ScannedItem[]): string | undefined {
-  if (items.length < 2) return product;
+  if (items.length < 2) return product ?? items[0]?.name;
   const named = product?.toLowerCase();
   if (product && !items.some((item) => item.name.toLowerCase() === named)) return product;
   const others = items.length - 1;

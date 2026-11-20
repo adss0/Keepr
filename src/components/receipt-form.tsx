@@ -360,6 +360,9 @@ export function ReceiptForm({
         onChangeText={(text) => update("warrantyMonths", text)}
         error={errors.warrantyMonths}
       />
+      {input.warrantyMonths.trim() !== "" && (
+        <Button title="No warranty" variant="ghost" onPress={() => update("warrantyMonths", "")} />
+      )}
       <Button title={submitLabel} variant="primary" onPress={submit} />
     </ScrollView>
   );

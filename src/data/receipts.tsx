@@ -25,6 +25,8 @@ type ReceiptsContextValue = {
   /** Attaches (or with undefined, removes) a receipt's photo file name. */
   /** Sets (or with no `photo`, removes) the receipt's photo, and where it came from. */
   setReceiptPhoto: (id: string, photo: string | undefined, source?: string) => void;
+  /** Takes the warranty off a receipt, for someone who doesn't want it tracked. */
+  removeWarranty: (id: string) => void;
   /** Marks a receipt as finished with, or with undefined, makes it active again. */
   closeReceipt: (id: string, closed: Receipt["closed"]) => void;
   deleteReceipt: (id: string) => void;
@@ -52,6 +54,7 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
           ? {
               id,
               photo: receipt.photo,
+              ...(receipt.photoSource && { photoSource: receipt.photoSource }),
               ownerId: receipt.ownerId,
               ...(receipt.closed && { closed: receipt.closed }),
               // Editing by hand keeps the words read from the original scan.
@@ -70,6 +73,16 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
         const { photo: _old, photoSource: _oldSource, ...rest } = receipt;
         if (!photo) return rest;
         return source ? { ...rest, photo, photoSource: source } : { ...rest, photo };
+      }),
+    );
+  }, [setReceipts]);
+
+  const removeWarranty = useCallback((id: string) => {
+    setReceipts((current) =>
+      current.map((receipt) => {
+        if (receipt.id !== id) return receipt;
+        const { warrantyMonths: _removed, ...rest } = receipt;
+        return rest;
       }),
     );
   }, [setReceipts]);
@@ -134,12 +147,13 @@ export function ReceiptsProvider({ children }: { children: ReactNode }) {
       addReceipt,
       updateReceipt,
       setReceiptPhoto,
+      removeWarranty,
       closeReceipt,
       deleteReceipt,
       restoreReceipt,
       mergeFromCloud,
     }),
-    [receipts, ready, addReceipt, updateReceipt, setReceiptPhoto, closeReceipt, deleteReceipt, restoreReceipt, mergeFromCloud],
+    [receipts, ready, addReceipt, updateReceipt, setReceiptPhoto, removeWarranty, closeReceipt, deleteReceipt, restoreReceipt, mergeFromCloud],
   );
 
   return <ReceiptsContext.Provider value={value}>{children}</ReceiptsContext.Provider>;
