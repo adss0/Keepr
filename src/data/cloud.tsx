@@ -7,7 +7,7 @@ import { AppState, Platform } from "react-native";
 
 import { useReceiptsStore } from "@/data/receipts";
 import { useSubscriptions } from "@/data/subscriptions";
-import { type LinkParams, recoveryParams, signInRedirectParams } from "@/lib/recovery-link";
+import { type ExpectedLink, type LinkParams, recoveryParams, signInRedirectParams, wasExpected } from "@/lib/recovery-link";
 import { forgetPushToken, notifySpaceMembers } from "@/data/push-notifications";
 import { deleteRemotePhotos, uploadNewPhotos } from "@/data/receipt-photos";
 import { supabase } from "@/data/supabase";
@@ -128,14 +128,33 @@ async function refusedRows<R extends { id: string }>(
   return refused;
 }
 
+const EXPECTED_LINK_KEY = "keepr.expectedLink.v1";
+
+/** Notes that this device just asked for a sign-in link of `kind`, so it's accepted when it comes back. */
+async function expectLink(kind: ExpectedLink["kind"]) {
+  await AsyncStorage.setItem(EXPECTED_LINK_KEY, JSON.stringify({ kind, at: Date.now() } satisfies ExpectedLink));
+}
+
 /**
  * Signs in with the tokens Supabase put in a link (a password reset, or the way back from Google).
- * False if the link holds none; throws the link's own error, such as an expired link.
+ * False if the link holds none; throws the link's own error, such as an expired link. With `expected`, only a link
+ * this device asked for is used (see wasExpected), and only once.
  */
-async function signInWithLinkTokens(params: LinkParams): Promise<boolean> {
+async function signInWithLinkTokens(params: LinkParams, expected?: ExpectedLink["kind"]): Promise<boolean> {
   if (!supabase) return false;
   if (params.error) throw new Error(params.error);
   if (!params.accessToken || !params.refreshToken) return false;
+  if (expected) {
+    const stored = await AsyncStorage.getItem(EXPECTED_LINK_KEY).catch(() => null);
+    if (!wasExpected(stored, expected, Date.now())) {
+      throw new Error(
+        expected === "recovery"
+          ? "This link wasn't asked for on this device"
+          : "This sign-in wasn't started on this device. Sign in again here",
+      );
+    }
+    await AsyncStorage.removeItem(EXPECTED_LINK_KEY).catch(() => undefined);
+  }
   const { error } = await supabase.auth.setSession({ access_token: params.accessToken, refresh_token: params.refreshToken });
   if (error) throw error;
   return true;
@@ -357,12 +376,14 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     if (signOutError) throw signOutError;
   }, []);
 
-  const completeSignInRedirect = useCallback((url: string) => signInWithLinkTokens(signInRedirectParams(url)), []);
+  // Only the web arrives here from an address; the phone's Google sign-in finishes inside signInWithGoogle.
+  const completeSignInRedirect = useCallback((url: string) => signInWithLinkTokens(signInRedirectParams(url), "google"), []);
 
   const signInWithGoogle = useCallback(async () => {
     if (!supabase) return false;
     // Must be in Supabase's allowed redirect list (Authentication > URL Configuration), see docs/cloud-setup.md.
     const redirectTo = Platform.OS === "web" ? `${window.location.origin}/account` : Linking.createURL("/account");
+    if (Platform.OS === "web") await expectLink("google");
     const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo, skipBrowserRedirect: Platform.OS !== "web" },
@@ -371,8 +392,9 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     if (Platform.OS === "web") return false; // The page is on its way to Google.
     const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
     if (result.type !== "success") return false;
-    return completeSignInRedirect(result.url);
-  }, [completeSignInRedirect]);
+    // The browser session hands back the address it was sent to, so this link is the one just asked for.
+    return signInWithLinkTokens(signInRedirectParams(result.url));
+  }, []);
 
   const sendPasswordResetEmail = useCallback(async (email: string) => {
     if (!supabase) return;
@@ -380,9 +402,10 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       redirectTo: Linking.createURL("/reset-password"),
     });
     if (resetError) throw resetError;
+    await expectLink("recovery");
   }, []);
 
-  const startPasswordRecovery = useCallback((url: string) => signInWithLinkTokens(recoveryParams(url)), []);
+  const startPasswordRecovery = useCallback((url: string) => signInWithLinkTokens(recoveryParams(url), "recovery"), []);
 
   const updatePassword = useCallback(async (newPassword: string) => {
     if (!supabase) return;

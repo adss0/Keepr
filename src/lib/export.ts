@@ -20,9 +20,14 @@ const HEADERS = [
 ];
 const DEADLINE_HEADERS = ["Next deadline", "Next deadline date"];
 
-/** Quotes a CSV field when it contains a comma, quote or line break. */
-function csvField(value: string): string {
-  return /[",\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+/**
+ * Quotes a CSV field when it contains a comma, quote or line break. Text starting with = + - @ or a tab is a formula
+ * to Excel and Sheets, and a shared space's member could name a product "=HYPERLINK(...)", so it gets a leading
+ * apostrophe, which spreadsheets show as plain text.
+ */
+export function csvField(value: string): string {
+  const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+  return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
 /**

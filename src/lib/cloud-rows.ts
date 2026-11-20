@@ -64,6 +64,9 @@ export function receiptToRow(receipt: Receipt): ReceiptRow {
   };
 }
 
+/** The file names Keepr gives photos ("<receipt id>.jpg", "<receipt id>-<time>.pdf"). Anything else could be a path. */
+const PHOTO_NAME = /^[A-Za-z0-9-]{1,80}\.[a-z]{3,4}$/;
+
 export function rowToReceipt(row: ReceiptRow): Receipt {
   return {
     id: row.id,
@@ -76,7 +79,8 @@ export function rowToReceipt(row: ReceiptRow): Receipt {
     ...(row.return_window_days !== null && { returnWindowDays: row.return_window_days }),
     ...(row.warranty_months !== null && { warrantyMonths: row.warranty_months }),
     // Rows saved before photos existed have no photo column value at all.
-    ...(row.photo != null && { photo: row.photo }),
+    // Another member's row names a file this phone saves, so only plain file names are taken.
+    ...(row.photo != null && PHOTO_NAME.test(row.photo) && { photo: row.photo }),
     ...(row.photo_source != null && { photoSource: row.photo_source }),
     ...(row.printed_text != null && { printedText: row.printed_text }),
     ...(row.order_number != null && { orderNumber: row.order_number }),

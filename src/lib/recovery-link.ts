@@ -31,3 +31,22 @@ export function signInRedirectParams(url: string): LinkParams {
   const refreshToken = params.get("refresh_token") ?? undefined;
   return accessToken && refreshToken ? { accessToken, refreshToken } : {};
 }
+
+/** A sign-in link this device asked for: a Google sign-in on the web, or a password reset email. */
+export type ExpectedLink = { kind: "google" | "recovery"; at: number };
+
+/** How long after asking a link is still accepted. Supabase's reset links last an hour. */
+const EXPECTED_FOR_MS = { google: 30 * 60 * 1000, recovery: 2 * 60 * 60 * 1000 };
+
+/**
+ * Whether a link of `kind` is one this device asked for. Sign-in links carry their account's tokens, so without
+ * this check someone could send a link that signs this phone into their account, and its receipts would back up there.
+ */
+export function wasExpected(stored: string | null, kind: ExpectedLink["kind"], now: number): boolean {
+  try {
+    const expected = JSON.parse(stored ?? "null") as ExpectedLink | null;
+    return expected?.kind === kind && now >= expected.at && now - expected.at <= EXPECTED_FOR_MS[kind];
+  } catch {
+    return false;
+  }
+}

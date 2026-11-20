@@ -9,6 +9,8 @@ import { GoogleGenAI } from "npm:@google/genai@^3.2.0";
 /** A free-tier Gemini model. Change it here if Google retires it. */
 const MODEL = "gemini-3.5-flash-lite";
 const MAX_IMAGE_BASE64_LENGTH = 7_000_000; // About 5 MB of image or PDF data.
+/** Scans a day per account: guest sessions (signed out) get fewer, as anyone can make one. */
+const DAILY_SCANS = { guest: 20, signedIn: 100 };
 const ALLOWED_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "application/pdf"];
 
 const corsHeaders = {
@@ -74,25 +76,47 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-/** True if the request carries the sign-in token of a real Keepr user, checked with Supabase Auth. */
-async function isSignedInUser(request: Request): Promise<boolean> {
+type Caller = { token: string; projectKey: string; supabaseUrl: string; guest: boolean };
+
+/** The caller, if the request carries the sign-in token of a real Keepr user (checked with Supabase Auth). */
+async function signedInCaller(request: Request): Promise<Caller | undefined> {
   const token = request.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
   const projectKey = request.headers.get("apikey");
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  if (!token || !projectKey || !supabaseUrl) return false;
+  if (!token || !projectKey || !supabaseUrl) return undefined;
 
   const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
     headers: { Authorization: `Bearer ${token}`, apikey: projectKey },
   });
-  if (!response.ok) return false;
+  if (!response.ok) return undefined;
   const user = await response.json().catch(() => null);
-  return typeof user?.id === "string";
+  if (typeof user?.id !== "string") return undefined;
+  return { token, projectKey, supabaseUrl, guest: user.is_anonymous === true };
+}
+
+/**
+ * Counts this scan against the caller's daily allowance (record_scan in the database) and says whether it's
+ * within it. Before the security-fixes migration has run, the function doesn't exist yet and every scan is allowed.
+ */
+async function withinDailyScans(caller: Caller): Promise<boolean> {
+  const response = await fetch(`${caller.supabaseUrl}/rest/v1/rpc/record_scan`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${caller.token}`, apikey: caller.projectKey, "Content-Type": "application/json" },
+    body: "{}",
+  });
+  if (!response.ok) {
+    console.error(`record_scan failed: ${response.status} ${await response.text()}`);
+    return true;
+  }
+  const scans = await response.json().catch(() => 0);
+  return typeof scans !== "number" || scans <= (caller.guest ? DAILY_SCANS.guest : DAILY_SCANS.signedIn);
 }
 
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (request.method !== "POST") return json({ error: "Use POST" }, 405);
-  if (!(await isSignedInUser(request))) return json({ error: "Sign in to scan receipts" }, 401);
+  const caller = await signedInCaller(request);
+  if (!caller) return json({ error: "Sign in to scan receipts" }, 401);
 
   const apiKey = Deno.env.get("GEMINI_API_KEY");
   if (!apiKey) return json({ error: "Receipt scanning isn't set up on the server" }, 500);
@@ -108,6 +132,13 @@ Deno.serve(async (request) => {
   }
   if (!image || image.length > MAX_IMAGE_BASE64_LENGTH) return json({ error: "The file is missing or larger than 5 MB" }, 400);
   if (!ALLOWED_MEDIA_TYPES.includes(mediaType)) return json({ error: "Use a photo, screenshot or PDF" }, 400);
+
+  if (!(await withinDailyScans(caller))) {
+    return json(
+      { error: caller.guest ? "That's today's limit for scanning without an account. Sign in to scan more." : "That's today's scanning limit. Try again tomorrow." },
+      429,
+    );
+  }
 
   // Image input in the Interactions API is only on v1beta; the default v1 rejects it with a 400.
   const client = new GoogleGenAI({ apiKey, apiVersion: "v1beta" });
