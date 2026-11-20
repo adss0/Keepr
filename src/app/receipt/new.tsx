@@ -60,7 +60,7 @@ export default function NewReceiptScreen() {
         if (photo) keepPhoto(receipt.id, photo);
         haptics.success();
         showToast({ message: "Receipt saved. Keepr will remind you before each deadline." });
-        router.replace({ pathname: "/receipt/[id]", params: { id: receipt.id } });
+        router.replace({ pathname: "/receipt/[id]", params: { id: receipt.id, kept: "1" } });
       }}
     />
   );

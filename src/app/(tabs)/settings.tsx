@@ -6,6 +6,7 @@ import { Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "
 import { Segmented } from "@/components/form";
 import { Icon, type IconName } from "@/components/icon";
 import { PressScale } from "@/components/press-scale";
+import { replayIntro } from "@/components/first-run";
 import { ScreenHeader } from "@/components/screen-header";
 import { useTheme } from "@/constants/theme";
 import { useCloud } from "@/data/cloud";
@@ -219,6 +220,10 @@ export default function SettingsScreen() {
 
         <Section title="Your data">
           <LinkRow icon="share" title="Export receipts" value="PDF, CSV or Excel" onPress={() => router.push("/export")} />
+        </Section>
+
+        <Section title="Help">
+          <LinkRow icon="receipts" title="How Keepr works" onPress={replayIntro} />
         </Section>
 
         <Text style={[styles.about, { color: theme.textMuted }]}>

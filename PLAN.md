@@ -51,6 +51,7 @@
 - ✅ Export screen: pick the dates (this month, 3 months, this year, last year, all, or your own), whether to include finished receipts, photos and subscriptions, then save a PDF of all those receipts, a CSV or an Excel breakdown
 - ✅ Receipt photos on the web: signed-in users upload straight to the cloud
 - ✅ Attach a receipt photo when adding by hand, choose camera or library when replacing it, and a one-time opening animation with a matching splash
+- ✅ "Capture, keep, find" intro: shown once to someone opening Keepr with no receipts. A receipt is scanned, stamped "Kept" and found by a search, in about three seconds, and Get started works throughout (Settings → How Keepr works plays it again). A scan line passes over the photo while a scan is read, and a newly saved receipt is stamped "Kept" as it opens
 - ⏭️ **Next:** email auto-capture
 
 ---

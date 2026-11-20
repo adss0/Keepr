@@ -8,6 +8,7 @@ import { Platform, Pressable, Text } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 
+import { FirstRun } from "@/components/first-run";
 import { LaunchReceipt } from "@/components/launch-receipt";
 import { PdfPreview } from "@/components/pdf-preview";
 import { SpaceAlerts } from "@/components/space-alerts";
@@ -83,6 +84,7 @@ function AppStack() {
       </Stack>
       <SpaceAlerts />
       <PdfPreview />
+      <FirstRun />
       <LaunchReceipt />
     </>
   );
