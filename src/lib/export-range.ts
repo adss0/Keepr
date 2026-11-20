@@ -1,4 +1,5 @@
 import { lastMonths } from "@/lib/insights";
+import { type ReceiptStatus, statusOf } from "@/lib/receipt-status";
 import type { Receipt } from "@/types/receipt";
 
 export type ExportPeriod = "month" | "3months" | "year" | "lastYear" | "all" | "custom";
@@ -40,10 +41,10 @@ export function boughtIn(receipt: Receipt, range: DateRange): boolean {
   return (!range.from || receipt.purchaseDate >= range.from) && (!range.to || receipt.purchaseDate <= range.to);
 }
 
-/** The receipts bought within `range`, oldest first. Finished-with ones only if `includeFinished`. */
-export function receiptsInRange(receipts: Receipt[], range: DateRange, includeFinished: boolean): Receipt[] {
+/** The receipts bought within `range` whose status is one of `statuses`, oldest first. */
+export function receiptsInRange(receipts: Receipt[], range: DateRange, statuses: ReadonlySet<ReceiptStatus>): Receipt[] {
   return receipts
-    .filter((receipt) => (includeFinished || !receipt.closed) && boughtIn(receipt, range))
+    .filter((receipt) => statuses.has(statusOf(receipt)) && boughtIn(receipt, range))
     .sort((a, b) => a.purchaseDate.localeCompare(b.purchaseDate));
 }
 
