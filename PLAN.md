@@ -11,6 +11,7 @@
 - ✅ README rewritten around the product (PR #3)
 - ✅ Build plan moved into `PLAN.md`
 - ✅ CI on every PR and merge, and `main` protected by a ruleset
+- ✅ Strict CI: lint fails on warnings, stricter TypeScript checks, Expo package versions checked, Supabase functions type-checked, with time limits so runs stay short
 - ✅ Receipts list screen with sample data, showing each receipt’s next deadline
 - ✅ Guide for running Keepr on a phone (Expo Go, Android APK, iPhone TestFlight)
 - ✅ Unit tests (Jest) for deadlines and formatting, run in CI
@@ -128,6 +129,7 @@ All features are free for now.
 - Every change goes through a PR with a summary. No direct pushes to `main`.
 - Keepr is free for now: no Premium tier, scan limits or in-app payments.
 - Added CI (typecheck, lint, web build). `main` ruleset: PR required, CI must pass, branch must be up to date, no force-push or deletion.
+- CI is strict: lint warnings fail, TypeScript flags unused code and missing returns, and package versions must match the Expo SDK. `noUncheckedIndexedAccess` stays off: it would mostly add `!` everywhere. The Supabase functions are type-checked in a parallel job, so the required check stays as quick as before.
 - Deadlines within 3 days are shown in red, and within 7 days in amber. Receipts are sorted by their soonest deadline.
 - Web preview runs as a single-page app (no server rendering), since Keepr is a phone app first.
 
