@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ReceiptPhotoCard } from "@/components/receipt-photo-card";
 import { DeadlinePill } from "@/components/deadline-pill";
+import { KeptStamp } from "@/components/kept-stamp";
 import { Button } from "@/components/form";
 import { Fonts, useTheme } from "@/constants/theme";
 import { useToast } from "@/components/toast";
@@ -26,7 +27,8 @@ const CLOSE_OPTIONS: { reason: ClosedReason; label: string }[] = [
 ];
 
 export default function ReceiptDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // `kept` is set when the receipt has just been saved, so it gets stamped as it opens.
+  const { id, kept } = useLocalSearchParams<{ id: string; kept?: string }>();
   const receipt = useReceipt(id);
   const { closeReceipt, deleteReceipt, restoreReceipt, removeWarranty, updateReceipt } = useReceiptsStore();
   const { showToast } = useToast();
@@ -75,6 +77,7 @@ export default function ReceiptDetailScreen() {
 
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
         <Text style={[styles.price, { color: theme.text }]}>{formatPrice(receipt.pricePence)}</Text>
+        {kept === "1" && <KeptStamp pressed silent delay={250} style={styles.stamp} />}
         {details.map(([label, value]) => (
           <View key={label} style={styles.detailRow}>
             <Text style={[styles.detailLabel, { color: theme.textMuted }]}>{label}</Text>
@@ -238,6 +241,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
+  },
+  stamp: {
+    position: "absolute",
+    top: 14,
+    right: 16,
   },
   card: {
     borderWidth: StyleSheet.hairlineWidth,

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, Platform, StyleSheet, Text, View } from "react-native";
 
-import Animated, { FadeIn } from "react-native-reanimated";
+import Animated, { FadeIn, useReducedMotion } from "react-native-reanimated";
 
 import { Button } from "@/components/form";
+import { ScanLine } from "@/components/scan-line";
 import { useTheme } from "@/constants/theme";
 import { useCloud } from "@/data/cloud";
 import { haptics } from "@/data/haptics";
@@ -23,7 +24,9 @@ type Props = {
 export function ScanPanel({ onScanned, autoStart = false, sharedPhoto }: Props) {
   const theme = useTheme();
   const { status } = useCloud();
-  const [busy, setBusy] = useState(false);
+  const reduced = useReducedMotion();
+  // The photo being read, shown small with the scan line passing over it.
+  const [reading, setReading] = useState<ReceiptPhoto>();
   const [message, setMessage] = useState<string>();
   const autoStarted = useRef(false);
   const canScan = status !== "not_set_up";
@@ -70,7 +73,7 @@ export function ScanPanel({ onScanned, autoStart = false, sharedPhoto }: Props) 
   async function read(photo: ReceiptPhoto) {
     setMessage(undefined);
     try {
-      setBusy(true);
+      setReading(photo);
       const result = await extractReceipt(photo);
       if ((result as { is_receipt?: boolean } | null)?.is_receipt === false) {
         setMessage("That doesn't look like a receipt. Try another photo.");
@@ -87,15 +90,31 @@ export function ScanPanel({ onScanned, autoStart = false, sharedPhoto }: Props) 
       haptics.error();
       setMessage(errorMessage(error));
     } finally {
-      setBusy(false);
+      setReading(undefined);
     }
   }
 
   return (
     <View style={[styles.panel, { backgroundColor: theme.card, borderColor: theme.border }]}>
-      {busy ? (
+      {reading ? (
         <View style={styles.busy}>
-          <ActivityIndicator color={theme.accent} />
+          {reduced ? (
+            <ActivityIndicator color={theme.accent} />
+          ) : (
+            <View style={[styles.preview, { backgroundColor: theme.background, borderColor: theme.border }]}>
+              {reading.mediaType.startsWith("image/") ? (
+                <Image source={{ uri: `data:${reading.mediaType};base64,${reading.base64}` }} style={styles.previewImage} />
+              ) : (
+                // A PDF can't be drawn as a picture here, so it gets a page of faint lines instead.
+                <View style={styles.page}>
+                  {[70, 90, 55, 80, 65].map((width) => (
+                    <View key={width} style={[styles.pageLine, { width: `${width}%`, backgroundColor: theme.border }]} />
+                  ))}
+                </View>
+              )}
+              <ScanLine repeat />
+            </View>
+          )}
           <Text style={[styles.text, { color: theme.text }]}>Reading your receipt…</Text>
         </View>
       ) : (
@@ -137,8 +156,28 @@ const styles = StyleSheet.create({
   busy: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingVertical: 8,
+    gap: 14,
+    paddingVertical: 4,
+  },
+  preview: {
+    width: 56,
+    height: 76,
+    borderRadius: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: "hidden",
+  },
+  previewImage: {
+    width: "100%",
+    height: "100%",
+  },
+  page: {
+    flex: 1,
+    padding: 8,
+    gap: 6,
+  },
+  pageLine: {
+    height: 3,
+    borderRadius: 2,
   },
   title: {
     fontSize: 16,

@@ -18,6 +18,8 @@ export type Settings = {
   /** How the Receipts tab shows receipts, and in what order. */
   receiptsView: ReceiptsView;
   receiptsSort: ReceiptsSort;
+  /** Whether the "Capture, keep, find" intro has been shown (or skipped) on this phone. */
+  introSeen: boolean;
 };
 
 const DEFAULT_SETTINGS: Settings = {
@@ -27,6 +29,7 @@ const DEFAULT_SETTINGS: Settings = {
   appearance: "system",
   receiptsView: "list",
   receiptsSort: "deadline",
+  introSeen: false,
 };
 
 type SettingsContextValue = {

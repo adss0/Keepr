@@ -10,8 +10,8 @@ import Animated, {
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 
+import { KeptStamp } from "@/components/kept-stamp";
 import { Fonts, useTheme } from "@/constants/theme";
-import { haptics } from "@/data/haptics";
 import { todayIso } from "@/lib/deadlines";
 import { formatFullDate } from "@/lib/format";
 
@@ -53,7 +53,6 @@ export function LaunchReceipt() {
   const reduced = useReducedMotion();
   const [visible, setVisible] = useState(!launchDone);
   const feed = useSharedValue(0);
-  const stamp = useSharedValue(0);
   const exit = useSharedValue(0);
 
   useEffect(() => {
@@ -64,17 +63,7 @@ export function LaunchReceipt() {
       return;
     }
     const finish = () => setVisible(false);
-    const land = () => haptics.selection();
     feed.set(withDelay(80, withTiming(1, { duration: 560, easing: FEED_STEPS })));
-    // The stamp comes down hard: no fade, just a quick press from slightly bigger.
-    stamp.set(
-      withDelay(
-        700,
-        withTiming(1, { duration: 90, easing: EASE_OUT }, (done) => {
-          if (done) scheduleOnRN(land);
-        }),
-      ),
-    );
     // Then the receipt is torn off upwards and the app is there.
     const timer = setTimeout(markLaunchDone, 980);
     exit.set(
@@ -86,7 +75,7 @@ export function LaunchReceipt() {
       ),
     );
     return () => clearTimeout(timer);
-  }, [visible, reduced, feed, stamp, exit]);
+  }, [visible, reduced, feed, exit]);
 
   const overlayStyle = useAnimatedStyle(() => ({
     opacity: 1 - exit.get(),
@@ -94,10 +83,6 @@ export function LaunchReceipt() {
   }));
   const paperStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: (feed.get() - 1) * PAPER_HEIGHT }],
-  }));
-  const stampStyle = useAnimatedStyle(() => ({
-    opacity: stamp.get() > 0 ? 1 : 0,
-    transform: [{ rotate: "-9deg" }, { scale: 1.12 - stamp.get() * 0.12 }],
   }));
 
   if (!visible || reduced) return null;
@@ -133,9 +118,8 @@ export function LaunchReceipt() {
             ))}
             <View style={[styles.rule, { borderColor: theme.border }]} />
             <Text style={[styles.mono, styles.thanks, { color: theme.textMuted }]}>YOUR RIGHTS, ON RECORD</Text>
-            <Animated.View style={[styles.stamp, { borderColor: theme.accent }, stampStyle]}>
-              <Text style={[styles.stampText, { color: theme.accent }]}>KEPT</Text>
-            </Animated.View>
+            {/* The stamp comes down hard once the receipt has printed. */}
+            <KeptStamp pressed delay={700} style={styles.stamp} />
             <View style={styles.teeth}>
               {Array.from({ length: TEETH }, (_, index) => (
                 <View key={index} style={[styles.tooth, { backgroundColor: theme.background }]} />
@@ -219,15 +203,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 18,
     top: 82,
-    borderWidth: 2.5,
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-  },
-  stampText: {
-    fontFamily: Fonts.monoBold,
-    fontSize: 20,
-    letterSpacing: 3,
   },
   teeth: {
     position: "absolute",
