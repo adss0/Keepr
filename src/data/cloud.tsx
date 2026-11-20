@@ -20,6 +20,7 @@ import {
   rowToSubscription,
   type SubscriptionRow,
   subscriptionToRow,
+  withCloudCopies,
 } from "@/lib/cloud-rows";
 import type { Receipt } from "@/types/receipt";
 import type { Subscription } from "@/types/subscription";
@@ -33,10 +34,20 @@ export type CloudStatus = "not_set_up" | "signed_out" | "syncing" | "synced" | "
 type CloudContextValue = {
   status: CloudStatus;
   email: string | undefined;
+  /** The name others see in shared spaces: the one the user chose, else their Google name. */
+  displayName: string | undefined;
+  /** Saves the name others see. */
+  setDisplayName: (name: string) => Promise<void>;
   /** The signed-in user's id, for their backed-up photos. */
   userId: string | undefined;
   lastSyncedAt: Date | undefined;
   error: string | undefined;
+  /** Why the account was signed out when the person didn't ask, such as a sign-in that couldn't be refreshed. */
+  notice: string | undefined;
+  /** The ways this account can sign in, such as ["email", "google"]. */
+  providers: string[];
+  /** Signs out every other phone and browser using this account; this one stays signed in. */
+  signOutOtherDevices: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   /** Creates an account. Resolves with a message to show, such as "check your email". */
   signUp: (email: string, password: string) => Promise<string>;
@@ -94,6 +105,29 @@ async function upsertRows<R extends Record<string, unknown>>(table: "receipts" |
   }
 }
 
+/** Postgres's "permission denied", which row level security gives for a row this user may not change. */
+const PERMISSION_DENIED = "42501";
+
+/**
+ * After an upsert failed, saves the rows one at a time and returns the ids the database refused permission for
+ * (shared items someone else added). Any other failure is thrown as before. No error: nothing refused.
+ */
+async function refusedRows<R extends { id: string }>(
+  table: "receipts" | "subscriptions",
+  error: { code?: string } | null | undefined,
+  rows: R[],
+): Promise<Set<string>> {
+  const refused = new Set<string>();
+  if (!error) return refused;
+  if (error.code !== PERMISSION_DENIED) throw error;
+  for (const row of rows) {
+    const result = await upsertRows(table, [row]);
+    if (result.error?.code === PERMISSION_DENIED) refused.add(row.id);
+    else if (result.error) throw result.error;
+  }
+  return refused;
+}
+
 /**
  * Signs in with the tokens Supabase put in a link (a password reset, or the way back from Google).
  * False if the link holds none; throws the link's own error, such as an expired link.
@@ -116,6 +150,9 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   const [syncState, setSyncState] = useState<"syncing" | "synced" | "error">("syncing");
   const [error, setError] = useState<string>();
   const [lastSyncedAt, setLastSyncedAt] = useState<Date>();
+  const [notice, setNotice] = useState<string>();
+  /** Set while the person signs out themselves, so it isn't reported as an unexpected sign-out. */
+  const signingOut = useRef(false);
   /** The user the cloud was last pulled for, and how many pulls so far. Changes are only pushed after a pull. */
   const [pulled, setPulled] = useState<{ userId: string; count: number }>();
   /** Pulls and pushes run one at a time: overlapping ones could undo each other (e.g. bring back a delete). */
@@ -126,9 +163,26 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!supabase) return;
     // An anonymous session only exists so signed-out users can scan; it never syncs or counts as signed in.
-    const keepRealSession = (newSession: Session | null) => setSession(newSession?.user.is_anonymous ? null : newSession);
+    const keepRealSession = (newSession: Session | null) => {
+      const real = newSession?.user.is_anonymous ? null : newSession;
+      setSession(real);
+      if (real) return;
+      // Signed out: what the last account synced (and any error) no longer applies.
+      setLastSyncedAt(undefined);
+      setError(undefined);
+      setSyncState("syncing");
+    };
     supabase.auth.getSession().then(({ data }) => keepRealSession(data.session));
-    const { data } = supabase.auth.onAuthStateChange((_event, newSession) => keepRealSession(newSession));
+    const { data } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (event === "SIGNED_OUT" && !signingOut.current) {
+        setNotice(
+          "Keepr was signed out because your sign-in couldn't be renewed, usually after a while offline. Sign in again to carry on backing up. Your receipts are still here.",
+        );
+      }
+      if (newSession && !newSession.user.is_anonymous) setNotice(undefined);
+      signingOut.current = false;
+      keepRealSession(newSession);
+    });
     return () => data.subscription.unsubscribe();
   }, []);
 
@@ -167,14 +221,30 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     }
 
     setSyncState("syncing");
-    const results = await Promise.all([
+    const [receiptsSaved, subscriptionsSaved, ...deletes] = await Promise.all([
       changedReceipts.length > 0 ? upsertRows("receipts", changedReceipts.map(receiptToRow)) : null,
       changedSubscriptions.length > 0 ? upsertRows("subscriptions", changedSubscriptions.map(subscriptionToRow)) : null,
+      // A delete the database refuses removes nothing without an error, and the next pull brings the item back.
       deletedReceipts.length > 0 ? supabase.from("receipts").delete().in("id", deletedReceipts) : null,
       deletedSubscriptions.length > 0 ? supabase.from("subscriptions").delete().in("id", deletedSubscriptions) : null,
     ]);
-    const failed = results.find((result) => result?.error);
-    if (failed?.error) throw failed.error;
+    const failedDelete = deletes.find((result) => result?.error);
+    if (failedDelete?.error) throw failedDelete.error;
+    // Shared items this account isn't allowed to change: save the rest, and put those back as the cloud has them.
+    const refusedReceipts = await refusedRows("receipts", receiptsSaved?.error, changedReceipts.map(receiptToRow));
+    const refusedSubscriptions = await refusedRows(
+      "subscriptions",
+      subscriptionsSaved?.error,
+      changedSubscriptions.map(subscriptionToRow),
+    );
+    const savedReceipts = withCloudCopies(localReceipts, before.receipts, refusedReceipts);
+    const savedSubscriptions = withCloudCopies(localSubscriptions, before.subscriptions, refusedSubscriptions);
+    const refused = refusedReceipts.size + refusedSubscriptions.size;
+    if (refused > 0) {
+      // Local is the "base" here, so only the refused items change: back to the cloud's copy.
+      mergeReceipts(savedReceipts, localReceipts);
+      mergeSubscriptions(savedSubscriptions, localSubscriptions);
+    }
     // Tell other members about receipts and subscriptions just added to their spaces.
     if ([...changedReceipts, ...changedSubscriptions].some((item) => item.spaceId)) notifySpaceMembers();
 
@@ -187,12 +257,16 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     ]).catch((photoError: unknown) => console.warn("Couldn't sync receipt photos", photoError));
 
     // The cloud now matches the phone (anything others added since arrives with the next pull).
-    base.current = { userId, receipts: localReceipts, subscriptions: localSubscriptions };
+    base.current = { userId, receipts: savedReceipts, subscriptions: savedSubscriptions };
     await saveSyncBase(base.current);
     setLastSyncedAt(new Date());
     setSyncState("synced");
-    setError(undefined);
-  }, []);
+    setError(
+      refused > 0
+        ? `${refused === 1 ? "A change to a shared item wasn't" : `${refused} changes to shared items weren't`} saved: only whoever added an item, or the space's owner and admins, can change it. It's back as it was.`
+        : undefined,
+    );
+  }, [mergeReceipts, mergeSubscriptions]);
 
   /** Adds work to the sync queue, reporting any error on the Account screen. */
   const enqueue = useCallback((work: () => Promise<void>) => {
@@ -273,7 +347,14 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     // Stop this phone getting the account's shared-space notifications first, while still signed in.
     await forgetPushToken().catch(() => undefined);
+    signingOut.current = true;
     await supabase?.auth.signOut();
+  }, []);
+
+  const signOutOtherDevices = useCallback(async () => {
+    if (!supabase) return;
+    const { error: signOutError } = await supabase.auth.signOut({ scope: "others" });
+    if (signOutError) throw signOutError;
   }, []);
 
   const completeSignInRedirect = useCallback((url: string) => signInWithLinkTokens(signInRedirectParams(url)), []);
@@ -309,6 +390,12 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     if (updateError) throw updateError;
   }, []);
 
+  const setDisplayName = useCallback(async (name: string) => {
+    if (!supabase) return;
+    const { error: updateError } = await supabase.auth.updateUser({ data: { display_name: name.trim() } });
+    if (updateError) throw updateError;
+  }, []);
+
   const syncNow = useCallback(async () => {
     if (!session) return;
     setSyncState("syncing");
@@ -316,14 +403,23 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   }, [pullNow, session]);
 
   const status: CloudStatus = !supabase ? "not_set_up" : !session ? "signed_out" : syncState;
+  const metadata = session?.user.user_metadata;
+  const displayName = [metadata?.display_name, metadata?.full_name, metadata?.name]
+    .find((name): name is string => typeof name === "string" && name.trim() !== "")
+    ?.trim();
 
   const value = useMemo(
     () => ({
       status,
       email: session?.user.email,
+      displayName,
+      setDisplayName,
       userId: session?.user.id,
+      providers: (session?.user.app_metadata.providers as string[] | undefined) ?? [],
       lastSyncedAt,
       error,
+      notice,
+      signOutOtherDevices,
       signIn,
       signUp,
       signOut,
@@ -337,8 +433,12 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     [
       status,
       session,
+      displayName,
+      setDisplayName,
       lastSyncedAt,
       error,
+      notice,
+      signOutOtherDevices,
       signIn,
       signUp,
       signOut,

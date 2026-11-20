@@ -13,6 +13,8 @@ export type ReceiptRow = {
   return_window_days: number | null;
   warranty_months: number | null;
   photo: string | null;
+  /** Missing until the photo-source migration has run. */
+  photo_source?: string | null;
   space_id: string | null;
   closed_reason: ClosedReason | null;
   closed_on: string | null;
@@ -47,6 +49,7 @@ export function receiptToRow(receipt: Receipt): ReceiptRow {
     return_window_days: receipt.returnWindowDays ?? null,
     warranty_months: receipt.warrantyMonths ?? null,
     photo: receipt.photo ?? null,
+    photo_source: receipt.photoSource ?? null,
     space_id: receipt.spaceId ?? null,
     closed_reason: receipt.closed?.reason ?? null,
     closed_on: receipt.closed?.on ?? null,
@@ -67,6 +70,7 @@ export function rowToReceipt(row: ReceiptRow): Receipt {
     ...(row.warranty_months !== null && { warrantyMonths: row.warranty_months }),
     // Rows saved before photos existed have no photo column value at all.
     ...(row.photo != null && { photo: row.photo }),
+    ...(row.photo_source != null && { photoSource: row.photo_source }),
     ...(row.printed_text != null && { printedText: row.printed_text }),
     ...(row.closed_reason != null && row.closed_on != null && { closed: { reason: row.closed_reason, on: row.closed_on } }),
     ...cloudFields(row),
@@ -150,4 +154,10 @@ export function reconcile<T extends { id: string }, R>(local: T[], remote: T[], 
 export function removedIds<T extends { id: string }>(before: T[], after: T[]): string[] {
   const afterIds = new Set(after.map((item) => item.id));
   return before.filter((item) => !afterIds.has(item.id)).map((item) => item.id);
+}
+
+/** The list with each refused item (one the database wouldn't let this user change) back as the cloud has it. */
+export function withCloudCopies<T extends { id: string }>(local: T[], cloud: T[], refused: Set<string>): T[] {
+  if (refused.size === 0) return local;
+  return local.map((item) => (refused.has(item.id) ? (cloud.find((copy) => copy.id === item.id) ?? item) : item));
 }

@@ -104,3 +104,19 @@ describe("getDeadlines with huge saved values", () => {
     expect(deadlines.find((d) => d.kind === "warranty")?.date).toBe("2126-01-01");
   });
 });
+
+describe("a 0-month warranty", () => {
+  it("is no warranty at all", () => {
+    const kinds = getDeadlines({
+      id: "g",
+      product: "Gift card",
+      retailer: "Greggs",
+      pricePence: 3500,
+      purchaseDate: "2026-11-20",
+      channel: "in_store",
+      paymentMethod: "debit_card",
+      warrantyMonths: 0,
+    }).map((deadline) => deadline.kind);
+    expect(kinds).not.toContain("warranty");
+  });
+});

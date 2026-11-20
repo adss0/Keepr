@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import { type Theme, useTheme } from "@/constants/theme";
-import { type Deadline, daysBetween } from "@/lib/deadlines";
+import { type Deadline, DEADLINE_WORDS, daysBetween } from "@/lib/deadlines";
 import { formatDate } from "@/lib/format";
 import { closedText } from "@/lib/receipt-status";
 import type { Receipt } from "@/types/receipt";
@@ -48,11 +48,11 @@ export function DeadlinePill({ deadline, today, closed }: Props) {
   } else if (!deadline || daysLeft === undefined) {
     text = "No active deadlines";
   } else if (daysLeft < 0) {
-    text = `${deadline.label}: ended ${formatDate(deadline.date, currentYear)}`;
+    text = `${DEADLINE_WORDS[deadline.kind].ended} ${formatDate(deadline.date, currentYear)}`;
   } else if (daysLeft <= SOON_DAYS) {
-    text = `${deadline.label}: ${describeDaysLeft(daysLeft)}`;
+    text = `${DEADLINE_WORDS[deadline.kind].name}: ${describeDaysLeft(daysLeft)}`;
   } else {
-    text = `${deadline.label}: until ${formatDate(deadline.date, currentYear)}`;
+    text = `${DEADLINE_WORDS[deadline.kind].by} ${formatDate(deadline.date, currentYear)}`;
   }
 
   return (

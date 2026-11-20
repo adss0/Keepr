@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 
 import { LaunchReceipt } from "@/components/launch-receipt";
+import { PdfPreview } from "@/components/pdf-preview";
 import { SpaceAlerts } from "@/components/space-alerts";
 import { ToastProvider } from "@/components/toast";
 import { Fonts, useColorMode, useTheme } from "@/constants/theme";
@@ -19,6 +20,10 @@ import { RemindersProvider } from "@/data/reminders";
 import { SettingsProvider } from "@/data/settings";
 import { SpacesProvider } from "@/data/spaces";
 import { SubscriptionsProvider } from "@/data/subscriptions";
+
+// A screen opened straight from a link (such as Account, on the way back from Google) gets the tabs underneath,
+// so it has a back button.
+export const unstable_settings = { anchor: "(tabs)" };
 
 // The splash stays up until Keepr's fonts are ready, then fades (iOS) into the opening receipt.
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -77,6 +82,7 @@ function AppStack() {
         <Stack.Screen name="reset-password" options={{ title: "Reset password" }} />
       </Stack>
       <SpaceAlerts />
+      <PdfPreview />
       <LaunchReceipt />
     </>
   );

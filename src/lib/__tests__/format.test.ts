@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 
-import { formatDate, formatFullDate, formatPrice } from "@/lib/format";
+import { errorMessage, formatDate, formatFullDate, formatPrice } from "@/lib/format";
 
 describe("formatPrice", () => {
   it("formats pence as pounds", () => {
@@ -30,5 +30,15 @@ describe("formatFullDate", () => {
   it("always includes the year", () => {
     expect(formatFullDate("2026-11-05")).toBe("5 Nov 2026");
     expect(formatFullDate("2027-10-30")).toBe("30 Oct 2027");
+  });
+});
+
+describe("errorMessage", () => {
+  it("reads Errors, Supabase's plain error objects and strings", () => {
+    expect(errorMessage(new Error("Offline"))).toBe("Offline");
+    // What a failed Supabase request returns: not an Error, so it used to show as "[object Object]".
+    expect(errorMessage({ message: "JWT expired", code: "PGRST301" })).toBe("JWT expired");
+    expect(errorMessage("Plain text")).toBe("Plain text");
+    expect(errorMessage({ code: 500 })).toBe("Something went wrong.");
   });
 });

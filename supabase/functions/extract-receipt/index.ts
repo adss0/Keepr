@@ -37,7 +37,8 @@ const RECEIPT_SCHEMA = {
     },
     product: {
       type: "string",
-      description: "The main item bought. If there are several items, the most expensive one.",
+      description:
+        "A short title saying what the receipt is for, under 60 characters. One item: its name as a shopper would say it, e.g. \"Sony WH-1000XM5 headphones\". Several items: what the shopping was, then the main things, e.g. \"Food shop: donuts, energy drinks and more\" or \"Phone case and charger\". Never just the first item.",
     },
     total_pence: { type: "integer", description: "Total paid, in pence. £79.99 is 7999." },
     purchase_date: { type: "string", description: "Date of purchase as YYYY-MM-DD." },
@@ -56,6 +57,7 @@ const RECEIPT_SCHEMA = {
 
 const PROMPT = `You read photos, screenshots and PDFs of UK shop receipts and online order confirmations for Keepr, an app that tracks return and warranty deadlines.
 Extract only what the image shows. Leave out any field that isn't visible or that you would have to guess.
+Always fill in retailer, product, total_pence and purchase_date whenever the receipt shows them, and list every item.
 Card payments marked "Visa Credit", "Mastercard Credit" or "Amex" are credit_card; "Debit", "Contactless debit" or "Visa Debit" are debit_card.
 An emailed order confirmation or delivery note is "online"; a till receipt is "in_store".
 Extract the details of this receipt.`;

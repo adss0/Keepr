@@ -5,6 +5,7 @@ import { Alert, Platform, Pressable, ScrollView, Share, StyleSheet, Switch, Text
 import { Button, Field, Segmented } from "@/components/form";
 import { Icon } from "@/components/icon";
 import { ReceiptCard } from "@/components/receipt-card";
+import { allDates, ReceiptFilters } from "@/components/receipt-filters";
 import { useToast } from "@/components/toast";
 import { Fonts, useTheme } from "@/constants/theme";
 import { useCloud } from "@/data/cloud";
@@ -14,6 +15,8 @@ import { useSpaceActivity } from "@/data/space-activity";
 import { canManage, type Space, type SpaceMember, useSpaces } from "@/data/spaces";
 import { useSubscriptions } from "@/data/subscriptions";
 import { todayIso } from "@/lib/deadlines";
+import { boughtIn, periodRange } from "@/lib/export-range";
+import { type ReceiptsSort, sortReceipts } from "@/lib/receipt-views";
 import { errorMessage, formatPrice } from "@/lib/format";
 import { activityDetail, activityText, timeAgo } from "@/lib/space-activity";
 import { formatInviteCode, KIND_LABELS, ROLE_LABELS } from "@/lib/spaces";
@@ -166,9 +169,15 @@ function ReceiptsTab({ space }: { space: Space }) {
   const receipts = useReceipts();
   const { subscriptions } = useSubscriptions();
   const today = todayIso();
-  const shared = receipts
-    .filter((receipt) => receipt.spaceId === space.id)
-    .sort((a, b) => b.purchaseDate.localeCompare(a.purchaseDate));
+  const [sort, setSort] = useState<ReceiptsSort>("newest");
+  const [dates, setDates] = useState(() => allDates(today));
+  const inSpace = receipts.filter((receipt) => receipt.spaceId === space.id);
+  const range = periodRange(dates.period, today, dates);
+  const shared = sortReceipts(
+    inSpace.filter((receipt) => boughtIn(receipt, range)),
+    sort,
+    today,
+  );
   const total = shared.reduce((sum, receipt) => sum + receipt.pricePence, 0);
   const sharedSubscriptions = subscriptions.filter((subscription) => subscription.spaceId === space.id).length;
 
@@ -186,10 +195,33 @@ function ReceiptsTab({ space }: { space: Space }) {
           ? ` · ${sharedSubscriptions} shared ${sharedSubscriptions === 1 ? "subscription" : "subscriptions"}`
           : ""}
       </Text>
-      {shared.length === 0 ? (
+      {inSpace.length > 0 && (
+        <ReceiptFilters
+          sort={sort}
+          onSortChange={setSort}
+          dates={dates}
+          onDatesChange={setDates}
+          today={today}
+          trailing={
+            <Button
+              title="Export"
+              variant="ghost"
+              onPress={() =>
+                router.push({
+                  pathname: "/export",
+                  params: { space: space.id, period: dates.period, from: dates.from, to: dates.to },
+                })
+              }
+            />
+          }
+        />
+      )}
+      {inSpace.length === 0 ? (
         <Text style={[styles.body, { color: theme.textMuted }]}>
           No shared receipts yet. Add one here, or pick this space under &quot;Who&apos;s it for?&quot; when you add a receipt.
         </Text>
+      ) : shared.length === 0 ? (
+        <Text style={[styles.body, { color: theme.textMuted }]}>No receipts bought in these dates.</Text>
       ) : (
         shared.map((receipt) => <ReceiptCard key={receipt.id} receipt={receipt} today={today} />)
       )}
@@ -424,6 +456,28 @@ function SettingsTab({ space, onError }: { space: Space; onError: (message: stri
         />
         <Text style={[styles.hint, { color: theme.textMuted }]}>
           Just for you, and just for this space. Nobody is told about what you do yourself.
+        </Text>
+      </View>
+
+      <View style={card}>
+        <Text style={[styles.title, { color: theme.text }]}>Who can change shared items</Text>
+        {manager ? (
+          <Segmented
+            label=""
+            value={space.membersCanEdit ? "everyone" : "adder"}
+            options={[
+              { value: "adder", label: "Whoever added it" },
+              { value: "everyone", label: "Everyone" },
+            ]}
+            onChange={(choice) =>
+              act("edit-rights", () => spaces.setMembersCanEdit(space.id, choice === "everyone"))
+            }
+          />
+        ) : null}
+        <Text style={[styles.hint, { color: theme.textMuted }]}>
+          {space.membersCanEdit
+            ? "Everyone in the space can edit, finish with or delete any shared receipt or subscription."
+            : "Only whoever added a receipt or subscription, and the owner and admins, can edit, finish with or delete it. Everyone can still see and export it."}
         </Text>
       </View>
 

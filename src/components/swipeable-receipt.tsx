@@ -7,6 +7,7 @@ import { useToast } from "@/components/toast";
 import { useTheme } from "@/constants/theme";
 import { haptics } from "@/data/haptics";
 import { useReceiptsStore } from "@/data/receipts";
+import { useSpaces } from "@/data/spaces";
 import { todayIso } from "@/lib/deadlines";
 import type { Receipt } from "@/types/receipt";
 
@@ -14,6 +15,8 @@ import type { Receipt } from "@/types/receipt";
 export function useReceiptActions(receipt: Receipt) {
   const { closeReceipt, deleteReceipt, restoreReceipt } = useReceiptsStore();
   const { showToast } = useToast();
+  /** Shared receipts can only be changed by whoever added them, or the space's owner and admins (unless it allows all). */
+  const editable = useSpaces().canChange(receipt);
 
   function toggleArchive() {
     const before = receipt.closed;
@@ -39,13 +42,16 @@ export function useReceiptActions(receipt: Receipt) {
   }
 
   return {
+    editable,
     archiveLabel: receipt.closed ? "Make active" : "Archive",
     toggleArchive,
     remove,
-    accessibilityActions: [
-      { name: "archive", label: receipt.closed ? "Make active" : "Archive" },
-      { name: "delete", label: "Delete" },
-    ],
+    accessibilityActions: editable
+      ? [
+          { name: "archive", label: receipt.closed ? "Make active" : "Archive" },
+          { name: "delete", label: "Delete" },
+        ]
+      : [],
     onAccessibilityAction: (name: string) => (name === "delete" ? remove() : name === "archive" ? toggleArchive() : undefined),
   };
 }
@@ -54,6 +60,7 @@ export function useReceiptActions(receipt: Receipt) {
 export function SwipeableReceipt({ receipt, children }: { receipt: Receipt; children: ReactNode }) {
   const theme = useTheme();
   const actions = useReceiptActions(receipt);
+  if (!actions.editable) return children;
 
   return (
     <ReanimatedSwipeable

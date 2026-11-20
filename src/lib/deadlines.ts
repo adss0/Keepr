@@ -16,6 +16,14 @@ export type Deadline = {
 };
 
 /** Plain-English explanation of what each deadline means for the buyer. */
+/** Short wording for pills and cards: "Refund by 11 Dec", "Refund: 3 days left", "Refund ended 11 Nov". */
+export const DEADLINE_WORDS: Record<DeadlineKind, { by: string; name: string; ended: string }> = {
+  faulty_reject: { by: "Refund by", name: "Refund", ended: "Refund ended" },
+  online_cancellation: { by: "Cancel by", name: "Cancel", ended: "Cancelling ended" },
+  retailer_return: { by: "Return by", name: "Return", ended: "Return ended" },
+  warranty: { by: "Warranty until", name: "Warranty", ended: "Warranty ended" },
+};
+
 export const DEADLINE_EXPLANATIONS: Record<DeadlineKind, string> = {
   online_cancellation:
     "Bought online, by phone or by mail order? You can cancel for any reason within 14 days of delivery, then return it within another 14 days for a full refund (Consumer Contracts Regulations 2013).",
@@ -89,7 +97,8 @@ export function getDeadlines(receipt: Receipt): Deadline[] {
     });
   }
 
-  if (receipt.warrantyMonths !== undefined) {
+  // A 0-month warranty (a scan that found none) is no warranty.
+  if (receipt.warrantyMonths !== undefined && receipt.warrantyMonths > 0) {
     deadlines.push({
       kind: "warranty",
       label: "Warranty",

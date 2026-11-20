@@ -25,7 +25,7 @@ export default function NewReceiptScreen() {
   function keepPhoto(receiptId: string, photo: ReceiptPhoto) {
     storePhoto(receiptId, photo, userId)
       .then((name) => {
-        if (name) setReceiptPhoto(receiptId, name);
+        if (name) setReceiptPhoto(receiptId, name, photo.source);
       })
       .catch((error: unknown) => {
         // The receipt itself is saved; only the photo is missing, and it can be added from the receipt screen.

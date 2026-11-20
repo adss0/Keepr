@@ -12,7 +12,8 @@ import { formatPrice } from "@/lib/format";
 import type { Receipt } from "@/types/receipt";
 
 /** A receipt as a grid tile: its photo (or the shop's initial), product, price and next deadline. */
-export function ReceiptTile({ receipt, today }: { receipt: Receipt; today: string }) {
+/** `fill` stretches the tile to its parent, for when something else (a tick box) sets the column width. */
+export function ReceiptTile({ receipt, today, fill }: { receipt: Receipt; today: string; fill?: boolean }) {
   const theme = useTheme();
   const { userId } = useCloud();
   const photoUri = usePhotoUri(isPdf(receipt.photo) ? undefined : receipt.photo, receipt.ownerId ?? userId);
@@ -20,7 +21,7 @@ export function ReceiptTile({ receipt, today }: { receipt: Receipt; today: strin
 
   return (
     // The wrapper sets the column width: the pressable inside only stretches to fill its parent.
-    <View style={styles.cell}>
+    <View style={fill ? undefined : styles.cell}>
       <Link href={{ pathname: "/receipt/[id]", params: { id: receipt.id } }} asChild>
         <PressScale
           accessibilityRole="button"

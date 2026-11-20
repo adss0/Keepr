@@ -1,7 +1,7 @@
 import Constants from "expo-constants";
 import { router } from "expo-router";
-import type { ReactNode } from "react";
-import { Linking, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { type ReactNode, useState } from "react";
+import { Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 
 import { Segmented } from "@/components/form";
 import { Icon, type IconName } from "@/components/icon";
@@ -45,6 +45,53 @@ function LinkRow({ icon, title, value, onPress }: { icon: IconName; title: strin
   );
 }
 
+/**
+ * One setting as a single row showing its current choice; tapping it shows every option underneath.
+ * Keeps the screen short without hiding what the options are.
+ */
+function ChoiceRow<T extends string>({
+  title,
+  value,
+  options,
+  onChange,
+  open,
+  onToggle,
+  divided,
+}: {
+  title: string;
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (value: T) => void;
+  open: boolean;
+  onToggle: () => void;
+  divided?: boolean;
+}) {
+  const theme = useTheme();
+  const current = options.find((option) => option.value === value)?.label;
+  return (
+    <View style={divided && [styles.divided, { borderTopColor: theme.border }]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${title}: ${current}`}
+        accessibilityState={{ expanded: open }}
+        onPress={onToggle}
+        style={styles.choiceRow}
+      >
+        <Text style={[styles.rowTitle, { color: theme.text }]}>{title}</Text>
+        <Text style={[styles.rowValue, { color: open ? theme.accent : theme.textMuted }]} numberOfLines={1}>
+          {current}
+        </Text>
+        <Icon name={open ? "chevronUp" : "chevronDown"} size={16} color={theme.textMuted} />
+      </Pressable>
+      {open && (
+        <View style={styles.choices}>
+          <Segmented label="" value={value} options={options} onChange={onChange} />
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function SettingsScreen() {
   const theme = useTheme();
   const { settings, update } = useSettings();
@@ -52,6 +99,9 @@ export default function SettingsScreen() {
   const reminders = useReminders();
   const { spaces } = useSpaces();
   const r = settings.reminders;
+  /** The one choice row that's open, so the screen stays short. */
+  const [openRow, setOpenRow] = useState<string>();
+  const toggle = (row: string) => () => setOpenRow((current) => (current === row ? undefined : row));
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
@@ -85,19 +135,20 @@ export default function SettingsScreen() {
               onPress={reminders.permission === "denied" ? () => Linking.openSettings() : reminders.request}
             />
           )}
-          <View style={styles.control}>
-            <Segmented
-              label="Remind me before"
-              value={String(r.daysBefore)}
-              options={[
-                { value: "1", label: "1 day" },
-                { value: "3", label: "3 days" },
-                { value: "7", label: "1 week" },
-                { value: "14", label: "2 weeks" },
-              ]}
-              onChange={(value) => update({ reminders: { ...r, daysBefore: Number(value) } })}
-            />
-          </View>
+          <ChoiceRow
+            title="Remind me before"
+            value={String(r.daysBefore)}
+            options={[
+              { value: "1", label: "1 day" },
+              { value: "3", label: "3 days" },
+              { value: "7", label: "1 week" },
+              { value: "14", label: "2 weeks" },
+            ]}
+            onChange={(value) => update({ reminders: { ...r, daysBefore: Number(value) } })}
+            open={openRow === "days"}
+            onToggle={toggle("days")}
+            divided={reminders.permission === "undetermined" || reminders.permission === "denied"}
+          />
           <View style={[styles.switchRow, { borderTopColor: theme.border }]}>
             <Text style={[styles.rowTitle, { color: theme.text }]}>Also on the last day</Text>
             <Switch
@@ -107,46 +158,48 @@ export default function SettingsScreen() {
               trackColor={{ true: theme.accent, false: theme.border }}
             />
           </View>
-          <View style={[styles.control, styles.divided, { borderTopColor: theme.border }]}>
-            <Segmented
-              label="Time of day"
-              value={String(r.hour)}
-              options={[
-                { value: "8", label: "8am" },
-                { value: "9", label: "9am" },
-                { value: "12", label: "Noon" },
-                { value: "18", label: "6pm" },
-              ]}
-              onChange={(value) => update({ reminders: { ...r, hour: Number(value) } })}
-            />
-          </View>
+          <ChoiceRow
+            title="Time of day"
+            value={String(r.hour)}
+            options={[
+              { value: "8", label: "8am" },
+              { value: "9", label: "9am" },
+              { value: "12", label: "Noon" },
+              { value: "18", label: "6pm" },
+            ]}
+            onChange={(value) => update({ reminders: { ...r, hour: Number(value) } })}
+            open={openRow === "hour"}
+            onToggle={toggle("hour")}
+            divided
+          />
         </Section>
 
         <Section title="New receipts" footer="These are filled in for you when you add a receipt. You can still change them each time.">
-          <View style={styles.control}>
-            <Segmented
-              label="Usually bought"
-              value={settings.defaultChannel}
-              options={[
-                { value: "in_store", label: "In store" },
-                { value: "online", label: "Online" },
-              ]}
-              onChange={(defaultChannel) => update({ defaultChannel })}
-            />
-          </View>
-          <View style={[styles.control, styles.divided, { borderTopColor: theme.border }]}>
-            <Segmented
-              label="Usually paid by"
-              value={settings.defaultPaymentMethod}
-              options={[
-                { value: "debit_card", label: "Debit card" },
-                { value: "credit_card", label: "Credit card" },
-                { value: "cash", label: "Cash" },
-                { value: "other", label: "Other" },
-              ]}
-              onChange={(defaultPaymentMethod) => update({ defaultPaymentMethod })}
-            />
-          </View>
+          <ChoiceRow
+            title="Usually bought"
+            value={settings.defaultChannel}
+            options={[
+              { value: "in_store", label: "In store" },
+              { value: "online", label: "Online" },
+            ]}
+            onChange={(defaultChannel) => update({ defaultChannel })}
+            open={openRow === "channel"}
+            onToggle={toggle("channel")}
+          />
+          <ChoiceRow
+            title="Usually paid by"
+            value={settings.defaultPaymentMethod}
+            options={[
+              { value: "debit_card", label: "Debit card" },
+              { value: "credit_card", label: "Credit card" },
+              { value: "cash", label: "Cash" },
+              { value: "other", label: "Other" },
+            ]}
+            onChange={(defaultPaymentMethod) => update({ defaultPaymentMethod })}
+            open={openRow === "payment"}
+            onToggle={toggle("payment")}
+            divided
+          />
         </Section>
 
         <Section title="Appearance">
@@ -231,6 +284,18 @@ const styles = StyleSheet.create({
   },
   control: {
     padding: 14,
+  },
+  choiceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    minHeight: 52,
+  },
+  choices: {
+    paddingHorizontal: 14,
+    paddingBottom: 14,
   },
   divided: {
     borderTopWidth: StyleSheet.hairlineWidth,

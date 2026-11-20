@@ -21,6 +21,11 @@ describe("sortReceipts", () => {
     expect(sortReceipts(receipts, "price", TODAY).map((r) => r.id)).toEqual(["new-dear", "mid-soon", "old-cheap"]);
   });
 
+  it("also sorts by oldest purchase or lowest price", () => {
+    expect(sortReceipts(receipts, "oldest", TODAY).map((r) => r.id)).toEqual(["old-cheap", "mid-soon", "new-dear"]);
+    expect(sortReceipts(receipts, "cheapest", TODAY).map((r) => r.id)).toEqual(["old-cheap", "mid-soon", "new-dear"]);
+  });
+
   it("doesn't change the list it was given", () => {
     const copy = [...receipts];
     sortReceipts(receipts, "price", TODAY);

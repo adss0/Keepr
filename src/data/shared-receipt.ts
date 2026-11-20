@@ -27,5 +27,5 @@ export async function readSharedReceipt(payloads: ResolvedSharePayload[]): Promi
     throw new Error("That file is over 5 MB, too big to scan. Try a screenshot instead.");
   }
   const base64 = await new File(payload.contentUri).base64();
-  return { base64, mediaType: payload.contentMimeType ?? "image/jpeg" };
+  return { base64, mediaType: payload.contentMimeType ?? "image/jpeg", source: "Shared from another app" };
 }

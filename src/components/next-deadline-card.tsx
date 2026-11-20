@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { PressScale } from "@/components/press-scale";
 import { Fonts, useTheme } from "@/constants/theme";
-import { daysBetween, getNextDeadline } from "@/lib/deadlines";
+import { DEADLINE_WORDS, daysBetween, getNextDeadline } from "@/lib/deadlines";
 import { formatFullDate } from "@/lib/format";
 import type { Receipt } from "@/types/receipt";
 
@@ -36,7 +36,7 @@ export function NextDeadlineCard({ receipts, today }: { receipts: Receipt[]; tod
           {next.receipt.product}
         </Text>
         <Text style={[styles.detail, { color: theme.onPrimary }]} numberOfLines={1}>
-          {next.deadline.label} · {formatFullDate(next.deadline.date)}
+          {DEADLINE_WORDS[next.deadline.kind].by} {formatFullDate(next.deadline.date)}
         </Text>
       </View>
       <View style={[styles.countdown, { borderColor: theme.onPrimary }]}>

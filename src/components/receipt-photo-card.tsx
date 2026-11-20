@@ -13,6 +13,8 @@ import { haptics } from "@/data/haptics";
 import { canKeepPhotos, isPdf, keepPhoto, usePhotoUri } from "@/data/receipt-photos";
 import { useReceiptsStore } from "@/data/receipts";
 import { pickReceiptPhoto } from "@/data/scan-receipt";
+import { evidenceSource } from "@/lib/evidence";
+import { useSpaces } from "@/data/spaces";
 import type { Receipt } from "@/types/receipt";
 
 /** The receipt's photo as proof of purchase, with ways to add or replace it. */
@@ -22,7 +24,9 @@ export function ReceiptPhotoCard({ receipt }: { receipt: Receipt }) {
   const { setReceiptPhoto } = useReceiptsStore();
   const folder = receipt.ownerId ?? userId;
   const uri = usePhotoUri(receipt.photo, folder);
-  const canAdd = canKeepPhotos(userId);
+  // Adding or replacing the photo counts as changing the receipt.
+  const { canChange } = useSpaces();
+  const canAdd = canKeepPhotos(userId) && canChange(receipt);
   const [busy, setBusy] = useState(false);
   const { showToast } = useToast();
 
@@ -33,7 +37,7 @@ export function ReceiptPhotoCard({ receipt }: { receipt: Receipt }) {
       setBusy(true);
       const name = await keepPhoto(receipt.id, photo, folder, receipt.photo);
       if (name) {
-        setReceiptPhoto(receipt.id, name);
+        setReceiptPhoto(receipt.id, name, photo.source);
         haptics.success();
       }
     } catch (error) {
@@ -45,7 +49,7 @@ export function ReceiptPhotoCard({ receipt }: { receipt: Receipt }) {
   }
 
   if (!receipt.photo) {
-    if (!canAdd) {
+    if (!canKeepPhotos(userId)) {
       // On the web, photos live in the cloud, so they need an account.
       return Platform.OS === "web" ? (
         <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
@@ -55,6 +59,7 @@ export function ReceiptPhotoCard({ receipt }: { receipt: Receipt }) {
         </View>
       ) : null;
     }
+    if (!canAdd) return null;
     return (
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
         <View style={styles.emptyRow}>
@@ -105,7 +110,10 @@ export function ReceiptPhotoCard({ receipt }: { receipt: Receipt }) {
         )}
       </PressScale>
       <View style={styles.footer}>
-        <Text style={[styles.hint, { color: theme.textMuted }]}>Proof of purchase{userId ? " · backed up" : ""}</Text>
+        <Text style={[styles.hint, styles.footerText, { color: theme.textMuted }]}>
+          Proof of purchase{receipt.photoSource ? ` · ${evidenceSource(receipt.photoSource)}` : ""}
+          {userId ? " · backed up" : ""}
+        </Text>
         {canAdd && (
           <Button
             title="Replace"
@@ -176,6 +184,9 @@ const styles = StyleSheet.create({
   pdf: {
     alignItems: "center",
     gap: 8,
+  },
+  footerText: {
+    flexShrink: 1,
   },
   footer: {
     flexDirection: "row",

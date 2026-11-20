@@ -17,17 +17,19 @@ const HEADERS = [
   "Paid by",
   "Return window (days)",
   "Warranty (months)",
-  "Next deadline",
-  "Next deadline date",
 ];
+const DEADLINE_HEADERS = ["Next deadline", "Next deadline date"];
 
 /** Quotes a CSV field when it contains a comma, quote or line break. */
 function csvField(value: string): string {
   return /[",\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 }
 
-/** All receipts as CSV, oldest purchase first, ready to open in Excel, Numbers or Google Sheets. */
-export function receiptsToCsv(receipts: Receipt[], today: string): string {
+/**
+ * All receipts as CSV, oldest purchase first, ready to open in Excel, Numbers or Google Sheets.
+ * `withDeadlines` adds each one's next deadline and its date.
+ */
+export function receiptsToCsv(receipts: Receipt[], today: string, withDeadlines = true): string {
   const rows = [...receipts]
     .sort((a, b) => a.purchaseDate.localeCompare(b.purchaseDate))
     .map((receipt) => {
@@ -41,10 +43,9 @@ export function receiptsToCsv(receipts: Receipt[], today: string): string {
         PAYMENT_LABELS[receipt.paymentMethod],
         receipt.returnWindowDays?.toString() ?? "",
         receipt.warrantyMonths?.toString() ?? "",
-        deadline?.label ?? "",
-        deadline?.date ?? "",
+        ...(withDeadlines ? [deadline?.label ?? "", deadline?.date ?? ""] : []),
       ];
     });
 
-  return [HEADERS, ...rows].map((row) => row.map(csvField).join(",")).join("\r\n") + "\r\n";
+  return [withDeadlines ? [...HEADERS, ...DEADLINE_HEADERS] : HEADERS, ...rows].map((row) => row.map(csvField).join(",")).join("\r\n") + "\r\n";
 }

@@ -163,9 +163,8 @@ export default function SpacesScreen() {
           onChange={setKind}
         />
         <Text style={[styles.hint, { color: theme.textMuted }]}>
-          {kind === "family"
-            ? "Everyone can add, edit and delete shared items."
-            : "Everyone can add and edit. Only owners and admins can delete shared items or invite people."}
+          Everyone can add. Only whoever added an item, and owners and admins, can change or delete it; you can let
+          everyone in the space&apos;s settings.
         </Text>
         <Button title="Create space" variant="primary" busy={busy === "create"} onPress={create} />
       </View>

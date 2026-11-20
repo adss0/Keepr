@@ -3,7 +3,7 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useM
 import { useCloud } from "@/data/cloud";
 import { notifySpaceMembers } from "@/data/push-notifications";
 import { supabase } from "@/data/supabase";
-import { nameFromEmail } from "@/lib/spaces";
+import { canChangeItem, nameFromEmail } from "@/lib/spaces";
 import { errorMessage } from "@/lib/format";
 
 export type SpaceKind = "family" | "organization";
@@ -17,7 +17,15 @@ export type SpaceMember = {
   notifyMembers: boolean;
 };
 export type SpaceNotifications = { notifyReceipts: boolean; notifyMembers: boolean };
-export type Space = { id: string; name: string; kind: SpaceKind; myRole: SpaceRole; members: SpaceMember[] };
+export type Space = {
+  id: string;
+  name: string;
+  kind: SpaceKind;
+  myRole: SpaceRole;
+  members: SpaceMember[];
+  /** Whether every member can change shared items, not just whoever added each one and the owner and admins. */
+  membersCanEdit: boolean;
+};
 
 /**
  * - signed_out: sharing needs an account;
@@ -38,6 +46,8 @@ type SpacesContextValue = {
   createInvite: (spaceId: string, role: "member" | "admin") => Promise<string>;
   renameSpace: (spaceId: string, name: string) => Promise<void>;
   setMyName: (spaceId: string, name: string) => Promise<void>;
+  /** Saves the name others see, on the account and in every space. */
+  setMyNameEverywhere: (name: string) => Promise<void>;
   removeMember: (spaceId: string, userId: string) => Promise<void>;
   /** Owner only: make another member an admin or a member. */
   setRole: (spaceId: string, userId: string, role: "admin" | "member") => Promise<void>;
@@ -47,6 +57,10 @@ type SpacesContextValue = {
   setNotifications: (spaceId: string, choices: SpaceNotifications) => Promise<void>;
   leaveSpace: (spaceId: string) => Promise<void>;
   deleteSpace: (spaceId: string) => Promise<void>;
+  /** Owner and admins: let every member change shared items, or only whoever added each one. */
+  setMembersCanEdit: (spaceId: string, value: boolean) => Promise<void>;
+  /** Whether you can edit, finish with or delete an item: yours, or shared in a space that lets you. */
+  canChange: (item: { spaceId?: string; ownerId?: string }) => boolean;
   spaceName: (spaceId: string | undefined) => string | undefined;
   /** "You", or a member's name in that space. */
   memberName: (spaceId: string | undefined, userId: string | undefined) => string | undefined;
@@ -58,6 +72,7 @@ type SpaceRow = {
   id: string;
   name: string;
   kind: SpaceKind;
+  members_can_edit?: boolean;
   space_members: {
     user_id: string;
     role: SpaceRole;
@@ -87,10 +102,12 @@ type LoadResult = { status: SpacesStatus; error?: string; spaces?: Space[] };
 /** Fetches the user's spaces with their members. */
 async function loadSpaces(userId: string): Promise<LoadResult> {
   if (!supabase) return { status: "signed_out" };
-  const query = (columns: string) =>
-    supabase!.from("spaces").select(`id, name, kind, space_members(${columns})`).order("created_at");
-  let { data, error } = await query(MEMBER_COLUMNS);
-  if (isMissingColumn(error)) ({ data, error } = await query(OLD_MEMBER_COLUMNS));
+  const query = (spaceColumns: string, memberColumns: string) =>
+    supabase!.from("spaces").select(`${spaceColumns}, space_members(${memberColumns})`).order("created_at");
+  // Newest columns first, falling back while the database is a migration or two behind.
+  let { data, error } = await query("id, name, kind, members_can_edit", MEMBER_COLUMNS);
+  if (isMissingColumn(error)) ({ data, error } = await query("id, name, kind", MEMBER_COLUMNS));
+  if (isMissingColumn(error)) ({ data, error } = await query("id, name, kind", OLD_MEMBER_COLUMNS));
   if (error) return { status: isMissing(error) ? "unavailable" : "error", error: error.message };
   return {
     status: "ready",
@@ -98,6 +115,8 @@ async function loadSpaces(userId: string): Promise<LoadResult> {
       id: row.id,
       name: row.name,
       kind: row.kind,
+      // Before the edit-rights migration, the database still lets every member edit.
+      membersCanEdit: row.members_can_edit ?? true,
       myRole: row.space_members.find((member) => member.user_id === userId)?.role ?? "member",
       members: row.space_members
         .map((member) => ({
@@ -116,7 +135,7 @@ export const canManage = (space: Space | undefined) => !!space && MANAGERS.inclu
 /** The signed-in user's shared spaces, and everything to create, join and manage them. */
 export function SpacesProvider({ children }: { children: ReactNode }) {
   const cloud = useCloud();
-  const { userId, email, syncNow } = cloud;
+  const { userId, email, displayName, setDisplayName, syncNow } = cloud;
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [status, setStatus] = useState<SpacesStatus>("loading");
   const [error, setError] = useState<string>();
@@ -159,7 +178,7 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<SpacesContextValue>(() => {
     const client = supabase!;
-    const myName = nameFromEmail(email);
+    const myName = displayName ?? nameFromEmail(email);
     const byId = new Map((userId ? spaces : []).map((space) => [space.id, space]));
     // Signed out is worked out here rather than stored, so it's right the moment someone signs out.
     const visibleSpaces = userId ? spaces : [];
@@ -178,6 +197,17 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
         run(() =>
           client.from("space_members").update({ display_name: name.trim() }).eq("space_id", spaceId).eq("user_id", userId!),
         ).then(() => undefined),
+      setMyNameEverywhere: async (name) => {
+        if (!name.trim()) throw new Error("Enter your name");
+        await setDisplayName(name);
+        if (!userId || spaces.length === 0) return;
+        const { error: nameError } = await client
+          .from("space_members")
+          .update({ display_name: name.trim() })
+          .eq("user_id", userId);
+        if (nameError) throw new Error(nameError.message);
+        await refresh();
+      },
       removeMember: (spaceId, memberId) =>
         run(() => client.from("space_members").delete().eq("space_id", spaceId).eq("user_id", memberId)).then(() => undefined),
       setRole: (spaceId, memberId, role) =>
@@ -195,6 +225,9 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
       leaveSpace: (spaceId) =>
         run(() => client.from("space_members").delete().eq("space_id", spaceId).eq("user_id", userId!)).then(() => undefined),
       deleteSpace: (spaceId) => run(() => client.from("spaces").delete().eq("id", spaceId)).then(() => undefined),
+      setMembersCanEdit: (spaceId, value) =>
+        run(() => client.from("spaces").update({ members_can_edit: value }).eq("id", spaceId)).then(() => undefined),
+      canChange: (item) => canChangeItem(item, userId, byId.get(item.spaceId ?? "")),
       spaceName: (spaceId) => (spaceId ? byId.get(spaceId)?.name : undefined),
       memberName: (spaceId, memberId) => {
         if (!memberId) return undefined;
@@ -202,7 +235,7 @@ export function SpacesProvider({ children }: { children: ReactNode }) {
         return byId.get(spaceId ?? "")?.members.find((member) => member.userId === memberId)?.displayName || "Someone";
       },
     };
-  }, [status, error, spaces, refresh, run, email, userId]);
+  }, [status, error, spaces, refresh, run, email, displayName, setDisplayName, userId]);
 
   return <SpacesContext.Provider value={value}>{children}</SpacesContext.Provider>;
 }
