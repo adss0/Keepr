@@ -100,6 +100,56 @@ export function Segmented<T extends string>({ label, value, options, onChange }:
   );
 }
 
+type ChipsProps<T extends string> = {
+  label: string;
+  /** The ticked options. */
+  value: ReadonlySet<T>;
+  options: { value: T; label: string }[];
+  onChange: (value: Set<T>) => void;
+};
+
+/** Like Segmented, but any number can be ticked: each chip turns on and off. */
+export function Chips<T extends string>({ label, value, options, onChange }: ChipsProps<T>) {
+  const theme = useTheme();
+  return (
+    <View style={styles.field}>
+      <Text style={[styles.label, { color: theme.text }]}>{label}</Text>
+      <View style={styles.segments}>
+        {options.map((option) => {
+          const checked = value.has(option.value);
+          return (
+            <Pressable
+              key={option.value}
+              accessibilityRole="checkbox"
+              accessibilityLabel={option.label}
+              accessibilityState={{ checked }}
+              onPress={() => {
+                haptics.selection();
+                const next = new Set(value);
+                if (checked) next.delete(option.value);
+                else next.add(option.value);
+                onChange(next);
+              }}
+              style={[
+                styles.segment,
+                {
+                  backgroundColor: checked ? theme.accentSoft : theme.card,
+                  borderColor: checked ? theme.accent : theme.border,
+                },
+              ]}
+            >
+              <Text style={{ color: checked ? theme.accent : theme.textMuted, fontWeight: "500" }}>
+                {checked ? "✓ " : ""}
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 type ButtonProps = {
   title: string;
   onPress: () => void;
