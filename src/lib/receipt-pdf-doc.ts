@@ -139,6 +139,8 @@ function writeDetails(w: Writer, receipt: Receipt, today: string, withDeadlines:
   ];
   if (receipt.returnWindowDays !== undefined) facts.push(["Shop returns", `${receipt.returnWindowDays} days`]);
   if (receipt.warrantyMonths) facts.push(["Warranty", `${receipt.warrantyMonths} months`]);
+  if (receipt.orderNumber) facts.push(["Order number", receipt.orderNumber]);
+  if (receipt.serialNumber) facts.push(["Serial number", receipt.serialNumber]);
   if (receipt.closed) facts.push(["Status", `${CLOSED_LABELS[receipt.closed.reason]} ${formatFullDate(receipt.closed.on)}`]);
   facts.push(["Proof", evidenceText(receipt)]);
   for (const [label, value] of facts) {

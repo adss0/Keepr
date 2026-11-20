@@ -10,6 +10,9 @@ export type ReceiptInput = {
   paymentMethod: PaymentMethod;
   returnWindowDays: string;
   warrantyMonths: string;
+  orderNumber: string;
+  serialNumber: string;
+  notes: string;
 };
 
 export type ReceiptInputErrors = Partial<Record<keyof ReceiptInput, string>>;
@@ -20,6 +23,11 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 export const MAX_RETURN_WINDOW_DAYS = 3650; // 10 years
 export const MAX_WARRANTY_MONTHS = 1200; // 100 years
 const MAX_PRICE_PENCE = 100_000_000; // £1,000,000, well inside the database's integer column
+/** Matching the database's limits (see supabase/migrations). */
+export const MAX_NUMBER_LENGTH = 100;
+export const MAX_NOTES_LENGTH = 1000;
+/** Warranty claims usually ask for a serial number; below this it's rarely worth the bother. */
+export const SERIAL_HINT_PENCE = 10_000;
 
 /** "79.99", "£79.99" or "1,234.5" → pence. Undefined if it isn't a valid amount. */
 export function parsePriceToPence(text: string): number | undefined {
@@ -50,6 +58,9 @@ export function emptyReceiptInput(today: string): ReceiptInput {
     paymentMethod: "debit_card",
     returnWindowDays: "",
     warrantyMonths: "",
+    orderNumber: "",
+    serialNumber: "",
+    notes: "",
   };
 }
 
@@ -65,6 +76,9 @@ export function receiptToInput(receipt: Receipt): ReceiptInput {
     paymentMethod: receipt.paymentMethod,
     returnWindowDays: receipt.returnWindowDays?.toString() ?? "",
     warrantyMonths: receipt.warrantyMonths?.toString() ?? "",
+    orderNumber: receipt.orderNumber ?? "",
+    serialNumber: receipt.serialNumber ?? "",
+    notes: receipt.notes ?? "",
   };
 }
 
@@ -105,6 +119,13 @@ export function validateReceiptInput(
     errors.warrantyMonths = "Enter 1200 months (100 years) or fewer";
   }
 
+  const orderNumber = input.orderNumber.trim();
+  const serialNumber = input.serialNumber.trim();
+  const notes = input.notes.trim();
+  if (orderNumber.length > MAX_NUMBER_LENGTH) errors.orderNumber = `Keep it under ${MAX_NUMBER_LENGTH} characters`;
+  if (serialNumber.length > MAX_NUMBER_LENGTH) errors.serialNumber = `Keep it under ${MAX_NUMBER_LENGTH} characters`;
+  if (notes.length > MAX_NOTES_LENGTH) errors.notes = `Keep notes under ${MAX_NOTES_LENGTH} characters`;
+
   if (Object.keys(errors).length > 0 || pricePence === undefined) return { errors };
 
   return {
@@ -117,6 +138,9 @@ export function validateReceiptInput(
       paymentMethod: input.paymentMethod,
       ...(returnWindowDays !== undefined && { returnWindowDays }),
       ...(warrantyMonths !== undefined && { warrantyMonths }),
+      ...(orderNumber && { orderNumber }),
+      ...(serialNumber && { serialNumber }),
+      ...(notes && { notes }),
     },
   };
 }

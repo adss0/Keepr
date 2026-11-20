@@ -30,7 +30,7 @@ export function Field({ label, hint, error, check, secureTextEntry, ...inputProp
           placeholderTextColor={theme.textMuted}
           accessibilityLabel={label}
           secureTextEntry={secureTextEntry && !revealed}
-          style={[styles.input, { color: theme.text }]}
+          style={[styles.input, inputProps.multiline && styles.multiline, { color: theme.text }]}
           {...inputProps}
         />
         {secureTextEntry && (
@@ -152,6 +152,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
+  },
+  multiline: {
+    minHeight: 88,
+    textAlignVertical: "top",
   },
   reveal: {
     paddingHorizontal: 12,

@@ -15,7 +15,14 @@ import { haptics } from "@/data/haptics";
 import { pickReceiptPhoto } from "@/data/scan-receipt";
 import type { ReceiptFields } from "@/data/receipts";
 import { todayIso } from "@/lib/deadlines";
-import { type ReceiptInput, type ReceiptInputErrors, validateReceiptInput } from "@/lib/receipt-input";
+import {
+  MAX_NOTES_LENGTH,
+  parsePriceToPence,
+  type ReceiptInput,
+  type ReceiptInputErrors,
+  SERIAL_HINT_PENCE,
+  validateReceiptInput,
+} from "@/lib/receipt-input";
 import { formatPrice } from "@/lib/format";
 import { usualReturnDays } from "@/lib/return-policies";
 import { type ScanChecks, scanChecks } from "@/lib/scan-checks";
@@ -373,6 +380,40 @@ export function ReceiptForm({
       {input.warrantyMonths.trim() !== "" && (
         <Button title="No warranty" variant="ghost" onPress={() => update("warrantyMonths", "")} />
       )}
+      <Field
+        label="Order or receipt number"
+        placeholder="e.g. 4021-7783"
+        hint="Optional. Shops ask for it when you return something."
+        autoCapitalize="characters"
+        autoCorrect={false}
+        value={input.orderNumber}
+        onChangeText={(text) => update("orderNumber", text)}
+        error={errors.orderNumber}
+      />
+      <Field
+        label="Serial number"
+        placeholder="e.g. SN 5CD1234XYZ"
+        hint={
+          (parsePriceToPence(input.price) ?? 0) >= SERIAL_HINT_PENCE
+            ? "Worth adding: warranty claims usually ask for it. It's on the box or a label on the item."
+            : "Optional. It's on the box or a label on the item."
+        }
+        autoCapitalize="characters"
+        autoCorrect={false}
+        value={input.serialNumber}
+        onChangeText={(text) => update("serialNumber", text)}
+        error={errors.serialNumber}
+      />
+      <Field
+        label="Notes"
+        placeholder="e.g. Gift for Sam, box in the loft"
+        hint="Optional. Search finds these too."
+        multiline
+        maxLength={MAX_NOTES_LENGTH}
+        value={input.notes}
+        onChangeText={(text) => update("notes", text)}
+        error={errors.notes}
+      />
       <Button title={submitLabel} variant="primary" onPress={submit} />
     </ScrollView>
   );

@@ -29,6 +29,12 @@ export type Receipt = {
   ownerId?: string;
   /** The words printed on the receipt, read when it was scanned, so search can find it by any of them. */
   printedText?: string;
+  /** The shop's order or receipt number, which returns and claims ask for. */
+  orderNumber?: string;
+  /** The item's serial or model number, which warranty claims ask for. */
+  serialNumber?: string;
+  /** Anything else worth remembering: where it's kept, who it's for, what went wrong. */
+  notes?: string;
   /** Set once it's finished with: no more deadlines or reminders, but it stays in the history. `on` is YYYY-MM-DD. */
   closed?: { reason: ClosedReason; on: string };
 };
