@@ -52,6 +52,17 @@ describe("validateReceiptInput", () => {
     expect(result.value).toMatchObject({ returnWindowDays: 28, warrantyMonths: 12 });
   });
 
+  it("keeps order number, serial number and notes trimmed, and leaves out blank ones", () => {
+    const result = validateReceiptInput({ ...valid, orderNumber: " 4021-7783 ", serialNumber: "  ", notes: " Box in the loft " }, TODAY);
+    expect(result.value).toMatchObject({ orderNumber: "4021-7783", notes: "Box in the loft" });
+    expect(result.value).not.toHaveProperty("serialNumber");
+  });
+
+  it("rejects an order number or notes longer than the database keeps", () => {
+    const result = validateReceiptInput({ ...valid, orderNumber: "1".repeat(101), notes: "a".repeat(1001) }, TODAY);
+    expect(Object.keys(result.errors ?? {}).sort()).toEqual(["notes", "orderNumber"]);
+  });
+
   it("rejects numbers so large their deadlines can't be calculated", () => {
     const result = validateReceiptInput(
       { ...valid, price: "99999999", returnWindowDays: "99999999", warrantyMonths: "1201" },

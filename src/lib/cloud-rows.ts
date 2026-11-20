@@ -19,6 +19,10 @@ export type ReceiptRow = {
   closed_reason: ClosedReason | null;
   closed_on: string | null;
   printed_text: string | null;
+  /** Missing until the record-fields migration has run. */
+  order_number?: string | null;
+  serial_number?: string | null;
+  notes?: string | null;
   /** Set by the database; not sent when saving. */
   user_id?: string;
   updated_at?: string;
@@ -54,6 +58,9 @@ export function receiptToRow(receipt: Receipt): ReceiptRow {
     closed_reason: receipt.closed?.reason ?? null,
     closed_on: receipt.closed?.on ?? null,
     printed_text: receipt.printedText ?? null,
+    order_number: receipt.orderNumber ?? null,
+    serial_number: receipt.serialNumber ?? null,
+    notes: receipt.notes ?? null,
   };
 }
 
@@ -72,6 +79,9 @@ export function rowToReceipt(row: ReceiptRow): Receipt {
     ...(row.photo != null && { photo: row.photo }),
     ...(row.photo_source != null && { photoSource: row.photo_source }),
     ...(row.printed_text != null && { printedText: row.printed_text }),
+    ...(row.order_number != null && { orderNumber: row.order_number }),
+    ...(row.serial_number != null && { serialNumber: row.serial_number }),
+    ...(row.notes != null && { notes: row.notes }),
     ...(row.closed_reason != null && row.closed_on != null && { closed: { reason: row.closed_reason, on: row.closed_on } }),
     ...cloudFields(row),
   };

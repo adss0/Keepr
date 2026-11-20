@@ -48,6 +48,13 @@ describe("row mapping", () => {
     expect(rowToReceipt(oldRow as ReturnType<typeof receiptToRow>)).toEqual(receipt);
   });
 
+  it("keeps order number, serial number and notes, and reads rows saved before they existed", () => {
+    const full = { ...receipt, orderNumber: "4021-7783", serialNumber: "SN123", notes: "Gift" };
+    expect(rowToReceipt(receiptToRow(full))).toEqual(full);
+    const { order_number: _o, serial_number: _s, notes: _n, ...oldRow } = receiptToRow(receipt);
+    expect(rowToReceipt(oldRow)).toEqual(receipt);
+  });
+
   it("round-trips a subscription", () => {
     expect(subscriptionToRow(subscription).trial_ends).toBeNull();
     expect(rowToSubscription(subscriptionToRow(subscription))).toEqual(subscription);

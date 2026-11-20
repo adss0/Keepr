@@ -1,4 +1,4 @@
-import type { ReceiptInput } from "@/lib/receipt-input";
+import { MAX_NUMBER_LENGTH, type ReceiptInput } from "@/lib/receipt-input";
 import type { PaymentMethod, PurchaseChannel } from "@/types/receipt";
 
 const CHANNELS: PurchaseChannel[] = ["in_store", "online"];
@@ -23,6 +23,7 @@ export function scanResultToInput(result: unknown, current: ReceiptInput): Recei
   const date = text(data.purchase_date);
   const returnDays = wholeNumber(data.return_window_days);
   const warranty = wholeNumber(data.warranty_months);
+  const orderNumber = text(data.order_number);
 
   return {
     ...current,
@@ -37,6 +38,7 @@ export function scanResultToInput(result: unknown, current: ReceiptInput): Recei
     returnWindowDays: returnDays !== undefined ? String(returnDays) : current.returnWindowDays,
     // 0 months means the receipt gave no warranty, not one that ends the day it was bought.
     warrantyMonths: warranty ? String(warranty) : current.warrantyMonths,
+    orderNumber: orderNumber && orderNumber.length <= MAX_NUMBER_LENGTH ? orderNumber : current.orderNumber,
   };
 }
 

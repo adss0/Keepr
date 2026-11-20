@@ -93,14 +93,14 @@ async function saveSyncBase(syncBase: SyncBase): Promise<void> {
 
 /**
  * Upserts rows, dropping columns the database doesn't have yet (PostgREST error PGRST204), so a phone on a newer
- * app version keeps syncing before the matching migration has run. Up to 3 missing columns.
+ * app version keeps syncing before the matching migration has run. Up to 6 missing columns.
  */
 async function upsertRows<R extends Record<string, unknown>>(table: "receipts" | "subscriptions", rows: R[]) {
   let current: Record<string, unknown>[] = rows;
   for (let attempt = 0; ; attempt++) {
     const result = await supabase!.from(table).upsert(current);
     const missing = result.error?.code === "PGRST204" ? /'([^']+)' column/.exec(result.error.message)?.[1] : undefined;
-    if (!missing || attempt === 3) return result;
+    if (!missing || attempt === 6) return result;
     current = current.map(({ [missing]: _dropped, ...row }) => row);
   }
 }

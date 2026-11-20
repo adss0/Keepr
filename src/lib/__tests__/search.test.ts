@@ -44,3 +44,12 @@ describe("searching printed text", () => {
     expect(searchReceipts([scanned], "twk3p420gb store").map((r) => r.id)).toEqual(["scanned"]);
   });
 });
+
+describe("searching the details added by hand", () => {
+  it("finds a receipt by its order number, serial number or notes", () => {
+    const detailed = { ...receipts[2], orderNumber: "4021-7783", serialNumber: "SN5CD1234", notes: "Present for Sam" };
+    expect(searchReceipts([detailed], "4021").map((r) => r.id)).toEqual(["3"]);
+    expect(searchReceipts([detailed], "sn5cd").map((r) => r.id)).toEqual(["3"]);
+    expect(searchReceipts([detailed], "sam kettle").map((r) => r.id)).toEqual(["3"]);
+  });
+});

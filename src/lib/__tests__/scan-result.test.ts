@@ -26,10 +26,12 @@ describe("scanResultToInput", () => {
           payment_method: "credit_card",
           return_window_days: 21,
           warranty_months: 12,
+          order_number: " ORD-88412 ",
         },
         blank,
       ),
     ).toEqual({
+      ...blank,
       product: "Sony WH-1000XM6 headphones",
       retailer: "Currys",
       price: "329.00",
@@ -38,7 +40,13 @@ describe("scanResultToInput", () => {
       paymentMethod: "credit_card",
       returnWindowDays: "21",
       warrantyMonths: "12",
+      orderNumber: "ORD-88412",
     });
+  });
+
+  it("ignores an order number too long to be one", () => {
+    const current = { ...blank, orderNumber: "A1" };
+    expect(scanResultToInput({ is_receipt: true, order_number: "9".repeat(101) }, current)?.orderNumber).toBe("A1");
   });
 
   it("keeps what's already in the form for missing or malformed fields", () => {

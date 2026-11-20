@@ -46,6 +46,11 @@ const RECEIPT_SCHEMA = {
     payment_method: { type: "string", enum: ["credit_card", "debit_card", "cash", "other"] },
     return_window_days: { type: "integer", description: "Only if the receipt states a returns period." },
     warranty_months: { type: "integer", description: "Only if the receipt states a warranty or guarantee." },
+    order_number: {
+      type: "string",
+      description:
+        "The order, receipt or transaction number the shop would ask for on a return, e.g. \"ORD-1234567\". Not a card number, barcode or VAT number.",
+    },
     printed_text: {
       type: "string",
       description:

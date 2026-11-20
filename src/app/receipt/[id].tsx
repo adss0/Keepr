@@ -67,6 +67,8 @@ export default function ReceiptDetailScreen() {
   if (receipt.warrantyMonths) {
     details.push(["Warranty", `${receipt.warrantyMonths} months`]);
   }
+  if (receipt.orderNumber) details.push(["Order number", receipt.orderNumber]);
+  if (receipt.serialNumber) details.push(["Serial number", receipt.serialNumber]);
 
   return (
     <ScrollView
@@ -81,9 +83,16 @@ export default function ReceiptDetailScreen() {
         {details.map(([label, value]) => (
           <View key={label} style={styles.detailRow}>
             <Text style={[styles.detailLabel, { color: theme.textMuted }]}>{label}</Text>
-            <Text style={[styles.detailValue, { color: theme.text }]}>{value}</Text>
+            {/* Selectable, so an order or serial number can be copied into a returns form. */}
+            <Text selectable style={[styles.detailValue, { color: theme.text }]}>{value}</Text>
           </View>
         ))}
+        {receipt.notes && (
+          <View style={styles.notes}>
+            <Text style={[styles.detailLabel, { color: theme.textMuted }]}>Notes</Text>
+            <Text selectable style={[styles.notesText, { color: theme.text }]}>{receipt.notes}</Text>
+          </View>
+        )}
       </View>
 
       <ReceiptPhotoCard receipt={receipt} />
@@ -270,6 +279,13 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     flexShrink: 1,
     textAlign: "right",
+  },
+  notes: {
+    gap: 4,
+  },
+  notesText: {
+    fontSize: 14,
+    lineHeight: 20,
   },
   heading: {
     fontSize: 17,
