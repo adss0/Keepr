@@ -28,6 +28,9 @@ export function ScanPanel({ onScanned, autoStart = false, sharedPhoto }: Props) 
   // The photo being read, shown small with the scan line passing over it.
   const [reading, setReading] = useState<ReceiptPhoto>();
   const [message, setMessage] = useState<string>();
+  // A photo whose scan failed, so it can be tried again without picking it again.
+  const [failed, setFailed] = useState<ReceiptPhoto>();
+  const run = useRef<AbortController>(undefined);
   const autoStarted = useRef(false);
   const canScan = status !== "not_set_up";
 
@@ -38,6 +41,9 @@ export function ScanPanel({ onScanned, autoStart = false, sharedPhoto }: Props) 
     const timer = setTimeout(() => scan("camera"), 300);
     return () => clearTimeout(timer);
   });
+
+  // Leaving the form mid-scan stops waiting for it.
+  useEffect(() => () => run.current?.abort(), []);
 
   const sharedRead = useRef(false);
   useEffect(() => {
@@ -71,10 +77,15 @@ export function ScanPanel({ onScanned, autoStart = false, sharedPhoto }: Props) 
   }
 
   async function read(photo: ReceiptPhoto) {
+    run.current?.abort();
+    const thisRun = new AbortController();
+    run.current = thisRun;
     setMessage(undefined);
+    setFailed(undefined);
     try {
       setReading(photo);
-      const result = await extractReceipt(photo);
+      const result = await extractReceipt(photo, thisRun.signal);
+      if (thisRun.signal.aborted) return;
       if ((result as { is_receipt?: boolean } | null)?.is_receipt === false) {
         setMessage("That doesn't look like a receipt. Try another photo.");
         return;
@@ -87,11 +98,23 @@ export function ScanPanel({ onScanned, autoStart = false, sharedPhoto }: Props) 
           : "Couldn't read any details. Try a clearer, flatter photo, or fill them in below.",
       );
     } catch (error) {
+      if (thisRun.signal.aborted) return;
       haptics.error();
       setMessage(errorMessage(error));
+      setFailed(photo);
     } finally {
-      setReading(undefined);
+      if (run.current === thisRun) {
+        run.current = undefined;
+        setReading(undefined);
+      }
     }
+  }
+
+  function cancel() {
+    run.current?.abort();
+    run.current = undefined;
+    setReading(undefined);
+    setMessage("Scan cancelled. Scan again, or fill in the details below.");
   }
 
   return (
@@ -115,7 +138,8 @@ export function ScanPanel({ onScanned, autoStart = false, sharedPhoto }: Props) 
               <ScanLine repeat />
             </View>
           )}
-          <Text style={[styles.text, { color: theme.text }]}>Reading your receipt…</Text>
+          <Text style={[styles.text, styles.busyText, { color: theme.text }]}>Reading your receipt…</Text>
+          <Button title="Cancel" variant="ghost" onPress={cancel} />
         </View>
       ) : (
         <>
@@ -135,6 +159,7 @@ export function ScanPanel({ onScanned, autoStart = false, sharedPhoto }: Props) 
           {message}
         </Animated.Text>
       )}
+      {failed && !reading && <Button title="Try again" onPress={() => read(failed)} />}
     </View>
   );
 }
@@ -178,6 +203,9 @@ const styles = StyleSheet.create({
   pageLine: {
     height: 3,
     borderRadius: 2,
+  },
+  busyText: {
+    flex: 1,
   },
   title: {
     fontSize: 16,

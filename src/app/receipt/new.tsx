@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 
+import { confirm } from "@/components/confirm";
 import { ReceiptForm } from "@/components/receipt-form";
 import { useToast } from "@/components/toast";
 import { haptics } from "@/data/haptics";
@@ -10,11 +11,13 @@ import { useReceiptsStore } from "@/data/receipts";
 import { takeSharedReceipt } from "@/data/shared-receipt";
 import { useSettings } from "@/data/settings";
 import { todayIso } from "@/lib/deadlines";
+import { findDuplicate } from "@/lib/duplicates";
+import { formatFullDate, formatPrice } from "@/lib/format";
 import { goBack } from "@/lib/navigation";
 import { emptyReceiptInput } from "@/lib/receipt-input";
 
 export default function NewReceiptScreen() {
-  const { addReceipt, setReceiptPhoto } = useReceiptsStore();
+  const { receipts, addReceipt, setReceiptPhoto } = useReceiptsStore();
   const { showToast } = useToast();
   const { scan, space } = useLocalSearchParams<{ scan?: string; space?: string }>();
   const { settings } = useSettings();
@@ -56,11 +59,23 @@ export default function NewReceiptScreen() {
         goBack();
       }}
       onSubmit={(fields, photo) => {
-        const receipt = addReceipt(fields);
-        if (photo) keepPhoto(receipt.id, photo);
-        haptics.success();
-        showToast({ message: "Receipt saved. Keepr will remind you before each deadline." });
-        router.replace({ pathname: "/receipt/[id]", params: { id: receipt.id, kept: "1" } });
+        function save() {
+          const receipt = addReceipt(fields);
+          if (photo) keepPhoto(receipt.id, photo);
+          haptics.success();
+          showToast({ message: "Receipt saved. Keepr will remind you before each deadline." });
+          router.replace({ pathname: "/receipt/[id]", params: { id: receipt.id, kept: "1" } });
+        }
+        // Scanning the same receipt twice is easy to do; ask, but never stop them keeping both.
+        const twin = findDuplicate(receipts, fields);
+        if (!twin) return save();
+        confirm(
+          "Already kept?",
+          `You have ${twin.product} from ${twin.retailer}, ${formatFullDate(twin.purchaseDate)}, ${formatPrice(twin.pricePence)}. Save this one as well?`,
+          "Save anyway",
+          save,
+          false,
+        );
       }}
     />
   );

@@ -1,7 +1,8 @@
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Alert, Platform, Pressable, ScrollView, Share, StyleSheet, Switch, Text, View } from "react-native";
+import { Pressable, ScrollView, Share, StyleSheet, Switch, Text, View } from "react-native";
 
+import { confirm } from "@/components/confirm";
 import { Button, Field, Segmented } from "@/components/form";
 import { Icon } from "@/components/icon";
 import { ReceiptCard } from "@/components/receipt-card";
@@ -28,18 +29,6 @@ const TABS: { value: Tab; label: string }[] = [
   { value: "people", label: "People" },
   { value: "settings", label: "Settings" },
 ];
-
-/** Asks before something that can't easily be undone. Browsers get their own confirm box. */
-function confirm(title: string, message: string, action: string, onConfirm: () => void) {
-  if (Platform.OS === "web") {
-    if (window.confirm(`${title}\n\n${message}`)) onConfirm();
-    return;
-  }
-  Alert.alert(title, message, [
-    { text: "Cancel", style: "cancel" },
-    { text: action, style: "destructive", onPress: onConfirm },
-  ]);
-}
 
 /**
  * One shared space, in four tabs: what's happened (Activity), its receipts, its people (invites and roles),

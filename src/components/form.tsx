@@ -9,10 +9,13 @@ type FieldProps = Omit<TextInputProps, "style"> & {
   label: string;
   hint?: string;
   error?: string;
+  /** Something to double-check, such as a detail a scan may have misread. Shown until the field is changed. */
+  check?: string;
 };
 
-export function Field({ label, hint, error, secureTextEntry, ...inputProps }: FieldProps) {
+export function Field({ label, hint, error, check, secureTextEntry, ...inputProps }: FieldProps) {
   const theme = useTheme();
+  const outline = error ? theme.urgentText : check ? theme.soonText : theme.border;
   const [revealed, setRevealed] = useState(false);
   return (
     <View style={styles.field}>
@@ -20,7 +23,7 @@ export function Field({ label, hint, error, secureTextEntry, ...inputProps }: Fi
       <View
         style={[
           styles.inputRow,
-          { backgroundColor: theme.card, borderColor: error ? theme.urgentText : theme.border },
+          { backgroundColor: theme.card, borderColor: outline },
         ]}
       >
         <TextInput
@@ -44,6 +47,8 @@ export function Field({ label, hint, error, secureTextEntry, ...inputProps }: Fi
       </View>
       {error ? (
         <Text style={[styles.message, { color: theme.urgentText }]}>{error}</Text>
+      ) : check ? (
+        <Text style={[styles.message, { color: theme.soonText }]}>{check}</Text>
       ) : hint ? (
         <Text style={[styles.message, { color: theme.textMuted }]}>{hint}</Text>
       ) : null}

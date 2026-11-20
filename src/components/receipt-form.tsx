@@ -18,6 +18,7 @@ import { todayIso } from "@/lib/deadlines";
 import { type ReceiptInput, type ReceiptInputErrors, validateReceiptInput } from "@/lib/receipt-input";
 import { formatPrice } from "@/lib/format";
 import { usualReturnDays } from "@/lib/return-policies";
+import { type ScanChecks, scanChecks } from "@/lib/scan-checks";
 import {
   countChangedFields,
   penceToInput,
@@ -73,6 +74,8 @@ export function ReceiptForm({
   const theme = useTheme();
   const [input, setInput] = useState(initial);
   const [errors, setErrors] = useState<ReceiptInputErrors>({});
+  // Details a scan may have misread, each shown until that field is changed.
+  const [checks, setChecks] = useState<ScanChecks>({});
   // A shared receipt is kept as proof of purchase even if scanning it fails.
   const [photo, setPhoto] = useState<ReceiptPhoto | undefined>(sharedPhoto);
   const keepsPhotos = canKeepPhotos(useCloud().userId);
@@ -120,12 +123,14 @@ export function ReceiptForm({
     const usual = usualReturnDays(text)?.toString();
     setInput({ ...input, retailer: text, ...(ours && { returnWindowDays: usual ?? "" }) });
     setErrors((current) => ({ ...current, retailer: undefined, ...(ours && { returnWindowDays: undefined }) }));
+    setChecks((current) => ({ ...current, retailer: undefined }));
     if (ours) setUsualDays(usual);
   }
 
   function update<K extends keyof ReceiptInput>(key: K, value: ReceiptInput[K]) {
     setInput((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: undefined }));
+    setChecks((current) => ({ ...current, [key]: undefined }));
   }
 
   function submit() {
@@ -144,6 +149,7 @@ export function ReceiptForm({
       price: item.pricePence !== undefined ? penceToInput(item.pricePence) : current.price,
     }));
     setErrors((current) => ({ ...current, product: undefined, price: undefined }));
+    setChecks((current) => ({ ...current, price: undefined }));
   }
 
   /** Every scanned item as its own receipt, sharing the shop, date and payment details. */
@@ -186,6 +192,7 @@ export function ReceiptForm({
             setInput(scanned);
             setWhole({ name: scanned.product, price: scanned.price });
             setErrors({});
+            setChecks(scanChecks(result, todayIso()));
             return countChangedFields(input, scanned);
           }}
         />
@@ -307,6 +314,7 @@ export function ReceiptForm({
         value={input.retailer}
         onChangeText={updateShop}
         error={errors.retailer}
+        check={checks.retailer}
       />
       <Field
         label="Price (£)"
@@ -315,6 +323,7 @@ export function ReceiptForm({
         value={input.price}
         onChangeText={(text) => update("price", text)}
         error={errors.price}
+        check={checks.price}
       />
       <DateField
         label="Date bought"
@@ -324,6 +333,7 @@ export function ReceiptForm({
         maximumDate={todayIso()}
         pastShortcuts
         error={errors.purchaseDate}
+        check={checks.purchaseDate}
       />
       <Segmented
         label="Where did you buy it?"
