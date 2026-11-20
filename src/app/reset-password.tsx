@@ -7,14 +7,11 @@ import { Button, Field } from "@/components/form";
 import { useTheme } from "@/constants/theme";
 import { HOME } from "@/lib/navigation";
 import { useCloud } from "@/data/cloud";
+import { errorMessage } from "@/lib/format";
 
 const MIN_PASSWORD_LENGTH = 8;
 
 type Step = "email" | "sent" | "new_password" | "done";
-
-function messageOf(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
 
 /**
  * Forgot password. Keepr emails a reset link; opening it on this device brings you back here
@@ -42,7 +39,7 @@ export default function ResetPasswordScreen() {
       })
       .catch((recoveryError: unknown) => {
         if (cancelled) return;
-        setError(`${messageOf(recoveryError)}. Send yourself a new link below.`);
+        setError(`${errorMessage(recoveryError)}. Send yourself a new link below.`);
         setStep("email");
       });
     return () => {
@@ -61,7 +58,7 @@ export default function ResetPasswordScreen() {
       await sendPasswordResetEmail(email);
       setStep("sent");
     } catch (sendError) {
-      setError(messageOf(sendError));
+      setError(errorMessage(sendError));
     } finally {
       setBusy(false);
     }
@@ -78,7 +75,7 @@ export default function ResetPasswordScreen() {
       await updatePassword(password);
       setStep("done");
     } catch (updateError) {
-      setError(messageOf(updateError));
+      setError(errorMessage(updateError));
     } finally {
       setBusy(false);
     }

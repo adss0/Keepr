@@ -7,8 +7,8 @@ import { closedText } from "@/lib/receipt-status";
 import type { Receipt } from "@/types/receipt";
 
 /** Deadlines this close (in days) are shown as urgent or coming up soon. */
-export const URGENT_DAYS = 3;
-export const SOON_DAYS = 7;
+const URGENT_DAYS = 3;
+const SOON_DAYS = 7;
 
 export type Tone = { bg: string; text: string; border: string };
 

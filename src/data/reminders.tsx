@@ -14,7 +14,7 @@ import type { Subscription } from "@/types/subscription";
 const CHANNEL_ID = "deadlines";
 
 /** Phone notifications aren't available in the web preview. */
-export const remindersSupported = Platform.OS !== "web";
+const remindersSupported = Platform.OS !== "web";
 
 if (remindersSupported) {
   Notifications.setNotificationHandler({

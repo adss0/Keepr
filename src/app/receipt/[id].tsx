@@ -1,6 +1,6 @@
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ReceiptPhotoCard } from "@/components/receipt-photo-card";
 import { DeadlinePill } from "@/components/deadline-pill";
@@ -14,7 +14,7 @@ import { shareReceiptPdf } from "@/data/receipt-pdf";
 import { useReceipt, useReceiptsStore } from "@/data/receipts";
 import { useSpaces } from "@/data/spaces";
 import { DEADLINE_EXPLANATIONS, getDeadlines, todayIso } from "@/lib/deadlines";
-import { formatDate, formatPrice } from "@/lib/format";
+import { errorMessage, formatDate, formatPrice } from "@/lib/format";
 import { PAYMENT_LABELS } from "@/lib/export";
 import { goBack } from "@/lib/navigation";
 import { CLOSED_LABELS } from "@/lib/receipt-status";
@@ -152,7 +152,7 @@ export default function ReceiptDetailScreen() {
             try {
               await shareReceiptPdf(receipt, today, photoUri);
             } catch (error) {
-              Alert.alert("Couldn't make the PDF", error instanceof Error ? error.message : String(error));
+              showToast({ message: `Couldn't make the PDF: ${errorMessage(error)}` });
             } finally {
               setExporting(false);
             }

@@ -5,7 +5,7 @@ import { type Activity, type ActivityRow, rowToActivity } from "@/lib/space-acti
 
 const FEED_LENGTH = 60;
 
-export type ActivityStatus = "loading" | "ready" | "unavailable" | "error";
+type ActivityStatus = "loading" | "ready" | "unavailable" | "error";
 
 async function fetchActivity(spaceId: string): Promise<{ status: ActivityStatus; items?: Activity[] }> {
   if (!supabase) return { status: "unavailable" };
@@ -31,10 +31,6 @@ export function useSpaceActivity(spaceId: string | undefined) {
     setStatus(result.status);
     if (result.items) setItems(result.items);
   }, []);
-
-  const load = useCallback(async () => {
-    if (spaceId) apply(await fetchActivity(spaceId));
-  }, [apply, spaceId]);
 
   useEffect(() => {
     if (!supabase || !spaceId) return;
@@ -62,5 +58,5 @@ export function useSpaceActivity(spaceId: string | undefined) {
     };
   }, [spaceId, apply]);
 
-  return { items, status, refresh: load };
+  return { items, status };
 }

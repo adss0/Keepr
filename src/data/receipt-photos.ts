@@ -72,9 +72,8 @@ function photoFile(name: string): File {
   return new File(photoDirectory(), name);
 }
 
-/** Saves the photo for a receipt on the phone. Returns its file name, or undefined on the web. */
-export function savePhoto(receiptId: string, photo: ReceiptPhoto): string | undefined {
-  if (!photosStoredLocally) return undefined;
+/** Saves the photo for a receipt on the phone and returns its file name. */
+function savePhoto(receiptId: string, photo: ReceiptPhoto): string {
   const name = `${receiptId}.${EXTENSIONS[photo.mediaType] ?? "jpg"}`;
   const file = photoFile(name);
   if (file.exists) file.delete();
@@ -108,7 +107,7 @@ function forgetUpload(name: string) {
   readUploaded()
     .then((uploaded) => {
       const kept = [...uploaded].filter((key) => !key.endsWith(`/${name}`));
-      if (kept.length !== uploaded.size) return AsyncStorage.setItem(UPLOADED_KEY, JSON.stringify(kept));
+      return kept.length === uploaded.size ? undefined : AsyncStorage.setItem(UPLOADED_KEY, JSON.stringify(kept));
     })
     .catch((error: unknown) => console.warn("Couldn't update photo backup list", error));
 }

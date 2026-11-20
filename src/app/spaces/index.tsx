@@ -11,11 +11,7 @@ import { useCloud } from "@/data/cloud";
 import { haptics } from "@/data/haptics";
 import { type SpaceKind, useSpaces } from "@/data/spaces";
 import { KIND_LABELS, ROLE_LABELS } from "@/lib/spaces";
-
-
-function messageOf(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
+import { errorMessage } from "@/lib/format";
 
 /** Lists your shared spaces, and lets you create one or join with an invite code. */
 export default function SpacesScreen() {
@@ -51,7 +47,7 @@ export default function SpacesScreen() {
       router.push({ pathname: "/spaces/[id]", params: { id } });
     } catch (createError) {
       haptics.error();
-      setError({ create: messageOf(createError) });
+      setError({ create: errorMessage(createError) });
     } finally {
       setBusy(undefined);
     }
@@ -72,7 +68,7 @@ export default function SpacesScreen() {
       router.push({ pathname: "/spaces/[id]", params: { id } });
     } catch (joinError) {
       haptics.error();
-      setError({ join: messageOf(joinError) });
+      setError({ join: errorMessage(joinError) });
     } finally {
       setBusy(undefined);
     }

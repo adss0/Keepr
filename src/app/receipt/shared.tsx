@@ -7,6 +7,7 @@ import { Button } from "@/components/form";
 import { useTheme } from "@/constants/theme";
 import { readSharedReceipt, setSharedReceipt } from "@/data/shared-receipt";
 import { HOME } from "@/lib/navigation";
+import { errorMessage } from "@/lib/format";
 
 /**
  * Where a photo, screenshot or PDF shared into Keepr from another app lands (see +native-intent).
@@ -32,7 +33,7 @@ export default function SharedReceiptScreen() {
         router.replace({ pathname: "/receipt/new", params: { scan: "shared" } });
       })
       .catch((readError: unknown) => {
-        if (!cancelled) setProblem(readError instanceof Error ? readError.message : String(readError));
+        if (!cancelled) setProblem(errorMessage(readError));
       });
     return () => {
       cancelled = true;

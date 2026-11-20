@@ -14,7 +14,7 @@ import { useSpaceActivity } from "@/data/space-activity";
 import { canManage, type Space, type SpaceMember, useSpaces } from "@/data/spaces";
 import { useSubscriptions } from "@/data/subscriptions";
 import { todayIso } from "@/lib/deadlines";
-import { formatPrice } from "@/lib/format";
+import { errorMessage, formatPrice } from "@/lib/format";
 import { activityDetail, activityText, timeAgo } from "@/lib/space-activity";
 import { formatInviteCode, KIND_LABELS, ROLE_LABELS } from "@/lib/spaces";
 
@@ -25,10 +25,6 @@ const TABS: { value: Tab; label: string }[] = [
   { value: "people", label: "People" },
   { value: "settings", label: "Settings" },
 ];
-
-function messageOf(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
 
 /** Asks before something that can't easily be undone. Browsers get their own confirm box. */
 function confirm(title: string, message: string, action: string, onConfirm: () => void) {
@@ -222,7 +218,7 @@ function PeopleTab({ space, onError }: { space: Space; onError: (message: string
       if (done) showToast({ message: done });
     } catch (actionError) {
       haptics.error();
-      onError(messageOf(actionError));
+      onError(errorMessage(actionError));
     } finally {
       setBusy(undefined);
     }
@@ -392,7 +388,7 @@ function SettingsTab({ space, onError }: { space: Space; onError: (message: stri
       await action();
     } catch (actionError) {
       haptics.error();
-      onError(messageOf(actionError));
+      onError(errorMessage(actionError));
     } finally {
       setBusy(undefined);
     }
@@ -407,7 +403,7 @@ function SettingsTab({ space, onError }: { space: Space; onError: (message: stri
       await spaces.setNotifications(space.id, next);
     } catch (saveError) {
       setNotify(before);
-      onError(messageOf(saveError));
+      onError(errorMessage(saveError));
     }
   }
 

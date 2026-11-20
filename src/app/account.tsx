@@ -7,7 +7,7 @@ import { Button, Field } from "@/components/form";
 import { useTheme } from "@/constants/theme";
 import { useCloud } from "@/data/cloud";
 import { STATUS_TEXT } from "@/lib/cloud-status";
-
+import { errorMessage } from "@/lib/format";
 
 /** Google's "G" mark, as Google's sign-in branding asks for on the button. */
 const GOOGLE_G =
@@ -32,7 +32,7 @@ function GoogleButton() {
           try {
             await signInWithGoogle();
           } catch (signInError) {
-            setError(signInError instanceof Error ? signInError.message : String(signInError));
+            setError(errorMessage(signInError));
           } finally {
             setBusy(false);
           }
@@ -69,7 +69,7 @@ function SignInForm() {
       const result = await action();
       if (result) setMessage(result);
     } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : String(actionError));
+      setError(errorMessage(actionError));
     } finally {
       setBusy(false);
     }
@@ -125,7 +125,7 @@ export default function AccountScreen() {
     const url = window.location.href;
     window.history.replaceState(null, "", window.location.pathname);
     completeSignInRedirect(url).catch((error: unknown) =>
-      setRedirectError(error instanceof Error ? error.message : String(error)),
+      setRedirectError(errorMessage(error)),
     );
   }, [completeSignInRedirect]);
   const card = [styles.card, { backgroundColor: theme.card, borderColor: theme.border }];

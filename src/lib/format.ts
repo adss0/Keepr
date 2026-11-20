@@ -14,6 +14,11 @@ export function formatDate(isoDate: string, currentYear?: number): string {
   return currentYear === undefined || year === currentYear ? short : `${short} ${year}`;
 }
 
+/** A caught error's message, to show to the user. */
+export function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 /** "2026-11-05" → "5 Nov 2026". Use for legal deadlines and letters, where the year matters. */
 export function formatFullDate(isoDate: string): string {
   const [year, month, day] = isoDate.split("-").map(Number);

@@ -7,7 +7,7 @@ import { AppState, Platform } from "react-native";
 
 import { useReceiptsStore } from "@/data/receipts";
 import { useSubscriptions } from "@/data/subscriptions";
-import { recoveryParams, signInRedirectParams } from "@/lib/recovery-link";
+import { type LinkParams, recoveryParams, signInRedirectParams } from "@/lib/recovery-link";
 import { forgetPushToken, notifySpaceMembers } from "@/data/push-notifications";
 import { deleteRemotePhotos, uploadNewPhotos } from "@/data/receipt-photos";
 import { supabase } from "@/data/supabase";
@@ -23,6 +23,7 @@ import {
 } from "@/lib/cloud-rows";
 import type { Receipt } from "@/types/receipt";
 import type { Subscription } from "@/types/subscription";
+import { errorMessage } from "@/lib/format";
 
 /** Wait this long after the last change before saving to the cloud. */
 const PUSH_DELAY_MS = 1000;
@@ -61,10 +62,6 @@ type CloudContextValue = {
 
 const CloudContext = createContext<CloudContextValue | null>(null);
 
-function messageOf(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
-
 /** After a change arrives from someone else, wait this long for more before pulling. */
 const REMOTE_PULL_DELAY_MS = 800;
 const SYNC_BASE_KEY = "keepr.syncBase.v1";
@@ -95,6 +92,19 @@ async function upsertRows<R extends Record<string, unknown>>(table: "receipts" |
     if (!missing || attempt === 3) return result;
     current = current.map(({ [missing]: _dropped, ...row }) => row);
   }
+}
+
+/**
+ * Signs in with the tokens Supabase put in a link (a password reset, or the way back from Google).
+ * False if the link holds none; throws the link's own error, such as an expired link.
+ */
+async function signInWithLinkTokens(params: LinkParams): Promise<boolean> {
+  if (!supabase) return false;
+  if (params.error) throw new Error(params.error);
+  if (!params.accessToken || !params.refreshToken) return false;
+  const { error } = await supabase.auth.setSession({ access_token: params.accessToken, refresh_token: params.refreshToken });
+  if (error) throw error;
+  return true;
 }
 
 /** Signs in with Supabase and keeps receipts and subscriptions in step with the cloud. */
@@ -188,7 +198,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   const enqueue = useCallback((work: () => Promise<void>) => {
     queue.current = queue.current.then(work).catch((syncError: unknown) => {
       setSyncState("error");
-      setError(messageOf(syncError));
+      setError(errorMessage(syncError));
     });
     return queue.current;
   }, []);
@@ -266,18 +276,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     await supabase?.auth.signOut();
   }, []);
 
-  const completeSignInRedirect = useCallback(async (url: string) => {
-    if (!supabase) return false;
-    const params = signInRedirectParams(url);
-    if (params.error) throw new Error(params.error);
-    if (!params.accessToken || !params.refreshToken) return false;
-    const { error: sessionError } = await supabase.auth.setSession({
-      access_token: params.accessToken,
-      refresh_token: params.refreshToken,
-    });
-    if (sessionError) throw sessionError;
-    return true;
-  }, []);
+  const completeSignInRedirect = useCallback((url: string) => signInWithLinkTokens(signInRedirectParams(url)), []);
 
   const signInWithGoogle = useCallback(async () => {
     if (!supabase) return false;
@@ -302,18 +301,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     if (resetError) throw resetError;
   }, []);
 
-  const startPasswordRecovery = useCallback(async (url: string) => {
-    if (!supabase) return false;
-    const params = recoveryParams(url);
-    if (params.error) throw new Error(params.error);
-    if (!params.accessToken || !params.refreshToken) return false;
-    const { error: sessionError } = await supabase.auth.setSession({
-      access_token: params.accessToken,
-      refresh_token: params.refreshToken,
-    });
-    if (sessionError) throw sessionError;
-    return true;
-  }, []);
+  const startPasswordRecovery = useCallback((url: string) => signInWithLinkTokens(recoveryParams(url)), []);
 
   const updatePassword = useCallback(async (newPassword: string) => {
     if (!supabase) return;
