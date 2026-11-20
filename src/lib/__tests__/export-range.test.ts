@@ -1,7 +1,10 @@
 import { describe, expect, it } from "@jest/globals";
 
 import { periodRange, rangeFileSuffix, receiptsInRange } from "@/lib/export-range";
+import type { ReceiptStatus } from "@/lib/receipt-status";
 import type { Receipt } from "@/types/receipt";
+
+const ALL = new Set<ReceiptStatus>(["active", "returned", "claimed", "archived"]);
 
 const make = (id: string, purchaseDate: string, closed?: Receipt["closed"]): Receipt => ({
   id,
@@ -41,13 +44,14 @@ describe("receiptsInRange", () => {
   ];
 
   it("keeps both end dates, oldest first", () => {
-    const ids = receiptsInRange(receipts, { from: "2026-01-01", to: "2026-02-01" }, true).map((r) => r.id);
+    const ids = receiptsInRange(receipts, { from: "2026-01-01", to: "2026-02-01" }, ALL).map((r) => r.id);
     expect(ids).toEqual(["jan", "feb"]);
   });
 
   it("leaves out finished receipts when asked", () => {
-    expect(receiptsInRange(receipts, {}, true)).toHaveLength(4);
-    expect(receiptsInRange(receipts, {}, false).map((r) => r.id)).not.toContain("returned");
+    expect(receiptsInRange(receipts, {}, ALL)).toHaveLength(4);
+    expect(receiptsInRange(receipts, {}, new Set(["active"] as const)).map((r) => r.id)).not.toContain("returned");
+    expect(receiptsInRange(receipts, {}, new Set(["returned"] as const)).map((r) => r.id)).toEqual(["returned"]);
   });
 
   it("names files by the range", () => {

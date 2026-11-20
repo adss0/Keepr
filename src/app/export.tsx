@@ -1,10 +1,9 @@
 import { Stack, useLocalSearchParams } from "expo-router";
-import { type ReactNode, useState } from "react";
-import { ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { useState } from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { DateField } from "@/components/date-field";
-import { Button, Segmented } from "@/components/form";
-import { Icon } from "@/components/icon";
+import { Button, Chips, Segmented } from "@/components/form";
 import { useToast } from "@/components/toast";
 import { Fonts, useTheme } from "@/constants/theme";
 import { useCloud } from "@/data/cloud";
@@ -17,22 +16,57 @@ import { todayIso } from "@/lib/deadlines";
 import { receiptsToCsv } from "@/lib/export";
 import { type ExportPeriod, PERIOD_OPTIONS, periodRange, rangeFileSuffix, receiptsInRange } from "@/lib/export-range";
 import { errorMessage, formatFullDate, formatPrice } from "@/lib/format";
+import { type ReceiptStatus, STATUS_OPTIONS } from "@/lib/receipt-status";
 import { spendingWorkbook } from "@/lib/spending-workbook";
 import { buildXlsx } from "@/lib/xlsx";
 
+/** "" stands for your own receipts, which aren't in any space. */
+const PERSONAL = "";
+
+type Format = "pdf" | "csv" | "excel";
+type Extra = "photos" | "deadlines" | "nextDeadline" | "subscriptions";
+
+const FORMAT_OPTIONS: { value: Format; label: string }[] = [
+  { value: "pdf", label: "PDF" },
+  { value: "csv", label: "CSV" },
+  { value: "excel", label: "Excel" },
+];
+
+/** What each format can add, and what its button says. */
+const FORMATS: Record<Format, { extras: { value: Extra; label: string }[]; save: string }> = {
+  pdf: {
+    extras: [
+      { value: "photos", label: "Receipt photos" },
+      { value: "deadlines", label: "Deadlines" },
+    ],
+    save: "Save PDF",
+  },
+  csv: { extras: [{ value: "nextDeadline", label: "Next deadline" }], save: "Save CSV" },
+  excel: { extras: [{ value: "subscriptions", label: "Subscriptions" }], save: "Save Excel file" },
+};
+
 /**
- * Choose which receipts to export (dates, finished ones, photos) and in which format. Opened from a shared space,
- * it exports just that space's receipts, starting from the dates chosen there.
+ * Export receipts: whose, which dates and which kinds, then one format and its save button. Opened from a shared
+ * space, it starts with just that space's receipts and the dates chosen there; other spaces can be added.
  */
 export default function ExportScreen() {
   const theme = useTheme();
   const today = todayIso();
   const params = useLocalSearchParams<{ space?: string; period?: string; from?: string; to?: string }>();
-  const spaceName = useSpaces().spaceName(params.space);
-  const allReceipts = useReceipts();
-  const receipts = spaceName ? allReceipts.filter((receipt) => receipt.spaceId === params.space) : allReceipts;
-  const { subscriptions: allSubscriptions } = useSubscriptions();
-  const subscriptions = spaceName ? allSubscriptions.filter((item) => item.spaceId === params.space) : allSubscriptions;
+  const { spaces, spaceName: nameOf } = useSpaces();
+  const fromSpace = nameOf(params.space) ? params.space : undefined;
+  // Undefined until the user changes it, so spaces that load after the screen opens are still included.
+  const [picked, setPicked] = useState<Set<string>>();
+  const included = picked ?? new Set(fromSpace ? [fromSpace] : [PERSONAL, ...spaces.map((space) => space.id)]);
+  const everything = spaces.length === 0 || (included.has(PERSONAL) && spaces.every((space) => included.has(space.id)));
+  const inScope = (item: { spaceId?: string }) => everything || included.has(item.spaceId ?? PERSONAL);
+  const receipts = useReceipts().filter(inScope);
+  const subscriptions = useSubscriptions().subscriptions.filter(inScope);
+  const names = [
+    ...(included.has(PERSONAL) ? ["Just mine"] : []),
+    ...spaces.filter((space) => included.has(space.id)).map((space) => space.name),
+  ];
+  const spaceName = everything || names.length === 0 ? undefined : names.join(", ");
   const { userId } = useCloud();
   const { showToast } = useToast();
 
@@ -41,15 +75,13 @@ export default function ExportScreen() {
   );
   const [from, setFrom] = useState(params.from ?? `${today.slice(0, 4)}-01-01`);
   const [to, setTo] = useState(params.to ?? today);
-  const [includeFinished, setIncludeFinished] = useState(true);
-  const [withPhotos, setWithPhotos] = useState(true);
-  const [withDeadlines, setWithDeadlines] = useState(false);
-  const [csvDeadlines, setCsvDeadlines] = useState(false);
-  const [withSubscriptions, setWithSubscriptions] = useState(true);
-  const [busy, setBusy] = useState<"pdf" | "csv" | "excel">();
+  const [statuses, setStatuses] = useState<Set<ReceiptStatus>>(() => new Set(STATUS_OPTIONS.map((option) => option.value)));
+  const [format, setFormat] = useState<Format>("pdf");
+  const [extras, setExtras] = useState<Set<Extra>>(() => new Set(["photos", "subscriptions"]));
+  const [busy, setBusy] = useState(false);
 
   const range = periodRange(period, today, { from, to });
-  const chosen = receiptsInRange(receipts, range, includeFinished);
+  const chosen = receiptsInRange(receipts, range, statuses);
   const total = chosen.reduce((sum, receipt) => sum + receipt.pricePence, 0);
   const dates =
     period === "all"
@@ -58,151 +90,72 @@ export default function ExportScreen() {
   const label = spaceName ? `${spaceName} · ${dates}` : dates;
   const suffix = `${spaceName ? `${spaceName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-` : ""}${rangeFileSuffix(range, today)}`;
 
-  async function run(kind: "pdf" | "csv" | "excel", task: () => Promise<void>) {
-    setBusy(kind);
+  async function save() {
+    setBusy(true);
     try {
-      await task();
+      if (format === "pdf") {
+        await shareReceiptsPdf(
+          chosen,
+          today,
+          label,
+          extras.has("photos"),
+          (receipt) => receipt.ownerId ?? userId,
+          extras.has("deadlines"),
+        );
+      } else if (format === "csv") {
+        await shareCsv(receiptsToCsv(chosen, today, extras.has("nextDeadline")), `keepr-receipts-${suffix}.csv`);
+      } else {
+        const workbook = spendingWorkbook(chosen, extras.has("subscriptions") ? subscriptions : [], today);
+        await shareXlsx(buildXlsx(workbook), `keepr-spending-${suffix}.xlsx`);
+      }
     } catch (error) {
       // A toast rather than an alert, which does nothing in browsers.
       showToast({ message: `Couldn't export: ${errorMessage(error)}` });
     } finally {
-      setBusy(undefined);
+      setBusy(false);
     }
   }
 
+  const empty =
+    names.length === 0
+      ? "Choose whose receipts to export."
+      : statuses.size === 0
+        ? "Choose at least one kind of receipt."
+        : "Nothing matches. Try other dates.";
+
   return (
     <ScrollView style={{ backgroundColor: theme.background }} contentContainerStyle={styles.content}>
-      {spaceName && <Stack.Screen options={{ title: `Export ${spaceName}` }} />}
-      <Segmented label="Which dates?" value={period} options={PERIOD_OPTIONS} onChange={setPeriod} />
+      {fromSpace && <Stack.Screen options={{ title: `Export ${nameOf(fromSpace)}` }} />}
+      {spaces.length > 0 && (
+        <Chips
+          label="Whose"
+          value={included}
+          options={[{ value: PERSONAL, label: "Just mine" }, ...spaces.map((space) => ({ value: space.id, label: space.name }))]}
+          onChange={setPicked}
+        />
+      )}
+      <Segmented label="Dates" value={period} options={PERIOD_OPTIONS} onChange={setPeriod} />
       {period === "custom" && (
         <View style={styles.dates}>
           <DateField label="From" value={from} onChange={setFrom} maximumDate={today} />
           <DateField label="To" value={to} onChange={setTo} maximumDate={today} />
         </View>
       )}
+      <Chips label="Include" value={statuses} options={STATUS_OPTIONS} onChange={setStatuses} />
 
-      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <Toggle
-          label="Include finished receipts"
-          hint="Returned, claimed and archived ones."
-          value={includeFinished}
-          onChange={setIncludeFinished}
-        />
-      </View>
+      <Segmented label="Format" value={format} options={FORMAT_OPTIONS} onChange={setFormat} />
+      <Chips label="Add" value={extras} options={FORMATS[format].extras} onChange={setExtras} />
 
-      <View style={[styles.summary, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <Icon name="receipts" size={20} color={theme.textMuted} />
-        <View style={styles.summaryText}>
-          <Text style={[styles.summaryTitle, { color: theme.text }]}>
-            {chosen.length === 1 ? "1 receipt" : `${chosen.length} receipts`} · {formatPrice(total)}
-          </Text>
-          <Text style={[styles.hint, { color: theme.textMuted }]}>{label}</Text>
-        </View>
-      </View>
-
-      {chosen.length === 0 ? (
-        <Text style={[styles.hint, styles.center, { color: theme.textMuted }]}>
-          No receipts in these dates. Pick a longer period.
+      <View style={[styles.summary, { borderColor: theme.border }]}>
+        <Text style={[styles.count, { color: theme.text }]}>
+          {chosen.length === 1 ? "1 receipt" : `${chosen.length} receipts`} · {formatPrice(total)}
         </Text>
-      ) : (
-        <>
-          {/* Each format with only the choices that apply to it, then its button. */}
-          <Format title="PDF" hint="A summary with the total, then a page for each receipt.">
-            <Toggle
-              label="Proof of purchase"
-              hint="Each receipt's photo, and the pages of any receipt kept as a PDF."
-              value={withPhotos}
-              onChange={setWithPhotos}
-            />
-            <Toggle
-              label="Deadlines"
-              hint="Return, refund and warranty dates, with what each one means."
-              value={withDeadlines}
-              onChange={setWithDeadlines}
-              divided
-            />
-            <Button
-              title="Save PDF"
-              variant="primary"
-              busy={busy === "pdf"}
-              onPress={() =>
-                run("pdf", () =>
-                  shareReceiptsPdf(chosen, today, label, withPhotos, (receipt) => receipt.ownerId ?? userId, withDeadlines),
-                )
-              }
-            />
-          </Format>
-
-          <Format title="Spreadsheet (CSV)" hint="One row per receipt, for Excel, Numbers or Google Sheets.">
-            <Toggle label="Next deadline" value={csvDeadlines} onChange={setCsvDeadlines} />
-            <Button
-              title="Save CSV"
-              busy={busy === "csv"}
-              onPress={() =>
-                run("csv", () => shareCsv(receiptsToCsv(chosen, today, csvDeadlines), `keepr-receipts-${suffix}.csv`))
-              }
-            />
-          </Format>
-
-          <Format title="Spending breakdown (Excel)" hint="A summary, totals by month and by shop, and every receipt.">
-            <Toggle label="Subscriptions" value={withSubscriptions} onChange={setWithSubscriptions} />
-            <Button
-              title="Save Excel file"
-              busy={busy === "excel"}
-              onPress={() =>
-                run("excel", () =>
-                  shareXlsx(
-                    buildXlsx(spendingWorkbook(chosen, withSubscriptions ? subscriptions : [], today)),
-                    `keepr-spending-${suffix}.xlsx`,
-                  ),
-                )
-              }
-            />
-          </Format>
-        </>
-      )}
-    </ScrollView>
-  );
-}
-
-function Format({ title, hint, children }: { title: string; hint: string; children: ReactNode }) {
-  const theme = useTheme();
-  return (
-    <View style={[styles.card, styles.format, { backgroundColor: theme.card, borderColor: theme.border }]}>
-      <Text style={[styles.formatTitle, { color: theme.text }]}>{title}</Text>
-      <Text style={[styles.hint, { color: theme.textMuted }]}>{hint}</Text>
-      <View style={styles.formatBody}>{children}</View>
-    </View>
-  );
-}
-
-function Toggle({
-  label,
-  hint,
-  value,
-  onChange,
-  divided,
-}: {
-  label: string;
-  hint?: string;
-  value: boolean;
-  onChange: (value: boolean) => void;
-  divided?: boolean;
-}) {
-  const theme = useTheme();
-  return (
-    <View style={[styles.toggle, divided && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border }]}>
-      <View style={styles.summaryText}>
-        <Text style={[styles.toggleLabel, { color: theme.text }]}>{label}</Text>
-        {hint ? <Text style={[styles.hint, { color: theme.textMuted }]}>{hint}</Text> : null}
+        <Text style={[styles.hint, { color: theme.textMuted }]} numberOfLines={1}>
+          {chosen.length === 0 ? empty : label}
+        </Text>
       </View>
-      <Switch
-        accessibilityLabel={label}
-        value={value}
-        onValueChange={onChange}
-        trackColor={{ true: theme.accent, false: theme.border }}
-      />
-    </View>
+      {chosen.length > 0 && <Button title={FORMATS[format].save} variant="primary" busy={busy} onPress={save} />}
+    </ScrollView>
   );
 }
 
@@ -210,59 +163,22 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: 40,
-    gap: 16,
+    gap: 18,
   },
   dates: {
     gap: 12,
   },
-  format: {
-    paddingTop: 14,
-    paddingBottom: 14,
-    gap: 2,
-  },
-  formatBody: {
-    gap: 8,
-  },
-  formatTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-  },
-  card: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
-    paddingHorizontal: 14,
-  },
-  toggle: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingVertical: 12,
-  },
-  toggleLabel: {
-    fontSize: 15,
-    fontWeight: "600",
-  },
   summary: {
-    borderWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    borderRadius: 16,
-    padding: 14,
-  },
-  summaryText: {
-    flex: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: 14,
     gap: 2,
   },
-  summaryTitle: {
+  count: {
     fontSize: 16,
     fontFamily: Fonts.mono,
   },
   hint: {
     fontSize: 13,
     lineHeight: 18,
-  },
-  center: {
-    textAlign: "center",
   },
 });
