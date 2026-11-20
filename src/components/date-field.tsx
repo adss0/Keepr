@@ -13,6 +13,8 @@ type Props = {
   onChange: (isoDate: string) => void;
   hint?: string;
   error?: string;
+  /** Something to double-check, such as a detail a scan may have misread. Shown until the field is changed. */
+  check?: string;
   /** Latest date that can be picked, as an ISO date. */
   maximumDate?: string;
   /** Show "Today" and "Yesterday" shortcuts, for dates in the past. */
@@ -27,8 +29,9 @@ function toDate(isoDate: string): Date {
 }
 
 /** A date picker that works the native way on each platform, plus quick shortcuts. */
-export function DateField({ label, value, onChange, hint, error, maximumDate, pastShortcuts, clearable }: Props) {
+export function DateField({ label, value, onChange, hint, error, check, maximumDate, pastShortcuts, clearable }: Props) {
   const theme = useTheme();
+  const outline = error ? theme.urgentText : check ? theme.soonText : theme.border;
   const today = todayIso();
   const hasValue = /^\d{4}-\d{2}-\d{2}$/.test(value);
   const current = hasValue ? toDate(value) : new Date();
@@ -73,7 +76,7 @@ export function DateField({ label, value, onChange, hint, error, maximumDate, pa
         fontSize: 16,
         padding: "9px 12px",
         borderRadius: 10,
-        border: `1px solid ${error ? theme.urgentText : theme.border}`,
+        border: `1px solid ${outline}`,
         backgroundColor: theme.card,
         color: theme.text,
         fontFamily: "inherit",
@@ -94,7 +97,7 @@ export function DateField({ label, value, onChange, hint, error, maximumDate, pa
       <Pressable
         accessibilityRole="button"
         onPress={() => onChange(maximumDate && maximumDate < today ? maximumDate : today)}
-        style={[styles.input, { backgroundColor: theme.card, borderColor: error ? theme.urgentText : theme.border }]}
+        style={[styles.input, { backgroundColor: theme.card, borderColor: outline }]}
       >
         <Text style={{ color: theme.textMuted, fontSize: 16 }}>Choose a date</Text>
       </Pressable>
@@ -105,7 +108,7 @@ export function DateField({ label, value, onChange, hint, error, maximumDate, pa
         accessibilityRole="button"
         accessibilityLabel={`${label}: ${hasValue ? formatFullDate(value) : "not set"}. Tap to change.`}
         onPress={openAndroidPicker}
-        style={[styles.input, { backgroundColor: theme.card, borderColor: error ? theme.urgentText : theme.border }]}
+        style={[styles.input, { backgroundColor: theme.card, borderColor: outline }]}
       >
         <Text style={{ color: hasValue ? theme.text : theme.textMuted, fontSize: 16 }}>
           {hasValue ? formatFullDate(value) : "Choose a date"}
@@ -129,6 +132,8 @@ export function DateField({ label, value, onChange, hint, error, maximumDate, pa
       </View>
       {error ? (
         <Text style={[styles.message, { color: theme.urgentText }]}>{error}</Text>
+      ) : check ? (
+        <Text style={[styles.message, { color: theme.soonText }]}>{check}</Text>
       ) : hint ? (
         <Text style={[styles.message, { color: theme.textMuted }]}>{hint}</Text>
       ) : null}

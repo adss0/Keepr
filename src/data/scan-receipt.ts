@@ -55,8 +55,11 @@ export async function pickReceiptDocument(): Promise<ReceiptPhoto | undefined> {
   return { base64, mediaType, source: `File: ${asset.name}` };
 }
 
-/** Sends the photo to the extract-receipt function, which reads it with Google Gemini. Returns its raw JSON. */
-export async function extractReceipt(photo: ReceiptPhoto): Promise<unknown> {
+/**
+ * Sends the photo to the extract-receipt function, which reads it with Google Gemini. Returns its raw JSON.
+ * `signal` stops waiting for it, when the user cancels.
+ */
+export async function extractReceipt(photo: ReceiptPhoto, signal?: AbortSignal): Promise<unknown> {
   if (!supabase) throw new Error("Receipt scanning isn't set up yet.");
   // Signed-out users get an anonymous Supabase session, so the function can still tell real app users from bots.
   // An error means a real sign-in couldn't be refreshed (often offline): a guest session would replace it.
@@ -68,6 +71,7 @@ export async function extractReceipt(photo: ReceiptPhoto): Promise<unknown> {
   }
   const { data, error } = await supabase.functions.invoke("extract-receipt", {
     body: { image: photo.base64, mediaType: photo.mediaType },
+    signal,
   });
   if (error instanceof FunctionsHttpError) {
     const body = await error.context.json().catch(() => undefined);
