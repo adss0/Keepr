@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { ReceiptPhotoCard } from "@/components/receipt-photo-card";
 import { DeadlinePill } from "@/components/deadline-pill";
 import { KeptStamp } from "@/components/kept-stamp";
+import { ReceiptTimeline } from "@/components/receipt-timeline";
 import { Button } from "@/components/form";
 import { Fonts, useTheme } from "@/constants/theme";
 import { useToast } from "@/components/toast";
@@ -13,7 +14,8 @@ import { haptics } from "@/data/haptics";
 import { shareReceiptPdf } from "@/data/receipt-pdf";
 import { useReceipt, useReceiptsStore } from "@/data/receipts";
 import { useSpaces } from "@/data/spaces";
-import { DEADLINE_EXPLANATIONS, getDeadlines, todayIso } from "@/lib/deadlines";
+import { todayIso } from "@/lib/deadlines";
+import { receiptTimeline } from "@/lib/timeline";
 import { errorMessage, formatDate, formatPrice } from "@/lib/format";
 import { PAYMENT_LABELS } from "@/lib/export";
 import { goBack } from "@/lib/navigation";
@@ -149,37 +151,35 @@ export default function ReceiptDetailScreen() {
       )}
 
       {!receipt.closed && <Text style={[styles.heading, { color: theme.text }]}>Your deadlines</Text>}
-      {!receipt.closed && getDeadlines(receipt).map((deadline) => (
-        <View
-          key={deadline.kind}
-          style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}
-        >
-          <DeadlinePill deadline={deadline} today={today} />
-          <Text style={[styles.explanation, { color: theme.textMuted }]}>
-            {DEADLINE_EXPLANATIONS[deadline.kind]}
-          </Text>
-          {deadline.kind === "warranty" && editable && (
-            <Button
-              title="Remove warranty"
-              variant="ghost"
-              onPress={() => {
-                const months = receipt.warrantyMonths;
-                removeWarranty(receipt.id);
-                showToast({
-                  message: "Warranty removed",
-                  action: {
-                    label: "Undo",
-                    onPress: () => {
-                      const { id: _id, photo: _photo, ownerId: _owner, closed: _closed, ...fields } = receipt;
-                      updateReceipt(receipt.id, { ...fields, warrantyMonths: months });
+      {!receipt.closed && (
+        <ReceiptTimeline
+          entries={receiptTimeline(receipt)}
+          today={today}
+          extra={(entry) =>
+            entry.key === "warranty" &&
+            editable && (
+              <Button
+                title="Remove warranty"
+                variant="ghost"
+                onPress={() => {
+                  const months = receipt.warrantyMonths;
+                  removeWarranty(receipt.id);
+                  showToast({
+                    message: "Warranty removed",
+                    action: {
+                      label: "Undo",
+                      onPress: () => {
+                        const { id: _id, photo: _photo, ownerId: _owner, closed: _closed, ...fields } = receipt;
+                        updateReceipt(receipt.id, { ...fields, warrantyMonths: months });
+                      },
                     },
-                  },
-                });
-              }}
-            />
-          )}
-        </View>
-      ))}
+                  });
+                }}
+              />
+            )
+          }
+        />
+      )}
 
       <View style={styles.actions}>
         <Button
