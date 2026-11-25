@@ -58,6 +58,7 @@
 - ✅ Export choices: pick whose receipts to export (just mine and any of your spaces, together or apart) and which kinds (active, returned, claimed, archived). Opened from a space, it starts with just that space
 - ✅ Order number, serial number and notes on receipts: optional fields on the form, shown on the receipt screen (order and serial numbers can be copied) and in the PDF, and all found by search. The scanner reads the order number. For items of £100 or more, the serial number field says it's worth adding. Needs the record-fields migration; until it runs, the new fields stay on the phone and sync once it has
 - ✅ Receipt timeline: the receipt screen's deadlines are one line in date order, from when it was bought or delivered through each right running out to the warranty, with the 6-month point after which proving a fault gets harder. "Today" marks where you are, the next deadline is highlighted, and rights that have run out are kept short
+- ✅ Finished label: a returned, claimed or archived receipt carries a dark "✓ Finished" pill with how and when it ended ("Returned 24 Nov"), in the list and on its screen; grid tiles just say "Finished". Free trials and payments due soon now show on the home screen even before the first receipt is added
 - ⏭️ **Next (in order):** claim tracking with an editable letter; account deletion and Sign in with Apple before the App Store
 
 ---

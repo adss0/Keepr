@@ -43,7 +43,7 @@ export function ReceiptTile({ receipt, today, fill }: { receipt: Receipt; today:
             <Text style={[styles.shop, { color: theme.textMuted }]} numberOfLines={1}>
               {receipt.retailer}
             </Text>
-            <DeadlinePill deadline={deadline} today={today} closed={receipt.closed} />
+            <DeadlinePill deadline={deadline} today={today} closed={receipt.closed} compact />
           </View>
         </PressScale>
       </Link>

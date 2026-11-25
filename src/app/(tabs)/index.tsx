@@ -107,7 +107,7 @@ export default function ReceiptsScreen() {
       <ScreenHeader
         title="Receipts"
         subtitle={
-          receipts.length === 0
+          receipts.length === 0 && dueSoon === 0
             ? "You keep your receipts. Keepr keeps your rights."
             : dueSoon === 0
               ? "Nothing due soon"
@@ -137,6 +137,12 @@ export default function ReceiptsScreen() {
     return (
       <View style={[styles.screen, { backgroundColor: theme.background }]}>
         {header}
+        {/* Subscriptions can be due before the first receipt is added. */}
+        {dueSoon > 0 && (
+          <View style={styles.emptyAttention}>
+            <NeedsAttention receipts={[]} subscriptions={subscriptions.filter(inScope)} today={today} />
+          </View>
+        )}
         <Intro id="home-body" rise delay={40} style={styles.centered}>
           <ExampleReceipt today={today} />
           <Text style={[styles.emptyTitle, { color: theme.text }]}>Keep your first receipt</Text>
@@ -411,6 +417,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 4,
     paddingBottom: 32,
+  },
+  emptyAttention: {
+    paddingHorizontal: 16,
   },
   centered: {
     flex: 1,
