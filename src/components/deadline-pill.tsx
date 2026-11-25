@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 
+import { Icon } from "@/components/icon";
 import { type Theme, useTheme } from "@/constants/theme";
 import { type Deadline, DEADLINE_WORDS, daysBetween } from "@/lib/deadlines";
 import { formatDate } from "@/lib/format";
@@ -34,18 +35,33 @@ type Props = {
   today: string;
   /** A finished-with receipt shows how it ended instead of a deadline. */
   closed?: Receipt["closed"];
+  /** Narrow spaces (grid tiles): a finished receipt just says "Finished", without how or when. */
+  compact?: boolean;
 };
 
-export function DeadlinePill({ deadline, today, closed }: Props) {
+export function DeadlinePill({ deadline, today, closed, compact }: Props) {
   const theme = useTheme();
   const daysLeft = deadline ? daysBetween(today, deadline.date) : undefined;
   const tone = toneFor(theme, daysLeft);
   const currentYear = Number(today.slice(0, 4));
 
-  let text: string;
   if (closed) {
-    text = closedText(closed, currentYear);
-  } else if (!deadline || daysLeft === undefined) {
+    // Inverted and ticked, so a finished receipt can't be mistaken for one with a deadline still running.
+    return (
+      <View
+        accessible
+        accessibilityLabel={`Finished: ${closedText(closed, currentYear)}`}
+        style={[styles.pill, styles.finished, { backgroundColor: theme.primary }]}
+      >
+        <Icon name="check" size={12} color={theme.onPrimary} />
+        <Text style={[styles.text, styles.finishedText, { color: theme.onPrimary }]}>Finished</Text>
+        {!compact && <Text style={[styles.text, { color: theme.onPrimary }]}>· {closedText(closed, currentYear)}</Text>}
+      </View>
+    );
+  }
+
+  let text: string;
+  if (!deadline || daysLeft === undefined) {
     text = "No active deadlines";
   } else if (daysLeft < 0) {
     text = `${DEADLINE_WORDS[deadline.kind].ended} ${formatDate(deadline.date, currentYear)}`;
@@ -72,5 +88,13 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 12,
     fontWeight: "500",
+  },
+  finished: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  finishedText: {
+    fontWeight: "700",
   },
 });
