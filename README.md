@@ -4,9 +4,9 @@
 
 > **You keep your receipts. Keepr keeps your rights.**
 
-Snap a receipt and Keepr pulls out the product, price and return deadline. It reminds you before your return window or warranty runs out. When something breaks, it tells you exactly what you're entitled to under UK consumer law, and how to claim it.
+**A free UK receipt keeper for iPhone, Android and the web. Snap or upload a receipt and AI fills in the details, Keepr reminds you before return windows and warranties run out, tracks your subscriptions, shares receipts with family in shared spaces, and tells you what UK consumer law says you're owed when something breaks, and how to claim it.**
 
-> **Status:** Early development. The Expo app skeleton is set up, and features are being built step by step. See the [build plan](PLAN.md).
+> **Status:** In active development and usable today. Receipts and AI scanning, reminders, the calendar, the rights engine with claim letters, subscriptions, shared spaces, cloud sync and PDF/CSV/Excel export all work. Still to come before an App Store release: claim tracking, account deletion and Sign in with Apple. See the [build plan](PLAN.md).
 
 ---
 
