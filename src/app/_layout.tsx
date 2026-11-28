@@ -8,6 +8,7 @@ import { Platform, Pressable, Text } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 
+import { DESKTOP_DETAIL_WIDTH, useDesktop } from "@/components/desktop";
 import { FirstRun } from "@/components/first-run";
 import { LaunchReceipt } from "@/components/launch-receipt";
 import { PdfPreview } from "@/components/pdf-preview";
@@ -33,6 +34,7 @@ SplashScreen.setOptions({ fade: true, duration: 300 });
 function AppStack() {
   const theme = useTheme();
   const mode = useColorMode();
+  const desktop = useDesktop();
   // Forms open as modals. Phones can swipe them away, but the web has no gesture, so every form gets Cancel.
   const modal = (title: string) => ({
     title,
@@ -61,10 +63,18 @@ function AppStack() {
           headerTintColor: theme.accent,
           headerTitleStyle: { color: theme.text, fontFamily: Fonts.display },
           headerShadowVisible: false,
-          contentStyle: { backgroundColor: theme.background },
+          // On the desktop a receipt or form sits in a readable column rather than stretching across the window.
+          contentStyle: [
+            { backgroundColor: theme.background },
+            desktop && { width: "100%", maxWidth: DESKTOP_DETAIL_WIDTH, alignSelf: "center" },
+          ],
         }}
       >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false, title: "Keepr" }} />
+        <Stack.Screen
+          name="(tabs)"
+          // The tabs lay themselves out (sidebar and centred pages), so they get the whole window.
+          options={{ headerShown: false, title: "Keepr", contentStyle: { backgroundColor: theme.background } }}
+        />
         <Stack.Screen name="receipt/[id]" options={{ title: "Receipt" }} />
         <Stack.Screen name="receipt/new" options={modal("Add receipt")} />
         <Stack.Screen name="receipt/shared" options={{ title: "Shared receipt" }} />

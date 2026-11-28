@@ -12,17 +12,15 @@ import { formatPrice } from "@/lib/format";
 import type { Receipt } from "@/types/receipt";
 
 /** A receipt as a grid tile: its photo (or the shop's initial), product, price and next deadline. */
-/** `fill` stretches the tile to its parent, for when something else (a tick box) sets the column width. */
-export function ReceiptTile({ receipt, today, fill }: { receipt: Receipt; today: string; fill?: boolean }) {
+/** A receipt in the grid. It fills its parent, which sets the column width. */
+export function ReceiptTile({ receipt, today }: { receipt: Receipt; today: string }) {
   const theme = useTheme();
   const { userId } = useCloud();
   const photoUri = usePhotoUri(isPdf(receipt.photo) ? undefined : receipt.photo, receipt.ownerId ?? userId);
   const deadline = getNextDeadline(receipt, today);
 
   return (
-    // The wrapper sets the column width: the pressable inside only stretches to fill its parent.
-    <View style={fill ? undefined : styles.cell}>
-      <Link href={{ pathname: "/receipt/[id]", params: { id: receipt.id } }} asChild>
+    <Link href={{ pathname: "/receipt/[id]", params: { id: receipt.id } }} asChild>
         <PressScale
           accessibilityRole="button"
           accessibilityLabel={`${receipt.product} from ${receipt.retailer}, ${formatPrice(receipt.pricePence)}`}
@@ -46,15 +44,11 @@ export function ReceiptTile({ receipt, today, fill }: { receipt: Receipt; today:
             <DeadlinePill deadline={deadline} today={today} closed={receipt.closed} compact />
           </View>
         </PressScale>
-      </Link>
-    </View>
+    </Link>
   );
 }
 
 const styles = StyleSheet.create({
-  cell: {
-    width: "48.5%",
-  },
   tile: {
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 16,
