@@ -60,7 +60,8 @@
     "web": "expo start --web",
     "lint": "expo lint --max-warnings 0",
     "typecheck": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest",
+    "deploy:web": "expo export --platform web && npx eas-cli@latest deploy --prod"
   },
   "private": true,
   "jest": {
