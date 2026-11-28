@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 
+import { columnWidth, useDesktop } from "@/components/desktop";
 import { ExampleReceipt } from "@/components/example-receipt";
 import { Button } from "@/components/form";
 import { Icon, type IconName } from "@/components/icon";
@@ -52,6 +53,7 @@ function scanReceipt() {
 
 export default function ReceiptsScreen() {
   const theme = useTheme();
+  const desktop = useDesktop();
   const today = todayIso();
   const { receipts: allReceipts, ready } = useReceiptsStore();
   const [query, setQuery] = useState("");
@@ -160,6 +162,8 @@ export default function ReceiptsScreen() {
   }
 
   const sections = view === "timeline" ? groupByMonth(visibleReceipts) : [];
+  // A wide window fits more: four tiles a row instead of two, and the list in two columns.
+  const columns = view === "grid" ? (desktop ? 4 : 2) : desktop ? 2 : 1;
   const selecting = selected !== undefined;
   const toggleSelected = (id: string) =>
     setSelected((current) => {
@@ -182,7 +186,7 @@ export default function ReceiptsScreen() {
   }
   /** A receipt in the list: swipeable normally, a tick box while choosing several. */
   const row = (item: (typeof visibleReceipts)[number], tile: boolean) => {
-    const content = tile ? <ReceiptTile receipt={item} today={today} fill={selecting} /> : <ReceiptCard receipt={item} today={today} />;
+    const content = tile ? <ReceiptTile receipt={item} today={today} /> : <ReceiptCard receipt={item} today={today} />;
     if (selecting) {
       return (
         <SelectableRow selected={selected.has(item.id)} onToggle={() => toggleSelected(item.id)} tile={tile} label={item.product}>
@@ -335,11 +339,13 @@ export default function ReceiptsScreen() {
           <FlatList
             {...listProps}
             // Changing the column count needs a fresh list.
-            key={view}
+            key={`${view}-${columns}`}
             data={visibleReceipts}
-            numColumns={view === "grid" ? 2 : 1}
-            columnWrapperStyle={view === "grid" ? styles.gridRow : undefined}
-            renderItem={({ item }) => row(item, view === "grid")}
+            numColumns={columns}
+            columnWrapperStyle={columns > 1 ? styles.gridRow : undefined}
+            renderItem={({ item }) =>
+              columns > 1 ? <View style={{ width: columnWidth(columns) }}>{row(item, view === "grid")}</View> : row(item, false)
+            }
           />
         )}
       </Intro>
@@ -491,7 +497,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   selectTile: {
-    width: "48.5%",
+    width: "100%",
   },
   unselected: {
     opacity: 0.6,
