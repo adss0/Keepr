@@ -45,3 +45,7 @@ Thumbs.db
 
 # Supabase CLI cache
 supabase/.temp/
+
+# Desktop app build
+desktop/node_modules/
+desktop/release/
